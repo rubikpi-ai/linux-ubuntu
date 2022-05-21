@@ -967,6 +967,7 @@ properties:
               - lenovo,yoga-c630
               - lg,judyln
               - lg,judyp
+              - lenovo,yoga-c630
               - oneplus,enchilada
               - oneplus,fajita
               - qcom,sdm845-mtp
