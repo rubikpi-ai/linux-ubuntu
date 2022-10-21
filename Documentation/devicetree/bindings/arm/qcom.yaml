@@ -404,6 +404,7 @@ properties:
           - const: qcom,mdm9615
 
       - description: Qualcomm Technologies, Inc. Robotics RB1
+      - description: Qualcomm Technologies, Inc. SC7180 IDP
         items:
           - enum:
               - qcom,qrb2210-rb1
