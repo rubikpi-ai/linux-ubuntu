@@ -403,7 +403,19 @@ properties:
           - const: swir,wp8548
           - const: qcom,mdm9615
 
-      - description: Qualcomm Technologies, Inc. Robotics RB1
+      - description: Qualcomm Technologies, Inc. Distributed Unit 1000 platform
+        items:
+          - enum:
+              - qcom,qdu1000-idp
+              - qcom,qdu1000-x100
+          - const: qcom,qdu1000
+
+      - description: Qualcomm Technologies, Inc. Radio Unit 1000 platform
+        items:
+          - enum:
+              - qcom,qru1000-idp
+          - const: qcom,qru1000
+
       - description: Qualcomm Technologies, Inc. SC7180 IDP
         items:
           - enum:
