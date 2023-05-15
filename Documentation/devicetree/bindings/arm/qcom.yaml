@@ -424,8 +424,7 @@ properties:
               - qcom,qru1000-idp
           - const: qcom,qru1000
 
-      - description: Qualcomm Technologies, Inc. SC7180 IDP
-        items:
+      - items:
           - enum:
               - qcom,qrb2210-rb1
           - const: qcom,qrb2210
