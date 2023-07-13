@@ -326,6 +326,7 @@ struct ufs_pwr_mode_info {
  * @config_scaling_param: called to configure clock scaling parameters
  * @program_key: program or evict an inline encryption key
  * @fill_crypto_prdt: initialize crypto-related fields in the PRDT
+ * @derive_sw_secret: derive sw secret from a wrapped key
  * @event_notify: called to notify important events
  * @mcq_config_resource: called to configure MCQ platform resources
  * @get_hba_mac: called to get vendor specific mac value, mandatory for mcq mode
@@ -373,6 +374,9 @@ struct ufs_hba_variant_ops {
 	int	(*fill_crypto_prdt)(struct ufs_hba *hba,
 				    const struct bio_crypt_ctx *crypt_ctx,
 				    void *prdt, unsigned int num_segments);
+	int	(*derive_sw_secret)(struct ufs_hba *hba, const u8 wrapped_key[],
+				    unsigned int wrapped_key_size,
+				    u8 sw_secret[BLK_CRYPTO_SW_SECRET_SIZE]);
 	void	(*event_notify)(struct ufs_hba *hba,
 				enum ufs_event_type evt, void *data);
 	int	(*mcq_config_resource)(struct ufs_hba *hba);
@@ -689,6 +693,12 @@ enum ufshcd_quirks {
 	 * because it causes link startup to become unreliable.
 	 */
 	UFSHCD_QUIRK_PERFORM_LINK_STARTUP_ONCE		= 1 << 26,
+
+	/*
+	 * This quirk indicates that UFS will be using HW wrapped keys
+	 * when using inline encryption.
+	 */
+	UFSHCD_QUIRK_USES_WRAPPED_CRYPTO_KEYS		= 1 << 27,
 };
 
 enum ufshcd_caps {
