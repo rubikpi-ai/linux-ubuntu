@@ -9,6 +9,8 @@
 #include <linux/ratelimit_types.h>
 #include <linux/once_lite.h>
 
+struct console;
+
 extern const char linux_banner[];
 extern const char linux_proc_banner[];
 
@@ -194,6 +196,8 @@ extern asmlinkage void dump_stack_lvl(const char *log_lvl) __cold;
 extern asmlinkage void dump_stack(void) __cold;
 void printk_trigger_flush(void);
 bool pr_flush(int timeout_ms, bool reset_on_progress);
+extern void nbcon_driver_acquire(struct console *con);
+extern void nbcon_driver_release(struct console *con);
 #else
 static inline __printf(1, 0)
 int vprintk(const char *s, va_list args)
@@ -277,6 +281,14 @@ static inline void printk_trigger_flush(void)
 static inline bool pr_flush(int timeout_ms, bool reset_on_progress)
 {
 	return true;
+}
+
+static inline void nbcon_driver_acquire(struct console *con)
+{
+}
+
+static inline void nbcon_driver_release(struct console *con)
+{
 }
 
 #endif
