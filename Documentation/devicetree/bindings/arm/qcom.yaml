@@ -49,8 +49,10 @@ description: |
         msm8996
         msm8998
         qcs404
+        qcs8550
         qcm2290
         qcm6490
+        qcm8550
         qdu1000
         qrb2210
         qrb4210
@@ -93,6 +95,16 @@ description: |
   The 'board' element must be one of the following strings:
 
         adp
+        aim300-aiot
+        ap-al02-c2
+        ap-al02-c6
+        ap-al02-c7
+        ap-al02-c8
+        ap-al02-c9
+        ap-mi01.2
+        ap-mi01.3
+        ap-mi01.6
+        ap-mi01.9
         cdp
         dragonboard
         idp
@@ -913,6 +925,14 @@ properties:
               - qcom,qcs404-evb-4000
           - const: qcom,qcs404-evb
           - const: qcom,qcs404
+
+      - items:
+          - enum:
+              - qcom,qcs8550-aim300-aiot
+          - const: qcom,qcs8550-aim300
+          - const: qcom,qcs8550
+          - const: qcom,qcm8550
+          - const: qcom,sm8550
 
       - items:
           - enum:
