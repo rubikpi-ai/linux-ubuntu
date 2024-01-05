@@ -429,6 +429,9 @@ static int socfpga_dwmac_probe(struct platform_device *pdev)
 
 	plat_dat->riwt_off = 1;
 
+	if (stmmac_res.rx_irq[0] > 0 && stmmac_res.tx_irq[0] > 0)
+		plat_dat->flags |= STMMAC_FLAG_MULTI_IRQ_EN;
+
 	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
 	if (ret)
 		return ret;
