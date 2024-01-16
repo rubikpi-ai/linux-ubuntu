@@ -1057,6 +1057,8 @@ properties:
 
       - items:
           - enum:
+              - qcom,x1e80100-addons-crd
+              - qcom,x1e80100-addons-qcp
               - qcom,x1e80100-crd
               - qcom,x1e80100-qcp
           - const: qcom,x1e80100
