@@ -928,6 +928,7 @@ properties:
 
       - items:
           - enum:
+              - qcom,qcs8550-addons-aim300-aiot
               - qcom,qcs8550-aim300-aiot
           - const: qcom,qcs8550-aim300
           - const: qcom,qcs8550
