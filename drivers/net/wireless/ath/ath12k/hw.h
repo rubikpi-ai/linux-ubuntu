@@ -213,6 +213,8 @@ struct ath12k_hw_params {
 
 	u32 otp_board_id_register;
 
+	bool supports_sta_ps;
+
 	u32 iova_mask;
 };
 
