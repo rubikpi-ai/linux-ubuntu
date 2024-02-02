@@ -113,6 +113,7 @@ description: |
         qcp
         qrd
         rb2
+        rb5gen2-hdk
         ride
         sbc
         x100
@@ -931,6 +932,14 @@ properties:
               - qcom,qcs8550-addons-aim300-aiot
               - qcom,qcs8550-aim300-aiot
           - const: qcom,qcs8550-aim300
+          - const: qcom,qcs8550
+          - const: qcom,qcm8550
+          - const: qcom,sm8550
+
+      - items:
+          - enum:
+              - qcom,qcs8550-rb5gen2-hdk
+          - const: qcom,qcs8550-rb5gen2
           - const: qcom,qcs8550
           - const: qcom,qcm8550
           - const: qcom,sm8550
