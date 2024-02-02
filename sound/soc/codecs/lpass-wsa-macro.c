@@ -20,6 +20,9 @@
 #include "lpass-wsa-macro.h"
 
 #define CDC_WSA_CLK_RST_CTRL_MCLK_CONTROL	(0x0000)
+#define LPASS_WSA_WSA_TOP_FS_UNGATE		(0x00AC)
+#define LPASS_WSA_WSA_TOP_FS_UNGATE2		(0x00DC)
+#define LPASS_CDC_WSA_TOP_GRP_SEL		(0x00B0)
 #define CDC_WSA_MCLK_EN_MASK			BIT(0)
 #define CDC_WSA_MCLK_ENABLE			BIT(0)
 #define CDC_WSA_MCLK_DISABLE			0
@@ -478,8 +481,11 @@ static const struct reg_default wsa_defaults[] = {
 	{ CDC_WSA_CLK_RST_CTRL_MCLK_CONTROL, 0x00},
 	{ CDC_WSA_CLK_RST_CTRL_FS_CNT_CONTROL, 0x00},
 	{ CDC_WSA_CLK_RST_CTRL_SWR_CONTROL, 0x00},
+	{ LPASS_WSA_WSA_TOP_FS_UNGATE, 0xff},
+	{ LPASS_WSA_WSA_TOP_FS_UNGATE2, 0x1f},
+	{ LPASS_CDC_WSA_TOP_GRP_SEL, 0x08},
 	{ CDC_WSA_TOP_TOP_CFG0, 0x00},
-	{ CDC_WSA_TOP_TOP_CFG1, 0x00},
+	{ CDC_WSA_TOP_TOP_CFG1, 0x03},
 	{ CDC_WSA_TOP_FREQ_MCLK, 0x00},
 	{ CDC_WSA_TOP_DEBUG_BUS_SEL, 0x00},
 	{ CDC_WSA_TOP_DEBUG_EN0, 0x00},
@@ -497,13 +503,13 @@ static const struct reg_default wsa_defaults[] = {
 	{ CDC_WSA_RX_INP_MUX_RX_EC_CFG0, 0x00},
 	{ CDC_WSA_RX_INP_MUX_SOFTCLIP_CFG0, 0x00},
 	{ CDC_WSA_TX0_SPKR_PROT_PATH_CTL, 0x02},
-	{ CDC_WSA_TX0_SPKR_PROT_PATH_CFG0, 0x00},
+	{ CDC_WSA_TX0_SPKR_PROT_PATH_CFG0, 0x01},
 	{ CDC_WSA_TX1_SPKR_PROT_PATH_CTL, 0x02},
-	{ CDC_WSA_TX1_SPKR_PROT_PATH_CFG0, 0x00},
+	{ CDC_WSA_TX1_SPKR_PROT_PATH_CFG0, 0x01},
 	{ CDC_WSA_TX2_SPKR_PROT_PATH_CTL, 0x02},
-	{ CDC_WSA_TX2_SPKR_PROT_PATH_CFG0, 0x00},
+	{ CDC_WSA_TX2_SPKR_PROT_PATH_CFG0, 0x01},
 	{ CDC_WSA_TX3_SPKR_PROT_PATH_CTL, 0x02},
-	{ CDC_WSA_TX3_SPKR_PROT_PATH_CFG0, 0x00},
+	{ CDC_WSA_TX3_SPKR_PROT_PATH_CFG0, 0x01},
 	{ CDC_WSA_INTR_CTRL_CFG, 0x00},
 	{ CDC_WSA_INTR_CTRL_CLR_COMMIT, 0x00},
 	{ CDC_WSA_INTR_CTRL_PIN1_MASK0, 0xFF},
@@ -847,6 +853,32 @@ int wsa_macro_set_spkr_mode(struct snd_soc_component *component, int mode)
 	return 0;
 }
 EXPORT_SYMBOL(wsa_macro_set_spkr_mode);
+
+void wsa_init_reg(struct snd_soc_component *comp)
+{
+	snd_soc_component_update_bits(comp, CDC_WSA_BOOST0_BOOST_CFG1, 0x3F, 0x12);
+	snd_soc_component_update_bits(comp, CDC_WSA_BOOST0_BOOST_CFG2, 0x1C, 0x08);
+	snd_soc_component_update_bits(comp, CDC_WSA_COMPANDER0_CTL7, 0x1E, 0x18);
+	snd_soc_component_update_bits(comp, CDC_WSA_BOOST1_BOOST_CFG1, 0x3F, 0x12);
+	snd_soc_component_update_bits(comp, CDC_WSA_BOOST1_BOOST_CFG2, 0x1C, 0x08);
+	snd_soc_component_update_bits(comp, CDC_WSA_COMPANDER1_CTL7, 0x1E, 0x18);
+	snd_soc_component_update_bits(comp, CDC_WSA_BOOST0_BOOST_CTL, 0x70, 0x58);
+	snd_soc_component_update_bits(comp, CDC_WSA_BOOST1_BOOST_CTL, 0x70, 0x58);
+	snd_soc_component_update_bits(comp, CDC_WSA_RX0_RX_PATH_CFG1, 0x08, 0x08);
+	snd_soc_component_update_bits(comp, CDC_WSA_RX1_RX_PATH_CFG1, 0x08, 0x08);
+	snd_soc_component_update_bits(comp, CDC_WSA_TOP_TOP_CFG1, 0x02, 0x02);
+	snd_soc_component_update_bits(comp, CDC_WSA_TOP_TOP_CFG1, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_TX0_SPKR_PROT_PATH_CFG0, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_TX1_SPKR_PROT_PATH_CFG0, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_TX2_SPKR_PROT_PATH_CFG0, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_TX3_SPKR_PROT_PATH_CFG0, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_COMPANDER0_CTL7, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_COMPANDER1_CTL7, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_RX0_RX_PATH_CFG0, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_RX1_RX_PATH_CFG0, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_RX0_RX_PATH_MIX_CFG, 0x01, 0x01);
+	snd_soc_component_update_bits(comp, CDC_WSA_RX1_RX_PATH_MIX_CFG, 0x01, 0x01);
+}
 
 static int wsa_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 						u8 int_prim_fs_rate_reg_val,
@@ -2361,6 +2393,7 @@ static int wsa_macro_component_probe(struct snd_soc_component *comp)
 				CDC_WSA_RX_PATH_SPKR_RATE_MASK,
 				CDC_WSA_RX_PATH_SPKR_RATE_FS_2P4_3P072);
 
+	wsa_init_reg(comp);
 	wsa_macro_set_spkr_mode(comp, WSA_MACRO_SPKR_MODE_1);
 
 	return 0;
