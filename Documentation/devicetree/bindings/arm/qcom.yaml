@@ -113,7 +113,6 @@ description: |
         qcp
         qrd
         rb2
-        rb5gen2-hdk
         ride
         sbc
         x100
@@ -934,10 +933,9 @@ properties:
 
       - items:
           - enum:
-              - qcom,qcs8550-rb5gen2-hdk
-          - const: qcom,qcs8550-rb5gen2
+              - qcom,qcs8550-rb5gen2
+          - const: qcom,qcs8550-rb5gen2-som
           - const: qcom,qcs8550
-          - const: qcom,qcm8550
           - const: qcom,sm8550
 
       - items:
