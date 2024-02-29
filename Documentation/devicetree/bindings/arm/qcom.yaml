@@ -1116,6 +1116,7 @@ properties:
 
       - items:
           - enum:
+              - qcom,sm8650p-addons-aim500-aiot
               - qcom,sm8650p-aim500-aiot
           - const: qcom,sm8650p-aim500
           - const: qcom,sm8650p
