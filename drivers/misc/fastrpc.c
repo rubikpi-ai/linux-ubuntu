@@ -100,6 +100,9 @@
 #define FASTRPC_RMID_INIT_MEM_MAP      10
 #define FASTRPC_RMID_INIT_MEM_UNMAP    11
 
+/* Fastrpc attribute for no mapping of fd  */
+#define FASTRPC_ATTR_NOMAP (16)
+
 /* Protection Domain(PD) ids */
 #define ROOT_PD		(0)
 #define USER_PD		(1)
@@ -767,6 +770,7 @@ static int fastrpc_map_attach(struct fastrpc_user *fl, int fd,
 	struct fastrpc_map *map = NULL;
 	struct sg_table *table;
 	struct scatterlist *sgl = NULL;
+	struct device *dev = NULL;
 	int err = 0, sgl_index = 0;
 
 	map = kzalloc(sizeof(*map), GFP_KERNEL);
@@ -784,9 +788,14 @@ static int fastrpc_map_attach(struct fastrpc_user *fl, int fd,
 		goto get_err;
 	}
 
-	map->attach = dma_buf_attach(map->buf, sess->dev);
+	if (attr & FASTRPC_ATTR_NOMAP)
+		dev = &fl->cctx->rpdev->dev;
+	else
+		dev = sess->dev;
+
+	map->attach = dma_buf_attach(map->buf, dev);
 	if (IS_ERR(map->attach)) {
-		dev_err(sess->dev, "Failed to attach dmabuf\n");
+		dev_err(dev, "Failed to attach dmabuf\n");
 		err = PTR_ERR(map->attach);
 		goto attach_err;
 	}
@@ -802,7 +811,8 @@ static int fastrpc_map_attach(struct fastrpc_user *fl, int fd,
 		map->phys = sg_phys(map->table->sgl);
 	} else {
 		map->phys = sg_dma_address(map->table->sgl);
-		map->phys += ((u64)fl->sctx->sid << 32);
+		if (!(attr & FASTRPC_ATTR_NOMAP))
+			map->phys += ((u64)fl->sctx->sid << 32);
 	}
 	for_each_sg(map->table->sgl, sgl, map->table->nents,
 		sgl_index)
@@ -831,7 +841,7 @@ static int fastrpc_map_attach(struct fastrpc_user *fl, int fd,
 		map->attr = attr;
 		err = qcom_scm_assign_mem(map->phys, (u64)map->len, &src_perms, dst_perms, 2);
 		if (err) {
-			dev_err(sess->dev, "Failed to assign memory with phys 0x%llx size 0x%llx err %d\n",
+			dev_err(dev, "Failed to assign memory with phys 0x%llx size 0x%llx err %d\n",
 					map->phys, map->len, err);
 			goto map_err;
 		}
