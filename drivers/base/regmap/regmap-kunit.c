@@ -4,10 +4,13 @@
 //
 // Copyright 2023 Arm Ltd
 
+#include <kunit/resource.h>
 #include <kunit/test.h>
 #include "internal.h"
 
 #define BLOCK_TEST_SIZE 12
+
+KUNIT_DEFINE_ACTION_WRAPPER(regmap_exit_action, regmap_exit, struct regmap *);
 
 static void get_changed_bytes(void *orig, void *new, size_t size)
 {
@@ -107,6 +110,8 @@ static struct regmap *gen_regmap(struct regmap_config *config,
 	if (IS_ERR(ret)) {
 		kfree(buf);
 		kfree(*data);
+	} else {
+		kunit_add_action(test, regmap_exit_action, ret);
 	}
 
 	return ret;
@@ -142,8 +147,6 @@ static void basic_read_write(struct kunit *test)
 
 	/* If using a cache the cache satisfied the read */
 	KUNIT_EXPECT_EQ(test, t->type == REGCACHE_NONE, data->read[0]);
-
-	regmap_exit(map);
 }
 
 static void bulk_write(struct kunit *test)
@@ -179,8 +182,6 @@ static void bulk_write(struct kunit *test)
 	/* If using a cache the cache satisfied the read */
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_EXPECT_EQ(test, t->type == REGCACHE_NONE, data->read[i]);
-
-	regmap_exit(map);
 }
 
 static void bulk_read(struct kunit *test)
@@ -212,8 +213,6 @@ static void bulk_read(struct kunit *test)
 	/* If using a cache the cache satisfied the read */
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_EXPECT_EQ(test, t->type == REGCACHE_NONE, data->read[i]);
-
-	regmap_exit(map);
 }
 
 static void write_readonly(struct kunit *test)
@@ -247,8 +246,6 @@ static void write_readonly(struct kunit *test)
 	/* Did that match what we see on the device? */
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_EXPECT_EQ(test, i != 5, data->written[i]);
-
-	regmap_exit(map);
 }
 
 static void read_writeonly(struct kunit *test)
@@ -287,8 +284,6 @@ static void read_writeonly(struct kunit *test)
 
 	/* Did we trigger a hardware access? */
 	KUNIT_EXPECT_FALSE(test, data->read[5]);
-
-	regmap_exit(map);
 }
 
 static void reg_defaults(struct kunit *test)
@@ -401,8 +396,6 @@ static void register_patch(struct kunit *test)
 			break;
 		}
 	}
-
-	regmap_exit(map);
 }
 
 static void stride(struct kunit *test)
@@ -444,8 +437,6 @@ static void stride(struct kunit *test)
 			KUNIT_EXPECT_TRUE(test, data->written[i]);
 		}
 	}
-
-	regmap_exit(map);
 }
 
 static struct regmap_range_cfg test_range = {
@@ -546,8 +537,6 @@ static void basic_ranges(struct kunit *test)
 		KUNIT_EXPECT_FALSE(test, data->read[i]);
 		KUNIT_EXPECT_FALSE(test, data->written[i]);
 	}
-
-	regmap_exit(map);
 }
 
 /* Try to stress dynamic creation of cache data structures */
@@ -601,8 +590,6 @@ static void stress_insert(struct kunit *test)
 		KUNIT_EXPECT_EQ(test, rval, vals[i]);
 		KUNIT_EXPECT_EQ(test, t->type == REGCACHE_NONE, data->read[i]);
 	}
-
-	regmap_exit(map);
 }
 
 static void cache_bypass(struct kunit *test)
@@ -639,8 +626,6 @@ static void cache_bypass(struct kunit *test)
 	regcache_cache_bypass(map, false);
 	KUNIT_EXPECT_EQ(test, 0, regmap_read(map, 0, &rval));
 	KUNIT_EXPECT_EQ(test, val, rval);
-
-	regmap_exit(map);
 }
 
 static void cache_sync(struct kunit *test)
@@ -677,8 +662,6 @@ static void cache_sync(struct kunit *test)
 	KUNIT_EXPECT_MEMEQ(test, data->vals, val, sizeof(val));
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_EXPECT_EQ(test, true, data->written[i]);
-
-	regmap_exit(map);
 }
 
 static void cache_sync_defaults(struct kunit *test)
@@ -713,8 +696,6 @@ static void cache_sync_defaults(struct kunit *test)
 	/* Did we just sync the one register we touched? */
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_EXPECT_EQ(test, i == 2, data->written[i]);
-
-	regmap_exit(map);
 }
 
 static void cache_sync_readonly(struct kunit *test)
@@ -754,8 +735,6 @@ static void cache_sync_readonly(struct kunit *test)
 	/* Did that match what we see on the device? */
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_EXPECT_EQ(test, i != 5, data->written[i]);
-
-	regmap_exit(map);
 }
 
 static void cache_sync_patch(struct kunit *test)
@@ -815,8 +794,6 @@ static void cache_sync_patch(struct kunit *test)
 			break;
 		}
 	}
-
-	regmap_exit(map);
 }
 
 static void cache_drop(struct kunit *test)
@@ -857,8 +834,6 @@ static void cache_drop(struct kunit *test)
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_EXPECT_EQ(test, data->read[i], i >= 3 && i <= 5);
 	KUNIT_EXPECT_MEMEQ(test, data->vals, rval, sizeof(rval));
-
-	regmap_exit(map);
 }
 
 static void cache_present(struct kunit *test)
@@ -896,8 +871,6 @@ static void cache_present(struct kunit *test)
 	/* Now everything should be cached */
 	for (i = 0; i < BLOCK_TEST_SIZE; i++)
 		KUNIT_ASSERT_TRUE(test, regcache_reg_cached(map, i));
-
-	regmap_exit(map);
 }
 
 /* Check that caching the window register works with sync */
@@ -1056,6 +1029,8 @@ static struct regmap *gen_raw_regmap(struct regmap_config *config,
 	if (IS_ERR(ret)) {
 		kfree(buf);
 		kfree(*data);
+	} else {
+		kunit_add_action(test, regmap_exit_action, ret);
 	}
 
 	return ret;
@@ -1082,8 +1057,6 @@ static void raw_read_defaults_single(struct kunit *test)
 		KUNIT_EXPECT_EQ(test, 0, regmap_read(map, i, &rval));
 		KUNIT_EXPECT_EQ(test, config.reg_defaults[i].def, rval);
 	}
-
-	regmap_exit(map);
 }
 
 static void raw_read_defaults(struct kunit *test)
@@ -1122,7 +1095,6 @@ static void raw_read_defaults(struct kunit *test)
 	}
 	
 	kfree(rval);
-	regmap_exit(map);
 }
 
 static void raw_write_read_single(struct kunit *test)
@@ -1147,8 +1119,6 @@ static void raw_write_read_single(struct kunit *test)
 	KUNIT_EXPECT_EQ(test, 0, regmap_write(map, 0, val));
 	KUNIT_EXPECT_EQ(test, 0, regmap_read(map, 0, &rval));
 	KUNIT_EXPECT_EQ(test, val, rval);
-
-	regmap_exit(map);
 }
 
 static void raw_write(struct kunit *test)
@@ -1199,8 +1169,6 @@ static void raw_write(struct kunit *test)
 
 	/* The values should appear in the "hardware" */
 	KUNIT_EXPECT_MEMEQ(test, &hw_buf[2], val, sizeof(val));
-
-	regmap_exit(map);
 }
 
 static bool reg_zero(struct device *dev, unsigned int reg)
@@ -1259,8 +1227,6 @@ static void raw_noinc_write(struct kunit *test)
 	/* Make sure we didn't touch the register after the noinc register */
 	KUNIT_EXPECT_EQ(test, 0, regmap_read(map, 1, &val));
 	KUNIT_ASSERT_EQ(test, val_test, val);
-
-	regmap_exit(map);
 }
 
 static void raw_sync(struct kunit *test)
@@ -1337,8 +1303,6 @@ static void raw_sync(struct kunit *test)
 
 	/* The values should now appear in the "hardware" */
 	KUNIT_EXPECT_MEMEQ(test, &hw_buf[2], &val[0], sizeof(val));
-
-	regmap_exit(map);
 }
 
 static struct kunit_case regmap_test_cases[] = {
