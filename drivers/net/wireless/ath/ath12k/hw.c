@@ -15,6 +15,10 @@
 #include "mhi.h"
 #include "dp_rx.h"
 
+static const guid_t wcn7850_uuid = GUID_INIT(0xf634f534, 0x6147, 0x11ec,
+					     0x90, 0xd6, 0x02, 0x42,
+					     0xac, 0x12, 0x00, 0x03);
+
 static u8 ath12k_hw_qcn9274_mac_from_pdev_id(int pdev_idx)
 {
 	return pdev_idx;
@@ -950,6 +954,8 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 
 		.supports_sta_ps = false,
 
+		.acpi_guid = NULL,
+
 		.iova_mask = 0,
 	},
 	{
@@ -1025,6 +1031,8 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 
 		.supports_sta_ps = true,
 
+		.acpi_guid = &wcn7850_uuid,
+
 		.iova_mask = ATH12K_PCIE_MAX_PAYLOAD_SIZE - 1,
 	},
 	{
@@ -1094,6 +1102,8 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.otp_board_id_register = QCN9274_QFPROM_RAW_RFA_PDET_ROW13_LSB,
 
 		.supports_sta_ps = false,
+
+		.acpi_guid = NULL,
 
 		.iova_mask = 0,
 	},

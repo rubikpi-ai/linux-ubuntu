@@ -8,6 +8,7 @@
 #define ATH12K_HW_H
 
 #include <linux/mhi.h>
+#include <linux/uuid.h>
 
 #include "wmi.h"
 #include "hal.h"
@@ -215,6 +216,8 @@ struct ath12k_hw_params {
 	u32 otp_board_id_register;
 
 	bool supports_sta_ps;
+
+	const guid_t *acpi_guid;
 
 	u32 iova_mask;
 };
