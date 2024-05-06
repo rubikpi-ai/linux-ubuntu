@@ -153,7 +153,7 @@ static int jpeg_v4_0_5_hw_init(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 	struct amdgpu_ring *ring = adev->jpeg.inst->ring_dec;
-	int r;
+	int r = 0;
 
 	r = amdgpu_ring_test_helper(ring);
 	if (r)
