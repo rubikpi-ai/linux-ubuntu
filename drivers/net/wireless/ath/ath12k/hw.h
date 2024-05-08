@@ -218,6 +218,7 @@ struct ath12k_hw_params {
 	bool supports_sta_ps;
 
 	const guid_t *acpi_guid;
+	bool supports_dynamic_smps_6ghz;
 
 	u32 iova_mask;
 };
