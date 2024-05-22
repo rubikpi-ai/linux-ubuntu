@@ -350,13 +350,16 @@ add_mmio_ext:
 	}
 }
 
-static void mmio_fini(struct drm_device *drm, void *arg)
+static void mmio_fini(void *arg)
 {
 	struct xe_device *xe = arg;
 
 	pci_iounmap(to_pci_dev(xe->drm.dev), xe->mmio.regs);
 	if (xe->mem.vram.mapping)
 		iounmap(xe->mem.vram.mapping);
+
+	xe->mem.vram.mapping = NULL;
+	xe->mmio.regs = NULL;
 }
 
 static int xe_verify_lmem_ready(struct xe_device *xe)
@@ -394,7 +397,7 @@ int xe_mmio_init(struct xe_device *xe)
 		return -EIO;
 	}
 
-	return drmm_add_action_or_reset(&xe->drm, mmio_fini, xe);
+	return devm_add_action_or_reset(xe->drm.dev, mmio_fini, xe);
 }
 
 int xe_mmio_root_tile_init(struct xe_device *xe)
