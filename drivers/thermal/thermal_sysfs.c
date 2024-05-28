@@ -150,7 +150,7 @@ trip_point_temp_show(struct device *dev, struct device_attribute *attr,
 	if (sscanf(attr->attr.name, "trip_point_%d_temp", &trip_id) != 1)
 		return -EINVAL;
 
-	return sprintf(buf, "%d\n", tz->trips[trip_id].temperature);
+	return sprintf(buf, "%d\n", READ_ONCE(tz->trips[trip_id].temperature));
 }
 
 static ssize_t
@@ -180,7 +180,7 @@ trip_point_hyst_store(struct device *dev, struct device_attribute *attr,
 				goto unlock;
 		}
 
-		trip->hysteresis = hyst;
+		WRITE_ONCE(trip->hysteresis, hyst);
 
 		thermal_zone_trip_updated(tz, trip);
 	}
@@ -201,7 +201,7 @@ trip_point_hyst_show(struct device *dev, struct device_attribute *attr,
 	if (sscanf(attr->attr.name, "trip_point_%d_hyst", &trip_id) != 1)
 		return -EINVAL;
 
-	return sprintf(buf, "%d\n", tz->trips[trip_id].hysteresis);
+	return sprintf(buf, "%d\n", READ_ONCE(tz->trips[trip_id].hysteresis));
 }
 
 static ssize_t

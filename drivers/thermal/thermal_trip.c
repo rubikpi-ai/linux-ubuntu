@@ -150,7 +150,7 @@ void thermal_zone_set_trip_temp(struct thermal_zone_device *tz,
 	if (trip->temperature == temp)
 		return;
 
-	trip->temperature = temp;
+	WRITE_ONCE(trip->temperature, temp);
 	thermal_notify_tz_trip_change(tz, trip);
 }
 EXPORT_SYMBOL_GPL(thermal_zone_set_trip_temp);
