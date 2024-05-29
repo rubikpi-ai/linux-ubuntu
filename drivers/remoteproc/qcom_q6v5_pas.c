@@ -49,6 +49,7 @@ struct adsp_data {
 	const char *ssr_name;
 	const char *sysmon_name;
 	int ssctl_id;
+	unsigned int smem_host_id;
 
 	int region_assign_idx;
 };
@@ -74,6 +75,7 @@ struct qcom_adsp {
 	int dtb_pas_id;
 	unsigned int minidump_id;
 	int crash_reason_smem;
+	unsigned int smem_host_id;
 	bool decrypt_shutdown;
 	const char *info_name;
 
@@ -386,6 +388,9 @@ static int adsp_stop(struct rproc *rproc)
 	if (handover)
 		qcom_pas_handover(&adsp->q6v5);
 
+	if (adsp->smem_host_id)
+		ret = qcom_smem_bust_hwspin_lock_by_host(adsp->smem_host_id);
+
 	return ret;
 }
 
@@ -694,6 +699,7 @@ static int adsp_probe(struct platform_device *pdev)
 	adsp->minidump_id = desc->minidump_id;
 	adsp->pas_id = desc->pas_id;
 	adsp->info_name = desc->sysmon_name;
+	adsp->smem_host_id = desc->smem_host_id;
 	adsp->decrypt_shutdown = desc->decrypt_shutdown;
 	adsp->region_assign_idx = desc->region_assign_idx;
 	if (dtb_fw_name) {
@@ -1122,6 +1128,7 @@ static const struct adsp_data sm8550_adsp_resource = {
 	.ssr_name = "lpass",
 	.sysmon_name = "adsp",
 	.ssctl_id = 0x14,
+	.smem_host_id = 2,
 };
 
 static const struct adsp_data sm8550_cdsp_resource = {
@@ -1142,6 +1149,7 @@ static const struct adsp_data sm8550_cdsp_resource = {
 	.ssr_name = "cdsp",
 	.sysmon_name = "cdsp",
 	.ssctl_id = 0x17,
+	.smem_host_id = 5,
 };
 
 static const struct adsp_data sm8550_mpss_resource = {
@@ -1162,6 +1170,7 @@ static const struct adsp_data sm8550_mpss_resource = {
 	.ssr_name = "mpss",
 	.sysmon_name = "modem",
 	.ssctl_id = 0x12,
+	.smem_host_id = 1,
 	.region_assign_idx = 2,
 };
 
