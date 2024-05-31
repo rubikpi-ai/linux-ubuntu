@@ -200,6 +200,13 @@ int led_trigger_set(struct led_classdev *led_cdev, struct led_trigger *trig)
 		 */
 		flush_work(&led_cdev->set_brightness_work);
 
+		/*
+		 * Some activate() calls use led_trigger_event() to initialize
+		 * the brightness of the LED for which the trigger is being set.
+		 * Ensure the led_cdev is visible on trig->led_cdevs for this.
+		 */
+		synchronize_rcu();
+
 		ret = 0;
 		if (trig->activate)
 			ret = trig->activate(led_cdev);
