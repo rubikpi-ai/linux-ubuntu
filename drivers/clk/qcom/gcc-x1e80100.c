@@ -6757,7 +6757,7 @@ static int gcc_x1e80100_probe(struct platform_device *pdev)
 	qcom_branch_set_force_mem_core(regmap, gcc_ufs_phy_ice_core_clk, true);
 	qcom_branch_set_force_mem_core(regmap, gcc_ufs_phy_axi_clk, true);
 
-	return qcom_cc_really_probe(pdev, &gcc_x1e80100_desc, regmap);
+	return qcom_cc_really_probe(&pdev->dev, &gcc_x1e80100_desc, regmap);
 }
 
 static struct platform_driver gcc_x1e80100_driver = {
