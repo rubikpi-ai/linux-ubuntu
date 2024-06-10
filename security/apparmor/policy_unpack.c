@@ -765,7 +765,24 @@ static int unpack_pdb(struct aa_ext *e, struct aa_policydb **policy,
 			*info = "missing required dfa";
 			goto fail;
 		}
-		goto out;
+	} else {
+		/*
+		 * only unpack the following if a dfa is present
+		 *
+		 * sadly start was given different names for file and policydb
+		 * but since it is optional we can try both
+		 */
+		if (!aa_unpack_u32(e, &pdb->start[0], "start"))
+			/* default start state */
+			pdb->start[0] = DFA_START;
+		if (!aa_unpack_u32(e, &pdb->start[AA_CLASS_FILE], "dfa_start")) {
+			/* default start state for xmatch and file dfa */
+			pdb->start[AA_CLASS_FILE] = DFA_START;
+		}	/* setup class index */
+		for (i = AA_CLASS_FILE + 1; i <= AA_CLASS_LAST; i++) {
+			pdb->start[i] = aa_dfa_next(pdb->dfa, pdb->start[0],
+						    i);
+		}
 	}
 
 	if (pdb->perms && version <= 2) {
@@ -782,26 +799,17 @@ static int unpack_pdb(struct aa_ext *e, struct aa_policydb **policy,
 		pdb->dfa->tables[YYTD_ID_ACCEPT2]->td_flags = tdflags;
 	}
 	/*
-	 * only unpack the following if a dfa is present
-	 *
-	 * sadly start was given different names for file and policydb
-	 * but since it is optional we can try both
+	 * Unfortunately due to a bug in earlier userspaces, a
+	 * transition table may be present even when the dfa is
+	 * not. For compatibility reasons unpack and discard.
 	 */
-	if (!aa_unpack_u32(e, &pdb->start[0], "start"))
-		/* default start state */
-		pdb->start[0] = DFA_START;
-	if (!aa_unpack_u32(e, &pdb->start[AA_CLASS_FILE], "dfa_start")) {
-		/* default start state for xmatch and file dfa */
-		pdb->start[AA_CLASS_FILE] = DFA_START;
-	}	/* setup class index */
-	for (i = AA_CLASS_FILE + 1; i <= AA_CLASS_LAST; i++) {
-		pdb->start[i] = aa_dfa_next(pdb->dfa, pdb->start[0],
-					       i);
-	}
 	if (!unpack_trans_table(e, &pdb->trans) && required_trans) {
 		*info = "failed to unpack profile transition table";
 		goto fail;
 	}
+
+	if (!pdb->dfa && pdb->trans.table)
+		aa_free_str_table(&pdb->trans);
 
 	/* TODO: move compat mapping here, requires dfa merging first */
 	/* TODO: move verify here, it has to be done after compat mappings */
