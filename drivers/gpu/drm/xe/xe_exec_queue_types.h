@@ -138,7 +138,7 @@ struct xe_exec_queue {
 		enum xe_exec_queue_priority priority;
 	} sched_props;
 
-	/** @compute: compute exec queue state */
+	/** @lr: long-running exec queue state */
 	struct {
 		/** @pfence: preemption fence */
 		struct dma_fence *pfence;
@@ -150,7 +150,7 @@ struct xe_exec_queue {
 		struct list_head link;
 		/** @lock: preemption fences lock */
 		spinlock_t lock;
-	} compute;
+	} lr;
 
 	/** @ops: submission backend exec queue operations */
 	const struct xe_exec_queue_ops *ops;
