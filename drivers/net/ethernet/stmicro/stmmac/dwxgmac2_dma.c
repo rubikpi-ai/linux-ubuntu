@@ -45,13 +45,14 @@ static void dwxgmac2_dma_init_chan(struct stmmac_priv *priv,
 				   void __iomem *ioaddr,
 				   struct stmmac_dma_cfg *dma_cfg, u32 chan)
 {
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_CONTROL(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 value = readl(ioaddr + XGMAC_DMA_CH_CONTROL(dwxgmac_addrs, chan));
 
 	if (dma_cfg->pblx8)
 		value |= XGMAC_PBLx8;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_CONTROL(chan));
-	writel(XGMAC_DMA_INT_DEFAULT_EN, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_CONTROL(dwxgmac_addrs, chan));
+	writel(XGMAC_DMA_INT_DEFAULT_EN, ioaddr + XGMAC_DMA_CH_INT_EN(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_dma_init_rx_chan(struct stmmac_priv *priv,
@@ -59,16 +60,17 @@ static void dwxgmac2_dma_init_rx_chan(struct stmmac_priv *priv,
 				      struct stmmac_dma_cfg *dma_cfg,
 				      dma_addr_t phy, u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 rxpbl = dma_cfg->rxpbl ?: dma_cfg->pbl;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 	value &= ~XGMAC_RxPBL;
 	value |= (rxpbl << XGMAC_RxPBL_SHIFT) & XGMAC_RxPBL;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 
-	writel(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_HADDR(chan));
-	writel(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_LADDR(chan));
+	writel(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_HADDR(dwxgmac_addrs, chan));
+	writel(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_LADDR(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_dma_init_tx_chan(struct stmmac_priv *priv,
@@ -76,17 +78,18 @@ static void dwxgmac2_dma_init_tx_chan(struct stmmac_priv *priv,
 				      struct stmmac_dma_cfg *dma_cfg,
 				      dma_addr_t phy, u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 txpbl = dma_cfg->txpbl ?: dma_cfg->pbl;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 	value &= ~XGMAC_TxPBL;
 	value |= (txpbl << XGMAC_TxPBL_SHIFT) & XGMAC_TxPBL;
 	value |= XGMAC_OSP;
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 
-	writel(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_HADDR(chan));
-	writel(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_LADDR(chan));
+	writel(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_HADDR(dwxgmac_addrs, chan));
+	writel(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_LADDR(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_dma_axi(void __iomem *ioaddr, struct stmmac_axi *axi)
@@ -145,16 +148,18 @@ static void dwxgmac2_dma_axi(void __iomem *ioaddr, struct stmmac_axi *axi)
 static void dwxgmac2_dma_dump_regs(struct stmmac_priv *priv,
 				   void __iomem *ioaddr, u32 *reg_space)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	int i;
 
-	for (i = (XGMAC_DMA_MODE / 4); i < XGMAC_REGSIZE; i++)
+	for (i = (XGMAC_DMA_MODE / 4); i < XGMAC_REGSIZE(dwxgmac_addrs); i++)
 		reg_space[i] = readl(ioaddr + i * 4);
 }
 
 static void dwxgmac2_dma_rx_mode(struct stmmac_priv *priv, void __iomem *ioaddr,
 				 int mode, u32 channel, int fifosz, u8 qmode)
 {
-	u32 value = readl(ioaddr + XGMAC_MTL_RXQ_OPMODE(channel));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 value = readl(ioaddr + XGMAC_MTL_RXQ_OPMODE(dwxgmac_addrs, channel));
 	unsigned int rqs = fifosz / 256 - 1;
 
 	if (mode == SF_DMA_MODE) {
@@ -175,7 +180,7 @@ static void dwxgmac2_dma_rx_mode(struct stmmac_priv *priv, void __iomem *ioaddr,
 	value |= (rqs << XGMAC_RQS_SHIFT) & XGMAC_RQS;
 
 	if ((fifosz >= 4096) && (qmode != MTL_QUEUE_AVB)) {
-		u32 flow = readl(ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(channel));
+		u32 flow = readl(ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(dwxgmac_addrs, channel));
 		unsigned int rfd, rfa;
 
 		value |= XGMAC_EHFC;
@@ -207,16 +212,17 @@ static void dwxgmac2_dma_rx_mode(struct stmmac_priv *priv, void __iomem *ioaddr,
 		flow &= ~XGMAC_RFA;
 		flow |= rfa << XGMAC_RFA_SHIFT;
 
-		writel(flow, ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(channel));
+		writel(flow, ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(dwxgmac_addrs, channel));
 	}
 
-	writel(value, ioaddr + XGMAC_MTL_RXQ_OPMODE(channel));
+	writel(value, ioaddr + XGMAC_MTL_RXQ_OPMODE(dwxgmac_addrs, channel));
 }
 
 static void dwxgmac2_dma_tx_mode(struct stmmac_priv *priv, void __iomem *ioaddr,
 				 int mode, u32 channel, int fifosz, u8 qmode)
 {
-	u32 value = readl(ioaddr + XGMAC_MTL_TXQ_OPMODE(channel));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 value = readl(ioaddr + XGMAC_MTL_TXQ_OPMODE(dwxgmac_addrs, channel));
 	unsigned int tqs = fifosz / 256 - 1;
 
 	if (mode == SF_DMA_MODE) {
@@ -253,45 +259,48 @@ static void dwxgmac2_dma_tx_mode(struct stmmac_priv *priv, void __iomem *ioaddr,
 	value &= ~XGMAC_TQS;
 	value |= (tqs << XGMAC_TQS_SHIFT) & XGMAC_TQS;
 
-	writel(value, ioaddr +  XGMAC_MTL_TXQ_OPMODE(channel));
+	writel(value, ioaddr + XGMAC_MTL_TXQ_OPMODE(dwxgmac_addrs, channel));
 }
 
 static void dwxgmac2_enable_dma_irq(struct stmmac_priv *priv,
 				    void __iomem *ioaddr, u32 chan,
 				    bool rx, bool tx)
 {
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 value = readl(ioaddr + XGMAC_DMA_CH_INT_EN(dwxgmac_addrs, chan));
 
 	if (rx)
 		value |= XGMAC_DMA_INT_DEFAULT_RX;
 	if (tx)
 		value |= XGMAC_DMA_INT_DEFAULT_TX;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_INT_EN(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_disable_dma_irq(struct stmmac_priv *priv,
 				     void __iomem *ioaddr, u32 chan,
 				     bool rx, bool tx)
 {
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 value = readl(ioaddr + XGMAC_DMA_CH_INT_EN(dwxgmac_addrs, chan));
 
 	if (rx)
 		value &= ~XGMAC_DMA_INT_DEFAULT_RX;
 	if (tx)
 		value &= ~XGMAC_DMA_INT_DEFAULT_TX;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_INT_EN(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_dma_start_tx(struct stmmac_priv *priv,
 				  void __iomem *ioaddr, u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 	value |= XGMAC_TXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 
 	value = readl(ioaddr + XGMAC_TX_CONFIG);
 	value |= XGMAC_CONFIG_TE;
@@ -301,11 +310,12 @@ static void dwxgmac2_dma_start_tx(struct stmmac_priv *priv,
 static void dwxgmac2_dma_stop_tx(struct stmmac_priv *priv, void __iomem *ioaddr,
 				 u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 	value &= ~XGMAC_TXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 
 	value = readl(ioaddr + XGMAC_TX_CONFIG);
 	value &= ~XGMAC_CONFIG_TE;
@@ -315,11 +325,12 @@ static void dwxgmac2_dma_stop_tx(struct stmmac_priv *priv, void __iomem *ioaddr,
 static void dwxgmac2_dma_start_rx(struct stmmac_priv *priv,
 				  void __iomem *ioaddr, u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 	value |= XGMAC_RXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 
 	value = readl(ioaddr + XGMAC_RX_CONFIG);
 	value |= XGMAC_CONFIG_RE;
@@ -329,11 +340,12 @@ static void dwxgmac2_dma_start_rx(struct stmmac_priv *priv,
 static void dwxgmac2_dma_stop_rx(struct stmmac_priv *priv, void __iomem *ioaddr,
 				 u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 	value &= ~XGMAC_RXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 }
 
 static int dwxgmac2_dma_interrupt(struct stmmac_priv *priv,
@@ -342,8 +354,10 @@ static int dwxgmac2_dma_interrupt(struct stmmac_priv *priv,
 				  u32 dir)
 {
 	struct stmmac_pcpu_stats *stats = this_cpu_ptr(priv->xstats.pcpu_stats);
-	u32 intr_status = readl(ioaddr + XGMAC_DMA_CH_STATUS(chan));
-	u32 intr_en = readl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 intr_status = readl(ioaddr + XGMAC_DMA_CH_STATUS(dwxgmac_addrs, chan));
+	u32 intr_en = readl(ioaddr + XGMAC_DMA_CH_INT_EN(dwxgmac_addrs, chan));
+
 	int ret = 0;
 
 	if (dir == DMA_DIR_RX)
@@ -382,7 +396,7 @@ static int dwxgmac2_dma_interrupt(struct stmmac_priv *priv,
 	}
 
 	/* Clear interrupts */
-	writel(intr_en & intr_status, ioaddr + XGMAC_DMA_CH_STATUS(chan));
+	writel(intr_en & intr_status, ioaddr + XGMAC_DMA_CH_STATUS(dwxgmac_addrs, chan));
 
 	return ret;
 }
@@ -531,105 +545,122 @@ static int dw25gmac_get_hw_feature(void __iomem *ioaddr,
 static void dwxgmac2_rx_watchdog(struct stmmac_priv *priv, void __iomem *ioaddr,
 				 u32 riwt, u32 queue)
 {
-	writel(riwt & XGMAC_RWT, ioaddr + XGMAC_DMA_CH_Rx_WATCHDOG(queue));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+
+	writel(riwt & XGMAC_RWT, ioaddr + XGMAC_DMA_CH_Rx_WATCHDOG(dwxgmac_addrs, queue));
 }
 
 static void dwxgmac2_set_rx_ring_len(struct stmmac_priv *priv,
 				     void __iomem *ioaddr, u32 len, u32 chan)
 {
-	writel(len, ioaddr + XGMAC_DMA_CH_RxDESC_RING_LEN(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+
+	writel(len, ioaddr + XGMAC_DMA_CH_RxDESC_RING_LEN(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_set_tx_ring_len(struct stmmac_priv *priv,
 				     void __iomem *ioaddr, u32 len, u32 chan)
 {
-	writel(len, ioaddr + XGMAC_DMA_CH_TxDESC_RING_LEN(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+
+	writel(len, ioaddr + XGMAC_DMA_CH_TxDESC_RING_LEN(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_set_rx_tail_ptr(struct stmmac_priv *priv,
 				     void __iomem *ioaddr, u32 ptr, u32 chan)
 {
-	writel(ptr, ioaddr + XGMAC_DMA_CH_RxDESC_TAIL_LPTR(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+
+	writel(ptr, ioaddr + XGMAC_DMA_CH_RxDESC_TAIL_LPTR(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_set_tx_tail_ptr(struct stmmac_priv *priv,
 				     void __iomem *ioaddr, u32 ptr, u32 chan)
 {
-	writel(ptr, ioaddr + XGMAC_DMA_CH_TxDESC_TAIL_LPTR(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+
+	writel(ptr, ioaddr + XGMAC_DMA_CH_TxDESC_TAIL_LPTR(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_enable_tso(struct stmmac_priv *priv, void __iomem *ioaddr,
 				bool en, u32 chan)
 {
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+
+	u32 value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 
 	if (en)
 		value |= XGMAC_TSE;
 	else
 		value &= ~XGMAC_TSE;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_qmode(struct stmmac_priv *priv, void __iomem *ioaddr,
 			   u32 channel, u8 qmode)
 {
-	u32 value = readl(ioaddr + XGMAC_MTL_TXQ_OPMODE(channel));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 value = readl(ioaddr + XGMAC_MTL_TXQ_OPMODE(dwxgmac_addrs, channel));
+
 	u32 flow = readl(ioaddr + XGMAC_RX_FLOW_CTRL);
 
 	value &= ~XGMAC_TXQEN;
 	if (qmode != MTL_QUEUE_AVB) {
 		value |= 0x2 << XGMAC_TXQEN_SHIFT;
-		writel(0, ioaddr + XGMAC_MTL_TCx_ETS_CONTROL(channel));
+		writel(0, ioaddr + XGMAC_MTL_TCx_ETS_CONTROL(dwxgmac_addrs, channel));
 	} else {
 		value |= 0x1 << XGMAC_TXQEN_SHIFT;
 		writel(flow & (~XGMAC_RFE), ioaddr + XGMAC_RX_FLOW_CTRL);
 	}
 
-	writel(value, ioaddr +  XGMAC_MTL_TXQ_OPMODE(channel));
+	writel(value, ioaddr + XGMAC_MTL_TXQ_OPMODE(dwxgmac_addrs, channel));
 }
 
 static void dwxgmac2_set_bfsize(struct stmmac_priv *priv, void __iomem *ioaddr,
 				int bfsize, u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 	value &= ~XGMAC_RBSZ;
 	value |= bfsize << XGMAC_RBSZ_SHIFT;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(dwxgmac_addrs, chan));
 }
 
 static void dwxgmac2_enable_sph(struct stmmac_priv *priv, void __iomem *ioaddr,
 				bool en, u32 chan)
 {
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
 	u32 value = readl(ioaddr + XGMAC_RX_CONFIG);
 
 	value &= ~XGMAC_CONFIG_HDSMS;
 	value |= XGMAC_CONFIG_HDSMS_256; /* Segment max 256 bytes */
 	writel(value, ioaddr + XGMAC_RX_CONFIG);
 
-	value = readl(ioaddr + XGMAC_DMA_CH_CONTROL(chan));
+	value = readl(ioaddr + XGMAC_DMA_CH_CONTROL(dwxgmac_addrs, chan));
 	if (en)
 		value |= XGMAC_SPH;
 	else
 		value &= ~XGMAC_SPH;
-	writel(value, ioaddr + XGMAC_DMA_CH_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_CONTROL(dwxgmac_addrs, chan));
 }
 
 static int dwxgmac2_enable_tbs(struct stmmac_priv *priv, void __iomem *ioaddr,
 			       bool en, u32 chan)
 {
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	const struct dwxgmac_addrs *dwxgmac_addrs = priv->plat->dwxgmac_addrs;
+	u32 value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 
 	if (en)
 		value |= XGMAC_EDSE;
 	else
 		value &= ~XGMAC_EDSE;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan));
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan)) & XGMAC_EDSE;
+	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(dwxgmac_addrs, chan)) & XGMAC_EDSE;
 	if (en && !value)
 		return -EIO;
 
