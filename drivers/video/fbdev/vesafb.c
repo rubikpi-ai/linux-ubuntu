@@ -258,7 +258,7 @@ static int vesafb_probe(struct platform_device *dev)
 	if (screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB)
 		return -ENODEV;
 
-	vga_compat = (screen_info.capabilities & 2) ? 0 : 1;
+	vga_compat = !__screen_info_vbe_mode_nonvga(si);
 	vesafb_fix.smem_start = screen_info.lfb_base;
 	vesafb_defined.bits_per_pixel = screen_info.lfb_depth;
 	if (15 == vesafb_defined.bits_per_pixel)
