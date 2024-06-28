@@ -200,8 +200,12 @@ struct dc_state *dc_state_create(struct dc *dc)
 	dc_state_construct(dc, state);
 
 #ifdef CONFIG_DRM_AMD_DC_FP
-	if (dc->debug.using_dml2)
-		dml2_create(dc, &dc->dml2_options, &state->bw_ctx.dml2);
+	if (dc->debug.using_dml2) {
+		if (!dml2_create(dc, &dc->dml2_options, &state->bw_ctx.dml2)) {
+			dc_state_release(state);
+			return NULL;
+		}
+	}
 #endif
 
 	kref_init(&state->refcount);
