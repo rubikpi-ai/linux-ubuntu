@@ -503,16 +503,21 @@ remote_event_create(wait_queue_head_t *wq, struct remote_event *event)
  * routines where switched to the "interruptible" family of functions, as the
  * former was deemed unjustified and the use "killable" set all VCHIQ's
  * threads in D state.
+ *
+ * Returns: 0 on success, a negative error code on failure
  */
 static inline int
 remote_event_wait(wait_queue_head_t *wq, struct remote_event *event)
 {
+	int ret = 0;
+
 	if (!event->fired) {
 		event->armed = 1;
 		dsb(sy);
-		if (wait_event_interruptible(*wq, event->fired)) {
+		ret = wait_event_interruptible(*wq, event->fired);
+		if (ret) {
 			event->armed = 0;
-			return 0;
+			return ret;
 		}
 		event->armed = 0;
 		/* Ensure that the peer sees that we are not waiting (armed == 0). */
@@ -520,7 +525,7 @@ remote_event_wait(wait_queue_head_t *wq, struct remote_event *event)
 	}
 
 	event->fired = 0;
-	return 1;
+	return ret;
 }
 
 /*
@@ -1141,6 +1146,7 @@ queue_message_sync(struct vchiq_state *state, struct vchiq_service *service,
 	struct vchiq_header *header;
 	ssize_t callback_result;
 	int svc_fourcc;
+	int ret;
 
 	local = state->local;
 
@@ -1148,7 +1154,9 @@ queue_message_sync(struct vchiq_state *state, struct vchiq_service *service,
 	    mutex_lock_killable(&state->sync_mutex))
 		return -EAGAIN;
 
-	remote_event_wait(&state->sync_release_event, &local->sync_release);
+	ret = remote_event_wait(&state->sync_release_event, &local->sync_release);
+	if (ret)
+		return ret;
 
 	/* Ensure that reads don't overtake the remote_event_wait. */
 	rmb();
@@ -1933,13 +1941,16 @@ slot_handler_func(void *v)
 {
 	struct vchiq_state *state = v;
 	struct vchiq_shared_state *local = state->local;
+	int ret;
 
 	DEBUG_INITIALISE(local);
 
 	while (1) {
 		DEBUG_COUNT(SLOT_HANDLER_COUNT);
 		DEBUG_TRACE(SLOT_HANDLER_LINE);
-		remote_event_wait(&state->trigger_event, &local->trigger);
+		ret = remote_event_wait(&state->trigger_event, &local->trigger);
+		if (ret)
+			return ret;
 
 		/* Ensure that reads don't overtake the remote_event_wait. */
 		rmb();
@@ -1970,6 +1981,7 @@ recycle_func(void *v)
 	struct vchiq_shared_state *local = state->local;
 	u32 *found;
 	size_t length;
+	int ret;
 
 	length = sizeof(*found) * BITSET_SIZE(VCHIQ_MAX_SERVICES);
 
@@ -1979,7 +1991,9 @@ recycle_func(void *v)
 		return -ENOMEM;
 
 	while (1) {
-		remote_event_wait(&state->recycle_event, &local->recycle);
+		ret = remote_event_wait(&state->recycle_event, &local->recycle);
+		if (ret)
+			return ret;
 
 		process_free_queue(state, found, length);
 	}
@@ -1996,6 +2010,7 @@ sync_func(void *v)
 		(struct vchiq_header *)SLOT_DATA_FROM_INDEX(state,
 			state->remote->slot_sync);
 	int svc_fourcc;
+	int ret;
 
 	while (1) {
 		struct vchiq_service *service;
@@ -2003,7 +2018,9 @@ sync_func(void *v)
 		int type;
 		unsigned int localport, remoteport;
 
-		remote_event_wait(&state->sync_trigger_event, &local->sync_trigger);
+		ret = remote_event_wait(&state->sync_trigger_event, &local->sync_trigger);
+		if (ret)
+			return ret;
 
 		/* Ensure that reads don't overtake the remote_event_wait. */
 		rmb();
