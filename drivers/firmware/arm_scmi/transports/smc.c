@@ -295,6 +295,15 @@ static const struct scmi_desc scmi_smc_desc = {
 	.atomic_enabled = IS_ENABLED(CONFIG_ARM_SCMI_TRANSPORT_SMC_ATOMIC_ENABLE),
 };
 
+const struct scmi_desc scmi_qcom_smc_desc = {
+	.ops = &scmi_smc_ops,
+	.max_rx_timeout_ms = 3000,
+	.max_msg = 10,
+	.max_msg_size = 256,
+	.sync_cmds_completed_on_ret = true,
+	.atomic_enabled = IS_ENABLED(CONFIG_ARM_SCMI_TRANSPORT_SMC_ATOMIC_ENABLE),
+};
+
 static const struct of_device_id scmi_of_match[] = {
 	{ .compatible = "arm,scmi-smc" },
 	{ .compatible = "arm,scmi-smc-param" },
@@ -302,7 +311,7 @@ static const struct of_device_id scmi_of_match[] = {
 	{ /* Sentinel */ },
 };
 
-DEFINE_SCMI_TRANSPORT_DRIVER(scmi_smc, scmi_smc_driver, scmi_smc_desc,
+DEFINE_SCMI_TRANSPORT_DRIVER(scmi_smc, scmi_smc_driver, scmi_qcom_smc_desc,
 			     scmi_of_match, core);
 module_platform_driver(scmi_smc_driver);
 
