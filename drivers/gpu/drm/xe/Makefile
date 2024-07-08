@@ -35,27 +35,14 @@ subdir-ccflags-$(CONFIG_DRM_XE_WERROR) += -Werror
 subdir-ccflags-y += -I$(obj) -I$(srctree)/$(src)
 
 # generated sources
+
 hostprogs := xe_gen_wa_oob
-
 generated_oob := $(obj)/generated/xe_wa_oob.c $(obj)/generated/xe_wa_oob.h
-
 quiet_cmd_wa_oob = GEN     $(notdir $(generated_oob))
       cmd_wa_oob = mkdir -p $(@D); $^ $(generated_oob)
-
 $(obj)/generated/%_wa_oob.c $(obj)/generated/%_wa_oob.h: $(obj)/xe_gen_wa_oob \
 		 $(srctree)/$(src)/xe_wa_oob.rules
 	$(call cmd,wa_oob)
-
-uses_generated_oob := \
-	$(obj)/xe_gsc.o \
-	$(obj)/xe_guc.o \
-	$(obj)/xe_migrate.o \
-	$(obj)/xe_ring_ops.o \
-	$(obj)/xe_vm.o \
-	$(obj)/xe_wa.o \
-	$(obj)/xe_ttm_stolen_mgr.o
-
-$(uses_generated_oob): $(generated_oob)
 
 # Please keep these build lists sorted!
 
@@ -303,3 +290,6 @@ quiet_cmd_hdrtest = HDRTEST $(patsubst %.hdrtest,%.h,$@)
 
 $(obj)/%.hdrtest: $(src)/%.h FORCE
 	$(call if_changed_dep,hdrtest)
+
+uses_generated_oob := $(addprefix $(obj)/, $(xe-y))
+$(uses_generated_oob): $(obj)/generated/xe_wa_oob.h
