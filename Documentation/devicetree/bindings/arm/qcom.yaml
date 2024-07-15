@@ -437,6 +437,7 @@ properties:
           - enum:
               - fairphone,fp5
               - qcom,qcm6490-addons-idp
+              - qcom,qcm6490-addons-idp-amoled
               - qcom,qcm6490-idp
               - qcom,qcs5430-fp1-addons-rb3gen2
               - qcom,qcs5430-fp1-addons-rb3gen2-vision-mezz
