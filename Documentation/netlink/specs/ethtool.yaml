@@ -1598,6 +1598,7 @@ operations:
         reply:
           attributes:
             - header
+            - context
             - hfunc
             - indir
             - hkey
