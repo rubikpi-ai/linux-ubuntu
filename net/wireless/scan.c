@@ -3121,8 +3121,7 @@ cfg80211_inform_single_bss_frame_data(struct wiphy *wiphy,
 	struct ieee80211_ext *ext = NULL;
 	u8 *bssid, *variable;
 	u16 capability, beacon_int;
-	size_t ielen, min_hdr_len = offsetof(struct ieee80211_mgmt,
-					     u.probe_resp.variable);
+	size_t ielen, min_hdr_len;
 	int bss_type;
 
 	BUILD_BUG_ON(offsetof(struct ieee80211_mgmt, u.probe_resp.variable) !=
@@ -3142,10 +3141,16 @@ cfg80211_inform_single_bss_frame_data(struct wiphy *wiphy,
 
 	if (ieee80211_is_s1g_beacon(mgmt->frame_control)) {
 		ext = (void *) mgmt;
-		min_hdr_len = offsetof(struct ieee80211_ext, u.s1g_beacon);
 		if (ieee80211_is_s1g_short_beacon(mgmt->frame_control))
 			min_hdr_len = offsetof(struct ieee80211_ext,
 					       u.s1g_short_beacon.variable);
+		else
+			min_hdr_len = offsetof(struct ieee80211_mgmt,
+					       u.probe_resp.variable);
+	} else {
+		/* same for beacons */
+		min_hdr_len = offsetof(struct ieee80211_mgmt,
+				       u.probe_resp.variable);
 	}
 
 	if (WARN_ON(len < min_hdr_len))
