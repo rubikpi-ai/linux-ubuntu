@@ -965,6 +965,7 @@ properties:
 
       - items:
           - enum:
+              - qcom,qcs8300-addons-ride
               - qcom,qcs8300-ride
           - const: qcom,qcs8275
           - const: qcom,qcs8300
