@@ -1253,7 +1253,14 @@ lpfc_linkdown(struct lpfc_hba *phba)
 	lpfc_scsi_dev_block(phba);
 	offline = pci_channel_offline(phba->pcidev);
 
-	phba->defer_flogi_acc_flag = false;
+	/* Decrement the held ndlp if there is a deferred flogi acc */
+	if (phba->defer_flogi_acc.flag) {
+		if (phba->defer_flogi_acc.ndlp) {
+			lpfc_nlp_put(phba->defer_flogi_acc.ndlp);
+			phba->defer_flogi_acc.ndlp = NULL;
+		}
+	}
+	phba->defer_flogi_acc.flag = false;
 
 	/* Clear external loopback plug detected flag */
 	phba->link_flag &= ~LS_EXTERNAL_LOOPBACK;
@@ -1381,7 +1388,7 @@ lpfc_linkup_port(struct lpfc_vport *vport)
 				   FCH_EVT_LINKUP, 0);
 
 	spin_lock_irq(shost->host_lock);
-	if (phba->defer_flogi_acc_flag)
+	if (phba->defer_flogi_acc.flag)
 		vport->fc_flag &= ~(FC_ABORT_DISCOVERY | FC_RSCN_MODE |
 				    FC_NLP_MORE | FC_RSCN_DISCOVERY);
 	else
