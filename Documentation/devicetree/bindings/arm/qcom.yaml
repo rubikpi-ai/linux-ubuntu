@@ -59,6 +59,7 @@ description: |
         qru1000
         sa8155p
         sa8540p
+        sa8255p
         sa8775p
         sc7180
         sc7280
@@ -975,6 +976,11 @@ properties:
           - enum:
               - qcom,sa8155p-adp
           - const: qcom,sa8155p
+
+      - items:
+          - enum:
+              - qcom,sa8255p-ride
+          - const: qcom,sa8255p
 
       - items:
           - enum:
