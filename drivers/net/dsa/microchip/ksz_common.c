@@ -2433,6 +2433,9 @@ static u32 ksz_get_phy_flags(struct dsa_switch *ds, int port)
 			return MICREL_KSZ8_P1_ERRATA;
 		break;
 	case KSZ9477_CHIP_ID:
+	case KSZ9567_CHIP_ID:
+	case KSZ9896_CHIP_ID:
+	case KSZ9897_CHIP_ID:
 		/* KSZ9477 Errata DS80000754C
 		 *
 		 * Module 4: Energy Efficient Ethernet (EEE) feature select must
@@ -2442,6 +2445,13 @@ static u32 ksz_get_phy_flags(struct dsa_switch *ds, int port)
 		 *   controls. If not disabled, the PHY ports can auto-negotiate
 		 *   to enable EEE, and this feature can cause link drops when
 		 *   linked to another device supporting EEE.
+		 *
+		 * The same item appears in the errata for the KSZ9567, KSZ9896,
+		 * and KSZ9897.
+		 *
+		 * A similar item appears in the errata for the KSZ8567, but
+		 * provides an alternative workaround. For now, use the simple
+		 * workaround of disabling the EEE feature for this device too.
 		 */
 		return MICREL_NO_EEE;
 	}
