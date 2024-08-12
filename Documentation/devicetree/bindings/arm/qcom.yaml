@@ -448,6 +448,10 @@ properties:
               - qcom,qcs5430-fp1p5-addons-rb3gen2-vision-mezz
               - qcom,qcs5430-fp2-addons-rb3gen2
               - qcom,qcs5430-fp2-addons-rb3gen2-vision-mezz
+              - qcom,qcs5430-fp2p5-addons-rb3gen2
+              - qcom,qcs5430-fp2p5-addons-rb3gen2-vision-mezz
+              - qcom,qcs5430-fp3-addons-rb3gen2
+              - qcom,qcs5430-fp3-addons-rb3gen2-vision-mezz
               - qcom,qcs6490-addons-rb3gen2
               - qcom,qcs6490-addons-rb3gen2-ia-mezz
               - qcom,qcs6490-addons-rb3gen2-ptz-mezz
