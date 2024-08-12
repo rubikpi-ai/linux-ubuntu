@@ -4,7 +4,7 @@
 #define UTIL_BPF_SKEL_LOCK_DATA_H
 
 struct contention_key {
-	u32 stack_id;
+	s32 stack_id;
 	u32 pid;
 	u64 lock_addr_or_cgroup;
 };
