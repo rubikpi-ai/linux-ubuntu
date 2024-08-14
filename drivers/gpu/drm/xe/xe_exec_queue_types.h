@@ -148,8 +148,6 @@ struct xe_exec_queue {
 		u32 seqno;
 		/** @link: link into VM's list of exec queues */
 		struct list_head link;
-		/** @lock: preemption fences lock */
-		spinlock_t lock;
 	} lr;
 
 	/** @ops: submission backend exec queue operations */
