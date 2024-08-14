@@ -500,7 +500,7 @@ static struct thermal_zone_device *thermal_of_zone_register(struct device_node *
 	if (IS_ERR(trips)) {
 		pr_err("Failed to find trip points for %pOFn id=%d\n", sensor, id);
 		ret = PTR_ERR(trips);
-		goto out_kfree_of_ops;
+		goto out_of_node_put;
 	}
 
 	ret = thermal_of_monitor_init(np, &delay, &pdelay);
@@ -530,6 +530,8 @@ static struct thermal_zone_device *thermal_of_zone_register(struct device_node *
 		goto out_kfree_trips;
 	}
 
+	of_node_put(np);
+
 	ret = thermal_zone_device_enable(tz);
 	if (ret) {
 		pr_err("Failed to enabled thermal zone '%s', id=%d: %d\n",
@@ -542,6 +544,10 @@ static struct thermal_zone_device *thermal_of_zone_register(struct device_node *
 
 out_kfree_trips:
 	kfree(trips);
+
+out_of_node_put:
+	of_node_put(np);
+
 out_kfree_of_ops:
 	kfree(of_ops);
 
