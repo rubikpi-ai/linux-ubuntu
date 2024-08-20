@@ -188,13 +188,14 @@ void xe_sched_job_destroy(struct kref *ref)
 {
 	struct xe_sched_job *job =
 		container_of(ref, struct xe_sched_job, refcount);
+	struct xe_exec_queue *q = job->q;
 
 	if (unlikely(job->q->flags & EXEC_QUEUE_FLAG_KERNEL))
 		xe_device_mem_access_put(job_to_xe(job));
-	xe_exec_queue_put(job->q);
 	dma_fence_put(job->fence);
 	drm_sched_job_cleanup(&job->drm);
 	job_free(job);
+	xe_exec_queue_put(q);
 }
 
 void xe_sched_job_set_error(struct xe_sched_job *job, int error)
