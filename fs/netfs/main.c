@@ -115,7 +115,7 @@ static int __init netfs_init(void)
 	return 0;
 
 error_proc:
-	remove_proc_entry("fs/netfs", NULL);
+	remove_proc_subtree("fs/netfs", NULL);
 error:
 	return ret;
 }
@@ -124,6 +124,6 @@ fs_initcall(netfs_init);
 static void __exit netfs_exit(void)
 {
 	fscache_exit();
-	remove_proc_entry("fs/netfs", NULL);
+	remove_proc_subtree("fs/netfs", NULL);
 }
 module_exit(netfs_exit);
