@@ -2566,9 +2566,12 @@ static struct sk_buff *manage_oob(struct sk_buff *skb, struct sock *sk,
 	struct sk_buff *read_skb = NULL, *unread_skb = NULL;
 	struct unix_sock *u = unix_sk(sk);
 
-	if (!unix_skb_len(skb)) {
-		spin_lock(&sk->sk_receive_queue.lock);
+	if (likely(unix_skb_len(skb) && skb != READ_ONCE(u->oob_skb)))
+		return skb;
 
+	spin_lock(&sk->sk_receive_queue.lock);
+
+	if (!unix_skb_len(skb)) {
 		if (copied && (!u->oob_skb || skb == u->oob_skb)) {
 			skb = NULL;
 		} else if (flags & MSG_PEEK) {
@@ -2579,13 +2582,8 @@ static struct sk_buff *manage_oob(struct sk_buff *skb, struct sock *sk,
 			__skb_unlink(read_skb, &sk->sk_receive_queue);
 		}
 
-		spin_unlock(&sk->sk_receive_queue.lock);
-
-		consume_skb(read_skb);
-		return skb;
+		goto unlock;
 	}
-
-	spin_lock(&sk->sk_receive_queue.lock);
 
 	if (skb != u->oob_skb)
 		goto unlock;
@@ -2607,6 +2605,7 @@ static struct sk_buff *manage_oob(struct sk_buff *skb, struct sock *sk,
 unlock:
 	spin_unlock(&sk->sk_receive_queue.lock);
 
+	consume_skb(read_skb);
 	kfree_skb(unread_skb);
 
 	return skb;
