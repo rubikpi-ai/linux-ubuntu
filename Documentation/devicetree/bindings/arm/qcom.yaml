@@ -444,20 +444,30 @@ properties:
               - qcom,qcm6490-addons-idp-amoled
               - qcom,qcm6490-idp
               - qcom,qcs5430-fp1-addons-rb3gen2
+              - qcom,qcs5430-fp1-addons-rb3gen2-hsp
               - qcom,qcs5430-fp1-addons-rb3gen2-vision-mezz
+              - qcom,qcs5430-fp1-addons-rb3gen2-vision-mezz-hsp
               - qcom,qcs5430-fp1p5-addons-rb3gen2
               - qcom,qcs5430-fp1p5-addons-rb3gen2-vision-mezz
               - qcom,qcs5430-fp2-addons-rb3gen2
+              - qcom,qcs5430-fp2-addons-rb3gen2-hsp
               - qcom,qcs5430-fp2-addons-rb3gen2-vision-mezz
+              - qcom,qcs5430-fp2-addons-rb3gen2-vision-mezz-hsp
               - qcom,qcs5430-fp2p5-addons-rb3gen2
+              - qcom,qcs5430-fp2p5-addons-rb3gen2-hsp
               - qcom,qcs5430-fp2p5-addons-rb3gen2-vision-mezz
+              - qcom,qcs5430-fp2p5-addons-rb3gen2-vision-mezz-hsp
               - qcom,qcs5430-fp3-addons-rb3gen2
+              - qcom,qcs5430-fp3-addons-rb3gen2-hsp
               - qcom,qcs5430-fp3-addons-rb3gen2-vision-mezz
+              - qcom,qcs5430-fp3-addons-rb3gen2-vision-mezz-hsp
               - qcom,qcs6490-addons-rb3gen2
+              - qcom,qcs6490-addons-rb3gen2-hsp
               - qcom,qcs6490-addons-rb3gen2-ia-mezz
               - qcom,qcs6490-addons-rb3gen2-ptz-mezz
               - qcom,qcs6490-addons-rb3gen2-video-mezz
               - qcom,qcs6490-addons-rb3gen2-vision-mezz
+              - qcom,qcs6490-addons-rb3gen2-vision-mezz-hsp
               - qcom,qcs6490-rb3gen2
           - const: qcom,qcm6490
           - const: qcom,qcs5430
