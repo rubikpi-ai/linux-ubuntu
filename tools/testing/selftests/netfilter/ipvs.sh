@@ -114,7 +114,7 @@ cleanup() {
 }
 
 server_listen() {
-	ip netns exec ns2 nc -l -p 8080 > "${outfile}" &
+	ip netns exec "$ns2" timeout 5 socat -u -4 TCP-LISTEN:8080,reuseaddr STDOUT > "${outfile}" &
 	server_pid=$!
 	sleep 0.2
 }
