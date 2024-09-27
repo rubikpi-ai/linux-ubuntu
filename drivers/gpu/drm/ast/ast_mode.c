@@ -1172,7 +1172,6 @@ ast_crtc_helper_atomic_flush(struct drm_crtc *crtc,
 	struct drm_device *dev = crtc->dev;
 	struct ast_device *ast = to_ast_device(dev);
 	struct ast_crtc_state *ast_crtc_state = to_ast_crtc_state(crtc_state);
-	struct ast_vbios_mode_info *vbios_mode_info = &ast_crtc_state->vbios_mode_info;
 
 	/*
 	 * The gamma LUT has to be reloaded after changing the primary
@@ -1186,10 +1185,6 @@ ast_crtc_helper_atomic_flush(struct drm_crtc *crtc,
 		else
 			ast_crtc_set_gamma_linear(ast, ast_crtc_state->format);
 	}
-
-	//Set Aspeed Display-Port
-	if (ast->tx_chip_types & AST_TX_ASTDP_BIT)
-		ast_dp_set_mode(crtc, vbios_mode_info);
 }
 
 static void ast_crtc_helper_atomic_enable(struct drm_crtc *crtc, struct drm_atomic_state *state)
@@ -1691,6 +1686,17 @@ static const struct drm_encoder_funcs ast_astdp_encoder_funcs = {
 	.destroy = drm_encoder_cleanup,
 };
 
+static void ast_astdp_encoder_helper_atomic_mode_set(struct drm_encoder *encoder,
+						     struct drm_crtc_state *crtc_state,
+						     struct drm_connector_state *conn_state)
+{
+	struct drm_crtc *crtc = crtc_state->crtc;
+	struct ast_crtc_state *ast_crtc_state = to_ast_crtc_state(crtc_state);
+	struct ast_vbios_mode_info *vbios_mode_info = &ast_crtc_state->vbios_mode_info;
+
+	ast_dp_set_mode(crtc, vbios_mode_info);
+}
+
 static void ast_astdp_encoder_helper_atomic_enable(struct drm_encoder *encoder,
 						   struct drm_atomic_state *state)
 {
@@ -1712,6 +1718,7 @@ static void ast_astdp_encoder_helper_atomic_disable(struct drm_encoder *encoder,
 }
 
 static const struct drm_encoder_helper_funcs ast_astdp_encoder_helper_funcs = {
+	.atomic_mode_set = ast_astdp_encoder_helper_atomic_mode_set,
 	.atomic_enable = ast_astdp_encoder_helper_atomic_enable,
 	.atomic_disable = ast_astdp_encoder_helper_atomic_disable,
 };
