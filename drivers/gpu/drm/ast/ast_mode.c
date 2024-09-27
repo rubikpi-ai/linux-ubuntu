@@ -45,7 +45,6 @@
 #include <drm/drm_gem_shmem_helper.h>
 #include <drm/drm_managed.h>
 #include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
 
 #include "ast_drv.h"
 #include "ast_tables.h"
@@ -1341,6 +1340,14 @@ static int ast_crtc_init(struct drm_device *dev)
 }
 
 /*
+ * VGA Encoder
+ */
+
+static const struct drm_encoder_funcs ast_vga_encoder_funcs = {
+	.destroy = drm_encoder_cleanup,
+};
+
+/*
  * VGA Connector
  */
 
@@ -1430,7 +1437,8 @@ static int ast_vga_output_init(struct ast_device *ast)
 	struct drm_connector *connector = &ast_vga_connector->base;
 	int ret;
 
-	ret = drm_simple_encoder_init(dev, encoder, DRM_MODE_ENCODER_DAC);
+	ret = drm_encoder_init(dev, encoder, &ast_vga_encoder_funcs,
+			       DRM_MODE_ENCODER_DAC, NULL);
 	if (ret)
 		return ret;
 	encoder->possible_crtcs = drm_crtc_mask(crtc);
@@ -1445,6 +1453,14 @@ static int ast_vga_output_init(struct ast_device *ast)
 
 	return 0;
 }
+
+/*
+ * SIL164 Encoder
+ */
+
+static const struct drm_encoder_funcs ast_sil164_encoder_funcs = {
+	.destroy = drm_encoder_cleanup,
+};
 
 /*
  * SIL164 Connector
@@ -1536,7 +1552,8 @@ static int ast_sil164_output_init(struct ast_device *ast)
 	struct drm_connector *connector = &ast_sil164_connector->base;
 	int ret;
 
-	ret = drm_simple_encoder_init(dev, encoder, DRM_MODE_ENCODER_TMDS);
+	ret = drm_encoder_init(dev, encoder, &ast_sil164_encoder_funcs,
+			       DRM_MODE_ENCODER_TMDS, NULL);
 	if (ret)
 		return ret;
 	encoder->possible_crtcs = drm_crtc_mask(crtc);
@@ -1551,6 +1568,14 @@ static int ast_sil164_output_init(struct ast_device *ast)
 
 	return 0;
 }
+
+/*
+ * DP501 Encoder
+ */
+
+static const struct drm_encoder_funcs ast_dp501_encoder_funcs = {
+	.destroy = drm_encoder_cleanup,
+};
 
 /*
  * DP501 Connector
@@ -1634,7 +1659,8 @@ static int ast_dp501_output_init(struct ast_device *ast)
 	struct drm_connector *connector = &ast->output.dp501.connector;
 	int ret;
 
-	ret = drm_simple_encoder_init(dev, encoder, DRM_MODE_ENCODER_TMDS);
+	ret = drm_encoder_init(dev, encoder, &ast_dp501_encoder_funcs,
+			       DRM_MODE_ENCODER_TMDS, NULL);
 	if (ret)
 		return ret;
 	encoder->possible_crtcs = drm_crtc_mask(crtc);
@@ -1649,6 +1675,14 @@ static int ast_dp501_output_init(struct ast_device *ast)
 
 	return 0;
 }
+
+/*
+ * ASPEED Display-Port Encoder
+ */
+
+static const struct drm_encoder_funcs ast_astdp_encoder_funcs = {
+	.destroy = drm_encoder_cleanup,
+};
 
 /*
  * ASPEED Display-Port Connector
@@ -1768,7 +1802,8 @@ static int ast_astdp_output_init(struct ast_device *ast)
 	struct drm_connector *connector = &ast->output.astdp.connector;
 	int ret;
 
-	ret = drm_simple_encoder_init(dev, encoder, DRM_MODE_ENCODER_TMDS);
+	ret = drm_encoder_init(dev, encoder, &ast_astdp_encoder_funcs,
+			       DRM_MODE_ENCODER_TMDS, NULL);
 	if (ret)
 		return ret;
 	encoder->possible_crtcs = drm_crtc_mask(crtc);
