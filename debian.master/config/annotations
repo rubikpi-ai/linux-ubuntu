@@ -11483,6 +11483,7 @@ CONFIG_SCLP_VT220_TTY                           policy<{'s390x': 'y'}>
 CONFIG_SCM_BLOCK                                policy<{'s390x': 'm'}>
 CONFIG_SCM_BUS                                  policy<{'s390x': 'y'}>
 CONFIG_SCOM_DEBUGFS                             policy<{'ppc64el': 'y'}>
+CONFIG_SCREEN_INFO                              policy<{'amd64': 'y', 'arm64': 'y', 'armhf': 'y', 'riscv64': 'y'}>
 CONFIG_SCSI                                     policy<{'amd64': 'y', 'arm64': 'y', 'armhf': 'y', 'ppc64el': 'y', 'riscv64': 'y', 's390x': 'y'}>
 CONFIG_SCSI_3W_9XXX                             policy<{'amd64': 'm', 'arm64': 'm', 'armhf': 'm', 'ppc64el': 'm', 'riscv64': 'm', 's390x': 'n'}>
 CONFIG_SCSI_3W_SAS                              policy<{'amd64': 'm', 'arm64': 'm', 'armhf': 'm', 'ppc64el': 'm', 'riscv64': 'm', 's390x': 'n'}>
