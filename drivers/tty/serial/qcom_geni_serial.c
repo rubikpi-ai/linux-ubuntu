@@ -1084,8 +1084,10 @@ static void qcom_geni_serial_shutdown(struct uart_port *uport)
 	if (uart_console(uport))
 		return;
 
+	uart_port_lock_irq(uport);
 	qcom_geni_serial_stop_tx(uport);
 	qcom_geni_serial_stop_rx(uport);
+	uart_port_unlock_irq(uport);
 }
 
 static int qcom_geni_serial_port_setup(struct uart_port *uport)
