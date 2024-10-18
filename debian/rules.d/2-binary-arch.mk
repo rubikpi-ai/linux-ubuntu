@@ -618,6 +618,9 @@ endif
 ifeq ($(do_cloud_tools),true)
 	$(call dh_all,$(pkgcloud))
 endif
+ifeq ($(do_tools_bpftool),true)
+	$(call if_package, linux-bpf-dev, $(call dh_all,linux-bpf-dev))
+endif
 
 #
 # per-architecture packages
@@ -670,6 +673,7 @@ endif
 ifeq ($(do_tools_bpftool),true)
 	mv $(builddirpa)/tools/bpf/bpftool/vmlinux $(builddirpa)/vmlinux
 	$(kmake) CROSS_COMPILE=$(CROSS_COMPILE) -C $(builddirpa)/tools/bpf/bpftool
+	$(builddirpa)/tools/bpf/bpftool/bpftool btf dump file $(builddirpa)/vmlinux format c > $(builddirpa)/vmlinux.h
 	rm -f $(builddirpa)/vmlinux
 endif
 ifeq ($(do_tools_x86),true)
@@ -721,6 +725,10 @@ endif
 endif
 ifeq ($(do_tools_bpftool),true)
 	install -m755 $(builddirpa)/tools/bpf/bpftool/bpftool $(toolspkgdir)/usr/lib/$(src_pkg_name)-tools-$(abi_release)
+endif
+ifeq ($(do_tools_bpftool),true)
+	install -d -m755 $(CURDIR)/debian/linux-bpf-dev/usr/include/$(DEB_HOST_MULTIARCH)/linux/
+	install -m644 $(builddirpa)/vmlinux.h $(CURDIR)/debian/linux-bpf-dev/usr/include/$(DEB_HOST_MULTIARCH)/linux/vmlinux.h
 endif
 ifeq ($(do_tools_x86),true)
 	install -m755 \
