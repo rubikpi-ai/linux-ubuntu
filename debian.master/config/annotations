@@ -1308,7 +1308,7 @@ CONFIG_ARCH_HAS_HUGEPD                          policy<{'ppc64el': 'y'}>
 CONFIG_ARCH_HAS_HW_PTE_YOUNG                    policy<{'amd64': 'y', 'arm64': 'y'}>
 CONFIG_ARCH_HAS_KCOV                            policy<{'amd64': 'y', 'arm64': 'y', 'armhf': 'y', 'ppc64el': 'y', 'riscv64': 'y', 's390x': 'y'}>
 CONFIG_ARCH_HAS_KEEPINITRD                      policy<{'arm64': 'y', 'armhf': 'y'}>
-CONFIG_ARCH_HAS_MEMBARRIER_CALLBACKS            policy<{'ppc64el': 'y'}>
+CONFIG_ARCH_HAS_MEMBARRIER_CALLBACKS            policy<{'ppc64el': 'y', 'riscv64': 'y'}>
 CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE            policy<{'amd64': 'y', 'arm64': 'y', 'armhf': 'y', 'ppc64el': 'y', 's390x': 'y'}>
 CONFIG_ARCH_HAS_MEMREMAP_COMPAT_ALIGN           policy<{'ppc64el': 'y'}>
 CONFIG_ARCH_HAS_MEM_ENCRYPT                     policy<{'amd64': 'y', 'ppc64el': 'y', 's390x': 'y'}>
