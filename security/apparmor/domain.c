@@ -288,7 +288,7 @@ static int change_profile_perms(struct aa_profile *profile,
 				u32 request, aa_state_t start,
 				struct aa_perms *perms)
 {
-	if (!profile_mediates(profile, AA_CLASS_FILE)) {
+	if (profile_unconfined(profile)) {
 		perms->allow = AA_MAY_CHANGE_PROFILE | AA_MAY_ONEXEC;
 		perms->audit = perms->quiet = perms->kill = 0;
 		return 0;
@@ -655,7 +655,7 @@ static struct aa_label *profile_transition(const struct cred *subj_cred,
 	error = aa_path_name(&bprm->file->f_path, profile->path_flags, buffer,
 			     &name, &info, profile->disconnected);
 	if (error) {
-		if (!profile_mediates(profile, AA_CLASS_FILE) ||
+		if (profile_unconfined(profile) ||
 		    (profile->label.flags & FLAG_IX_ON_NAME_ERROR)) {
 			AA_DEBUG(DEBUG_DOMAIN, "name lookup ix on error");
 			error = 0;
@@ -665,7 +665,7 @@ static struct aa_label *profile_transition(const struct cred *subj_cred,
 		goto audit;
 	}
 
-	if (!profile_mediates(profile, AA_CLASS_FILE)) {
+	if (profile_unconfined(profile)) {
 		new = find_attach(bprm, profile->ns,
 				  &profile->ns->base.profiles, name, &info);
 		if (new) {
@@ -757,7 +757,7 @@ static int profile_onexec(const struct cred *subj_cred,
 	AA_BUG(!bprm);
 	AA_BUG(!buffer);
 
-	if (!profile_mediates(profile, AA_CLASS_FILE)) {
+	if (profile_unconfined(profile)) {
 		/* change_profile on exec already granted */
 		/*
 		 * NOTE: Domain transitions from unconfined are allowed
@@ -770,7 +770,7 @@ static int profile_onexec(const struct cred *subj_cred,
 	error = aa_path_name(&bprm->file->f_path, profile->path_flags, buffer,
 			     &xname, &info, profile->disconnected);
 	if (error) {
-		if (!profile_mediates(profile, AA_CLASS_FILE) ||
+		if (profile_unconfined(profile) ||
 		    (profile->label.flags & FLAG_IX_ON_NAME_ERROR)) {
 			AA_DEBUG(DEBUG_DOMAIN, "name lookup ix on error");
 			error = 0;
@@ -910,8 +910,8 @@ int apparmor_bprm_creds_for_exec(struct linux_binprm *bprm)
 	 *
 	 * Testing for unconfined must be done before the subset test
 	 */
-	if ((bprm->unsafe & LSM_UNSAFE_NO_NEW_PRIVS) &&
-	    label_mediates(label, AA_CLASS_FILE) && !ctx->nnp)
+	if ((bprm->unsafe & LSM_UNSAFE_NO_NEW_PRIVS) && !unconfined(label) &&
+	    !ctx->nnp)
 		ctx->nnp = aa_get_label(label);
 
 	/* buffer freed below, name is pointer into buffer */
@@ -949,7 +949,7 @@ int apparmor_bprm_creds_for_exec(struct linux_binprm *bprm)
 	 * aways results in a further reduction of permissions.
 	 */
 	if ((bprm->unsafe & LSM_UNSAFE_NO_NEW_PRIVS) &&
-	    label_mediates(label, AA_CLASS_FILE) &&
+	    !unconfined(label) &&
 	    !aa_label_is_unconfined_subset(new, ctx->nnp)) {
 		error = -EPERM;
 		info = "no new privs";
@@ -1199,20 +1199,14 @@ int aa_change_hat(const char *hats[], int count, u64 token, int flags)
 	label = aa_get_newest_cred_label(subj_cred);
 	previous = aa_get_newest_label(ctx->previous);
 
-	if (!label_mediates(label, AA_CLASS_FILE)) {
-		info = "unconfined can not change_hat";
-		error = -EPERM;
-		goto fail;
-	}
-
 	/*
 	 * Detect no new privs being set, and store the label it
 	 * occurred under. Ideally this would happen when nnp
 	 * is set but there isn't a good way to do that yet.
 	 *
-	 * Testing for mediation must be done before the subset test
+	 * Testing for unconfined must be done before the subset test
 	 */
-	if (task_no_new_privs(current) && !ctx->nnp)
+	if (task_no_new_privs(current) && !unconfined(label) && !ctx->nnp)
 		ctx->nnp = aa_get_label(label);
 
 	/* return -EPERM when unconfined doesn't have children to avoid
@@ -1253,9 +1247,8 @@ int aa_change_hat(const char *hats[], int count, u64 token, int flags)
 		/*
 		 * no new privs prevents domain transitions that would
 		 * reduce restrictions.
-		 * label_mediates(label, AA_CLASS_FILE) == true here
 		 */
-		if (task_no_new_privs(current) &&
+		if (task_no_new_privs(current) && !unconfined(label) &&
 		    !aa_label_is_unconfined_subset(new, ctx->nnp)) {
 			/* not an apparmor denial per se, so don't log it */
 			AA_DEBUG(DEBUG_DOMAIN,
@@ -1276,9 +1269,8 @@ int aa_change_hat(const char *hats[], int count, u64 token, int flags)
 		/*
 		 * no new privs prevents domain transitions that would
 		 * reduce restrictions.
-		 * label_mediates(label, AA_CLASS_FILE) == true here
 		 */
-		if (task_no_new_privs(current) &&
+		if (task_no_new_privs(current) && !unconfined(label) &&
 		    !aa_label_is_unconfined_subset(previous, ctx->nnp)) {
 			/* not an apparmor denial per se, so don't log it */
 			AA_DEBUG(DEBUG_DOMAIN,
@@ -1383,8 +1375,7 @@ int aa_change_profile(const char *fqname, int flags)
 	 *
 	 * Testing for unconfined must be done before the subset test
 	 */
-	if (task_no_new_privs(current) &&
-	    label_mediates(label, AA_CLASS_FILE) && !ctx->nnp)
+	if (task_no_new_privs(current) && !unconfined(label) && !ctx->nnp)
 		ctx->nnp = aa_get_label(label);
 
 	if (!fqname || !*fqname) {
@@ -1410,7 +1401,7 @@ int aa_change_profile(const char *fqname, int flags)
 	/* This should move to a per profile test. Requires pushing build
 	 * into callback
 	 */
-	if (!stack && !label_mediates(label, AA_CLASS_FILE) &&
+	if (!stack && unconfined(label) &&
 	    label == &labels_ns(label)->unconfined->label &&
 	    aa_unprivileged_unconfined_restricted &&
 	    /* TODO: refactor so this check is a fn */
@@ -1506,8 +1497,7 @@ check:
 		 * no new privs prevents domain transitions that would
 		 * reduce restrictions.
 		 */
-		if (task_no_new_privs(current) &&
-		    label_mediates(label, AA_CLASS_FILE) &&
+		if (task_no_new_privs(current) && !unconfined(label) &&
 		    !aa_label_is_unconfined_subset(new, ctx->nnp)) {
 			/* not an apparmor denial per se, so don't log it */
 			AA_DEBUG(DEBUG_DOMAIN,

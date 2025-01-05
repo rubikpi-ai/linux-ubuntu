@@ -88,7 +88,7 @@ static int profile_signal_perm(const struct cred *cred,
 	struct aa_perms perms;
 	aa_state_t state;
 
-	if (!profile_mediates(profile, AA_CLASS_SIGNAL))
+	if (profile_unconfined(profile))
 		return 0;
 
 	ad->subj_cred = cred;

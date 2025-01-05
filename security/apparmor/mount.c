@@ -678,7 +678,8 @@ static struct aa_label *build_pivotroot(const struct cred *subj_cred,
 	AA_BUG(!new_path);
 	AA_BUG(!old_path);
 
-	if (!RULE_MEDIATES(rules, AA_CLASS_MOUNT))
+	if (profile_unconfined(profile) ||
+	    !RULE_MEDIATES(rules, AA_CLASS_MOUNT))
 		return aa_get_newest_label(&profile->label);
 
 	error = aa_path_name(old_path, path_flags(profile, old_path),
