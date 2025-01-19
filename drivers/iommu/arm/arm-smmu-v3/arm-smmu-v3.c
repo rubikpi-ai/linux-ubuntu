@@ -2065,6 +2065,8 @@ static struct iommu_domain *arm_smmu_domain_alloc(unsigned type)
 	spin_lock_init(&smmu_domain->devices_lock);
 	INIT_LIST_HEAD(&smmu_domain->mmu_notifiers);
 
+	spin_lock_init(&smmu_domain->virtio.lock);
+
 	return &smmu_domain->domain;
 }
 
@@ -2222,7 +2224,7 @@ static int arm_smmu_domain_finalise(struct iommu_domain *domain)
 	return 0;
 }
 
-static struct arm_smmu_ste *
+struct arm_smmu_ste *
 arm_smmu_get_step_for_sid(struct arm_smmu_device *smmu, u32 sid)
 {
 	struct arm_smmu_strtab_cfg *cfg = &smmu->strtab_cfg;
@@ -2379,14 +2381,8 @@ static void arm_smmu_detach_dev(struct arm_smmu_master *master)
 	master->domain = NULL;
 	master->ats_enabled = false;
 	arm_smmu_install_ste_for_dev(master);
-	/*
-	 * Clearing the CD entry isn't strictly required to detach the domain
-	 * since the table is uninstalled anyway, but it helps avoid confusion
-	 * in the call to arm_smmu_write_ctx_desc on the next attach (which
-	 * expects the entry to be empty).
-	 */
-	if (smmu_domain->stage == ARM_SMMU_DOMAIN_S1 && master->cd_table.cdtab)
-		arm_smmu_write_ctx_desc(master, IOMMU_NO_PASID, NULL);
+	if (master->smmu->impl_ops && master->smmu->impl_ops->install_ste)
+		master->smmu->impl_ops->install_ste(master, NULL, smmu_domain);
 }
 
 static int arm_smmu_attach_dev(struct iommu_domain *domain, struct device *dev)
@@ -2449,6 +2445,16 @@ static int arm_smmu_attach_dev(struct iommu_domain *domain, struct device *dev)
 	 */
 	if (smmu_domain->stage != ARM_SMMU_DOMAIN_BYPASS)
 		master->ats_enabled = arm_smmu_ats_supported(master);
+
+	arm_smmu_install_ste_for_dev(master);
+	if (smmu->impl_ops && smmu->impl_ops->install_ste) {
+		ret = smmu->impl_ops->install_ste(master, master->domain, NULL);
+		if (ret) {
+			master->domain = NULL;
+			arm_smmu_install_ste_for_dev(master);
+			goto out_unlock;
+		}
+	}
 
 	spin_lock_irqsave(&smmu_domain->devices_lock, flags);
 	list_add(&master->domain_head, &smmu_domain->devices);
