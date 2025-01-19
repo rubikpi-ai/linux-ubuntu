@@ -986,8 +986,10 @@ static void arm_smmu_sync_cd(struct arm_smmu_master *master,
 			     int ssid, bool leaf)
 {
 	size_t i;
+	unsigned long flags;
 	struct arm_smmu_cmdq_batch cmds;
 	struct arm_smmu_device *smmu = master->smmu;
+	struct arm_smmu_domain *smmu_domain = master->domain;
 	struct arm_smmu_cmdq_ent cmd = {
 		.opcode	= CMDQ_OP_CFGI_CD,
 		.cfgi	= {
@@ -997,10 +999,20 @@ static void arm_smmu_sync_cd(struct arm_smmu_master *master,
 	};
 
 	cmds.num = 0;
-	for (i = 0; i < master->num_streams; i++) {
-		cmd.cfgi.sid = master->streams[i].id;
-		arm_smmu_cmdq_batch_add(smmu, &cmds, &cmd);
+
+	if (smmu->impl_ops && smmu->impl_ops->sync_cd) {
+		smmu->impl_ops->sync_cd(smmu_domain, ssid, leaf);
+		return;
 	}
+
+	spin_lock_irqsave(&smmu_domain->devices_lock, flags);
+	list_for_each_entry(master, &smmu_domain->devices, domain_head) {
+		for (i = 0; i < master->num_streams; i++) {
+			cmd.cfgi.sid = master->streams[i].id;
+			arm_smmu_cmdq_batch_add(smmu, &cmds, &cmd);
+		}
+	}
+	spin_unlock_irqrestore(&smmu_domain->devices_lock, flags);
 
 	arm_smmu_cmdq_batch_submit(smmu, &cmds);
 }
