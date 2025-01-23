@@ -368,6 +368,11 @@ ifeq ($(do_tools_perf),true)
 ifeq ($(do_tools_perf_jvmti),true)
 	$(LN) ../../$(src_pkg_name)-tools-$(abi_release)/libperf-jvmti.so $(toolspkgdir)/usr/lib/linux-tools/$(abi_release)-$*
 endif
+ifeq ($(do_tools_perf_python),true)
+	# Link the subdirectory that contains the .so rather than the file itself. Its name is
+	# pseudo-random and can't be determined easily and reliably.
+	$(LN) ../../$(src_pkg_name)-tools-$(abi_release)/lib $(toolspkgdir)/usr/lib/linux-tools/$(abi_release)-$*
+endif
 endif
 ifeq ($(do_tools_bpftool),true)
 	$(LN) ../../$(src_pkg_name)-tools-$(abi_release)/bpftool $(toolspkgdir)/usr/lib/linux-tools/$(abi_release)-$*
