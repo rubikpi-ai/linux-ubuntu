@@ -20,7 +20,10 @@ class KernelNotFoundError(Exception):
 _kernel_version = os.uname().release
 _perf_dir = f"/usr/lib/linux-tools/{_kernel_version}/lib"
 if not os.path.exists(_perf_dir):
-    raise KernelNotFoundError()
+    _abi_version = "-".join(_kernel_version.split("-")[0:2])
+    _perf_dir = f"/usr/lib/python3/dist-packages/linux-tools-{_abi_version}"
+    if not os.path.exists(_perf_dir):
+        raise KernelNotFoundError()
 _perf_lib = glob(os.path.join(_perf_dir, "perf.*.so"))[-1]
 
 _spec = importlib.util.spec_from_file_location("perf", _perf_lib)
