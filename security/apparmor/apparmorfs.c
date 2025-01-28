@@ -1217,9 +1217,6 @@ static int aa_sfs_seq_show(struct seq_file *seq, void *v)
 	case AA_SFS_TYPE_U64:
 		seq_printf(seq, "%#08lx\n", fs_file->v.u64);
 		break;
-	case AA_SFS_TYPE_INTPTR:
-		seq_printf(seq, "%d\n", READ_ONCE(*fs_file->v.intptr));
-		break;
 	default:
 		/* Ignore unpritable entry types. */
 		break;
@@ -2590,9 +2587,8 @@ static struct aa_sfs_entry aa_sfs_entry_domain[] = {
 
 static struct aa_sfs_entry aa_sfs_entry_unconfined[] = {
 	AA_SFS_FILE_BOOLEAN("change_profile", 1),
-	AA_SFS_FILE_INTPTR("userns",		aa_unprivileged_userns_restricted),
-	AA_SFS_FILE_INTPTR("io_uring",
-			    aa_unprivileged_uring_restricted),
+	AA_SFS_FILE_BOOLEAN("userns",	1),
+	AA_SFS_FILE_BOOLEAN("io_uring",	1),
 	{ }
 };
 
