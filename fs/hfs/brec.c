@@ -70,6 +70,7 @@ int hfs_brec_insert(struct hfs_find_data *fd, void *entry, int entry_len)
 	int data_off, end_off;
 	int idx_rec_off, data_rec_off, end_rec_off;
 	__be32 cnid;
+	int res;
 
 	tree = fd->tree;
 	if (!fd->bnode) {
@@ -138,7 +139,10 @@ skip:
 	 * at the start of the node and it is not the new node
 	 */
 	if (!rec && new_node != node) {
-		hfs_bnode_read_key(node, fd->search_key, data_off + size);
+		res = hfs_bnode_read_key(node, fd->search_key, data_off + size);
+		if (res < 0)
+			return res;
+
 		hfs_brec_update_parent(fd);
 	}
 
@@ -156,7 +160,10 @@ skip:
 		entry_len = sizeof(cnid);
 
 		/* get index key */
-		hfs_bnode_read_key(new_node, fd->search_key, 14);
+		res = hfs_bnode_read_key(new_node, fd->search_key, 14);
+		if (res < 0)
+			return res;
+
 		__hfs_brec_find(fd->bnode, fd);
 
 		hfs_bnode_put(new_node);
@@ -356,6 +363,7 @@ static int hfs_brec_update_parent(struct hfs_find_data *fd)
 	int newkeylen, diff;
 	int rec, rec_off, end_rec_off;
 	int start_off, end_off;
+	int res;
 
 	tree = fd->tree;
 	node = fd->bnode;
@@ -431,7 +439,10 @@ skip:
 		}
 		fd->bnode = hfs_bnode_find(tree, new_node->parent);
 		/* create index key and entry */
-		hfs_bnode_read_key(new_node, fd->search_key, 14);
+		res = hfs_bnode_read_key(new_node, fd->search_key, 14);
+		if (res < 0)
+			return res;
+
 		cnid = cpu_to_be32(new_node->this);
 
 		__hfs_brec_find(fd->bnode, fd);
@@ -443,7 +454,9 @@ skip:
 			if (new_node == node)
 				goto out;
 			/* restore search_key */
-			hfs_bnode_read_key(node, fd->search_key, 14);
+			res = hfs_bnode_read_key(node, fd->search_key, 14);
+			if (res < 0)
+				return res;
 		}
 		new_node = NULL;
 	}
