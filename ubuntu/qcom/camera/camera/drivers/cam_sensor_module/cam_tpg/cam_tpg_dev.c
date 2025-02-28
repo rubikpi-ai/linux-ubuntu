@@ -4,6 +4,8 @@
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
+#include <linux/of_device.h>
+
 #include "cam_tpg_dev.h"
 #include "cam_tpg_core.h"
 #include "camera_main.h"
