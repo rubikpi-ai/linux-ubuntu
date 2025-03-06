@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #include <linux/clk.h>
 #include <linux/interconnect.h>
@@ -1813,7 +1814,9 @@ static const struct camss_subdev_resources csiphy_res_8300[] = {
 		.regulators = {},
 		.clock = { "csid_csiphy_rx", "csiphy0", "csiphy0_timer"},
 		.clock_rate = {
-			{ 400000000, 0, 400000000}
+			{ 400000000 },
+			{ 0 },
+			{ 400000000 }
 		},
 		.reg = { "csiphy0" },
 		.interrupt = { "csiphy0" },
@@ -1827,7 +1830,9 @@ static const struct camss_subdev_resources csiphy_res_8300[] = {
 		.regulators = {},
 		.clock = { "csid_csiphy_rx", "csiphy1", "csiphy1_timer"},
 		.clock_rate = {
-			{ 400000000, 0, 400000000}
+			{ 400000000 },
+			{ 0 },
+			{ 400000000 }
 		},
 		.reg = { "csiphy1" },
 		.interrupt = { "csiphy1" },
@@ -1841,7 +1846,9 @@ static const struct camss_subdev_resources csiphy_res_8300[] = {
 		.regulators = {},
 		.clock = { "csid_csiphy_rx", "csiphy2", "csiphy2_timer"},
 		.clock_rate = {
-			{ 400000000, 0, 400000000}
+			{ 400000000 },
+			{ 0 },
+			{ 400000000 }
 		},
 		.reg = { "csiphy2" },
 		.interrupt = { "csiphy2" },
@@ -2257,7 +2264,9 @@ static const struct camss_subdev_resources csiphy_res_8775p[] = {
 		.regulators = {},
 		.clock = { "csid_csiphy_rx", "csiphy0", "csiphy0_timer"},
 		.clock_rate = {
-			{ 400000000, 0, 400000000}
+			{ 400000000 },
+			{ 0 },
+			{ 400000000 }
 		},
 		.reg = { "csiphy0" },
 		.interrupt = { "csiphy0" },
@@ -2271,7 +2280,9 @@ static const struct camss_subdev_resources csiphy_res_8775p[] = {
 		.regulators = {},
 		.clock = { "csid_csiphy_rx", "csiphy1", "csiphy1_timer"},
 		.clock_rate = {
-			{ 400000000, 0, 400000000}
+			{ 400000000 },
+			{ 0 },
+			{ 400000000 }
 		},
 		.reg = { "csiphy1" },
 		.interrupt = { "csiphy1" },
@@ -2285,7 +2296,9 @@ static const struct camss_subdev_resources csiphy_res_8775p[] = {
 		.regulators = {},
 		.clock = { "csid_csiphy_rx", "csiphy2", "csiphy2_timer"},
 		.clock_rate = {
-			{ 400000000, 0, 400000000}
+			{ 400000000 },
+			{ 0 },
+			{ 400000000 }
 		},
 		.reg = { "csiphy2" },
 		.interrupt = { "csiphy2" },
@@ -2299,7 +2312,9 @@ static const struct camss_subdev_resources csiphy_res_8775p[] = {
 		.regulators = {},
 		.clock = { "csid_csiphy_rx", "csiphy3", "csiphy3_timer"},
 		.clock_rate = {
-			{ 400000000, 0, 400000000}
+			{ 400000000 },
+			{ 0 },
+			{ 400000000 }
 		},
 		.reg = { "csiphy3" },
 		.interrupt = { "csiphy3" },
