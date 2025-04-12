@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * QCOM TSC PTP : Linux driver for Time Stamp Counter Hardware.
  *
@@ -52,6 +53,15 @@
 #define TSCSS_ETU_SLICE_TIMER_TRIG_PERIOD	0x38
 #define MAX_ETU_SLICE				16
 
+#define TSCSS_TSC_TIMER_TSC_SOF_PERIOD		0x0
+#define TSCSS_TSC_TIMER_PULSE_WIDTH_REG		0x4
+#define TSCSS_TSC_TIMER_PPS			0x8
+#define TSCSS_TSC_TIMER_CFG			0xC
+#define TSCSS_TSC_TIMER_PHASE_OFFSET		0x10
+#define TSCSS_RESOLUTION			4
+#define TSCSS_TSC_TIMER_BASE(base, idx, offset) \
+			(base + idx * 0x100 + offset)
+
 #define TSC_PRELOAD_POLLING_DELAY_MS		100
 #define NSEC_SHFT				32
 #define NSEC_MASK				GENMASK_ULL(31, 0)
@@ -84,6 +94,7 @@ struct qcom_ptp_tsc {
 	struct	device *dev;
 	void __iomem *baseaddr;
 	void __iomem *etu_baseaddr;
+	void __iomem *timer_baseaddr;
 	struct clk *tsc_cfg_ahb_clk;
 	struct clk *tsc_cntr_clk;
 	struct clk *tsc_etu_clk;
@@ -93,8 +104,10 @@ struct qcom_ptp_tsc {
 	int pps_enable;
 	int total_etu_cnt;
 	u32 incval;
+	u32 pulse_gen_ref_cnt;
 	bool tsc_nsec_update;
 	bool tsc_hw_preload;
+	bool frame_pulse_gen;
 	spinlock_t reg_lock;
 	struct delayed_work tsc_preload_poll_work;
 };
@@ -276,6 +289,12 @@ static int qcom_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 
 	spin_lock_irqsave(&timer->reg_lock, flags);
 
+	if (timer->pulse_gen_ref_cnt) {
+		pr_err("Frame pulse generation must be disabled for offset correction\n");
+		spin_unlock_irqrestore(&timer->reg_lock, flags);
+		return -EOPNOTSUPP;
+	}
+
 	offset = ns_to_timespec64(delta);
 	pr_debug("sec: %lld, nsec: %ld\n", offset.tv_sec, offset.tv_nsec);
 
@@ -451,12 +470,105 @@ static void qcom_tsc_configure_etu(struct qcom_ptp_tsc *timer, int slice)
 		readl_relaxed(TSCSS_TSC_ETU_SLICE_BASE(base, slice, TSCSS_TSC_SLICE_ETU_CFG)));
 }
 
+static void qcom_tsc_set_timer_phase(struct qcom_ptp_tsc *timer,
+				     struct ptp_clock_request *rq)
+{
+	void __iomem *base = timer->timer_baseaddr;
+	u32 regval;
+
+	regval = rq->perout.phase.sec * NSEC + rq->perout.phase.nsec;
+	do_div(regval, TSCSS_RESOLUTION);
+	writel_relaxed(regval, TSCSS_TSC_TIMER_BASE(base, rq->perout.index,
+				TSCSS_TSC_TIMER_PHASE_OFFSET));
+}
+
+static void qcom_tsc_disable_timer(struct qcom_ptp_tsc *timer,
+				   unsigned int index)
+{
+	void __iomem *base = timer->timer_baseaddr;
+	u32 regval;
+
+	regval = readl_relaxed(TSCSS_TSC_TIMER_BASE(base, index,
+				TSCSS_TSC_TIMER_CFG));
+	regval &= ~BIT(0);
+	writel_relaxed(regval, TSCSS_TSC_TIMER_BASE(base, index,
+			TSCSS_TSC_TIMER_CFG));
+
+	pr_debug("Frame pulse generation for timer%d disabled\n", index);
+}
+
+static bool qcom_tsc_timer_is_enabled(struct qcom_ptp_tsc *timer, unsigned int index)
+{
+	return readl_relaxed(TSCSS_TSC_TIMER_BASE(timer->timer_baseaddr, index,
+					TSCSS_TSC_TIMER_CFG)) & BIT(0);
+}
+
+static void qcom_tsc_configure_timer(struct qcom_ptp_tsc *timer,
+				     struct ptp_clock_request *rq)
+{
+	void __iomem *base = timer->timer_baseaddr;
+	unsigned long flags;
+	u32 regval;
+
+	/* If the timer is already enabled, update only phase offset */
+	if (!!qcom_tsc_timer_is_enabled(timer, rq->perout.index)) {
+		if (rq->perout.flags & PTP_PEROUT_PHASE)
+			qcom_tsc_set_timer_phase(timer, rq);
+		return;
+	}
+
+	/* Configure the delay between 2 frame pulses */
+	regval = rq->perout.period.sec * NSEC + rq->perout.period.nsec;
+	writel_relaxed(regval, TSCSS_TSC_TIMER_BASE(base,
+			rq->perout.index, TSCSS_TSC_TIMER_TSC_SOF_PERIOD));
+
+	/* Fractional frame rate */
+	if (rq->perout.period.reserved != 0) {
+		regval = rq->perout.period.reserved;
+		writel_relaxed(regval, TSCSS_TSC_TIMER_BASE(base,
+				rq->perout.index, TSCSS_TSC_TIMER_PPS));
+	}
+
+	/* To stretch the o/p pulse by n clock cycles */
+	if (rq->perout.flags & PTP_PEROUT_DUTY_CYCLE) {
+		regval = rq->perout.on.sec * NSEC + rq->perout.on.nsec;
+		do_div(regval, TSCSS_RESOLUTION);
+		writel_relaxed(regval, TSCSS_TSC_TIMER_BASE(base,
+				rq->perout.index, TSCSS_TSC_TIMER_PULSE_WIDTH_REG));
+	}
+
+	/* Propagate the pulses to Camera Subsystem and ETU */
+	regval = readl_relaxed(TSCSS_TSC_TIMER_BASE(base,
+				rq->perout.index, TSCSS_TSC_TIMER_CFG));
+	regval |= BIT(2);
+	writel_relaxed(regval, TSCSS_TSC_TIMER_BASE(base,
+			rq->perout.index, TSCSS_TSC_TIMER_CFG));
+
+	/* Enable the timer */
+	regval = readl_relaxed(TSCSS_TSC_TIMER_BASE(base,
+				rq->perout.index, TSCSS_TSC_TIMER_CFG));
+	regval |= BIT(0);
+	writel_relaxed(regval, TSCSS_TSC_TIMER_BASE(base,
+				rq->perout.index, TSCSS_TSC_TIMER_CFG));
+
+	spin_lock_irqsave(&timer->reg_lock, flags);
+	timer->pulse_gen_ref_cnt++;
+	spin_unlock_irqrestore(&timer->reg_lock, flags);
+
+	/* Add phase offset to the o/p pulse */
+	if (rq->perout.flags & PTP_PEROUT_PHASE) {
+		qcom_tsc_set_timer_phase(timer, rq);
+	}
+}
+
 static int qcom_ptp_enable(struct ptp_clock_info *ptp,
 			  struct ptp_clock_request *rq, int on)
 {
 	struct qcom_ptp_tsc *timer = container_of(ptp, struct qcom_ptp_tsc,
 							ptp_clock_info);
 	struct timespec64 ts;
+	unsigned long flags;
+	u32 regval;
 	int slice;
 
 	pr_debug("Request Type %d\n", rq->type);
@@ -489,6 +601,11 @@ static int qcom_ptp_enable(struct ptp_clock_info *ptp,
 		return 0;
 	case PTP_CLK_REQ_PEROUT:
 		if (timer->tsc_hw_preload) {
+			if (timer->pulse_gen_ref_cnt) {
+				pr_err("Frame pulse generation must be disabled for hw_preload\n");
+				return -EOPNOTSUPP;
+			}
+
 			if (!rq->perout.period.sec) {
 				/* Get the current timer value */
 				qcom_tod_read(timer, &ts);
@@ -504,6 +621,24 @@ static int qcom_ptp_enable(struct ptp_clock_info *ptp,
 			ts.tv_nsec = 0;
 			qcom_ptp_enable_tsc_hw_preload(timer, ts);
 		}
+
+		if (timer->frame_pulse_gen) {
+			if (!!on) {
+				qcom_tsc_configure_timer(timer, rq);
+			} else if (!!qcom_tsc_timer_is_enabled(timer, rq->perout.index)) {
+				if (rq->perout.flags & PTP_PEROUT_PHASE) {
+					qcom_tsc_set_timer_phase(timer, rq);
+				} else {
+					qcom_tsc_disable_timer(timer, rq->perout.index);
+					spin_lock_irqsave(&timer->reg_lock, flags);
+					timer->pulse_gen_ref_cnt--;
+					spin_unlock_irqrestore(&timer->reg_lock, flags);
+				}
+			}
+			pr_debug("PTP_CLK_REQ_PEROUT: Configured timer%d on=%d\n",
+				 rq->perout.index, on);
+		}
+
 		return 0;
 	default:
 		break;
@@ -518,7 +653,7 @@ static struct ptp_clock_info qcom_ptp_clock_info = {
 	.max_adj  = 999999999,
 	/* The number of external time stamp channels. */
 	.n_ext_ts = 1,
-	.n_per_out = 1,
+	.n_per_out = 16,
 	.pps = 1,
 	.adjfine  = qcom_ptp_adjfreq,
 	.adjtime  = qcom_ptp_adjtime,
@@ -549,7 +684,7 @@ static int qcom_tsc_etu_get_data(struct platform_device *pdev,
 	struct pinctrl *pinctrl;
 	int ret, cnt, i;
 
-	r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	r_mem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "etu");
 	if (!r_mem) {
 		dev_err(&pdev->dev, "No ETU resource defined\n");
 		return 0;
@@ -629,13 +764,23 @@ static int qcom_ptp_tsc_probe(struct platform_device *pdev)
 
 	timer->dev = &pdev->dev;
 
-	r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	r_mem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "tsc");
 	if (!r_mem) {
 		dev_err(&pdev->dev, "no IO resource defined\n");
 		return -ENXIO;
 	}
 
 	timer->baseaddr = devm_ioremap_resource(&pdev->dev, r_mem);
+	if (IS_ERR(timer->baseaddr))
+		return PTR_ERR(timer->baseaddr);
+
+	r_mem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "timer");
+	if (!r_mem) {
+		dev_err(&pdev->dev, "no timer resource defined\n");
+		return -ENXIO;
+	}
+
+	timer->timer_baseaddr = devm_ioremap_resource(&pdev->dev, r_mem);
 	if (IS_ERR(timer->baseaddr))
 		return PTR_ERR(timer->baseaddr);
 
@@ -686,6 +831,9 @@ static int qcom_ptp_tsc_probe(struct platform_device *pdev)
 
 	timer->tsc_hw_preload = of_property_read_bool(pdev->dev.of_node,
 							"qcom,tsc-hw-preload");
+
+	timer->frame_pulse_gen = of_property_read_bool(pdev->dev.of_node,
+							"qcom,tsc-frame-pulse-gen");
 
 	if (timer->tsc_hw_preload)
 		INIT_DEFERRABLE_WORK(&timer->tsc_preload_poll_work, tsc_preload_poll);
