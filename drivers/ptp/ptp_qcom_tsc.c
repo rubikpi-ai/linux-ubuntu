@@ -60,6 +60,8 @@
 #define TSCSS_TSC_TIMER_PPS			0x8
 #define TSCSS_TSC_TIMER_CFG			0xC
 #define TSCSS_TSC_TIMER_PHASE_OFFSET		0x10
+#define TSCSS_TSC_TIMER_FUSA_STATUS		0xF4
+#define TSCSS_TIMER_COUNT			16
 #define TSCSS_RESOLUTION			4
 #define TSCSS_TSC_TIMER_BASE(base, idx, offset) \
 			(base + idx * 0x100 + offset)
@@ -488,6 +490,43 @@ static irqreturn_t qcom_etu_irq_handler(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
+static irqreturn_t qcom_fusa_irq_handler(int irq, void *data)
+{
+	struct qcom_ptp_tsc *timer = data;
+	u32 regval, cfg;
+	int i;
+
+	regval = readl_relaxed(timer->baseaddr + TSCSS_TSC_FUSA_CFG_STAT);
+
+	/* Check if counter error or valid error */
+	if (regval & BIT(1) || regval & BIT(2)) {
+		regval |= BIT(0);
+		writel_relaxed(regval, timer->baseaddr + TSCSS_TSC_FUSA_CFG_STAT);
+		regval = readl_relaxed(timer->baseaddr + TSCSS_TSC_FUSA_CFG_STAT);
+		regval &= ~BIT(0);
+		writel_relaxed(regval, timer->baseaddr + TSCSS_TSC_FUSA_CFG_STAT);
+	}
+
+	/* Check all the timers and clear the error */
+	for (i = 0; i < TSCSS_TIMER_COUNT; i++) {
+		regval = readl_relaxed(TSCSS_TSC_TIMER_BASE(timer->timer_baseaddr,
+					i, TSCSS_TSC_TIMER_FUSA_STATUS));
+		/* Check if pulse width, pps or approx error occurred */
+		if (regval & BIT(0) || regval & BIT(1) || regval & BIT(2)) {
+			cfg = readl_relaxed(TSCSS_TSC_TIMER_BASE(timer->timer_baseaddr,
+					    i, TSCSS_TSC_TIMER_CFG));
+			cfg |= BIT(31);
+			writel_relaxed(cfg, TSCSS_TSC_TIMER_BASE(timer->timer_baseaddr,
+					i, TSCSS_TSC_TIMER_CFG));
+			cfg &= ~BIT(31);
+			writel_relaxed(cfg, TSCSS_TSC_TIMER_BASE(timer->timer_baseaddr,
+					i, TSCSS_TSC_TIMER_CFG));
+		}
+	}
+
+	return IRQ_HANDLED;
+}
+
 static void qcom_tsc_configure_etu(struct qcom_ptp_tsc *timer, int slice)
 {
 	void __iomem *base = timer->etu_baseaddr;
@@ -800,7 +839,7 @@ static int qcom_ptp_tsc_probe(struct platform_device *pdev)
 	struct qcom_ptp_tsc *timer;
 	struct resource *r_mem;
 	u32 cntr_val;
-	int ret;
+	int fusa_irq, ret;
 
 	timer = devm_kzalloc(&pdev->dev, sizeof(*timer), GFP_KERNEL);
 	if (!timer)
@@ -898,6 +937,18 @@ static int qcom_ptp_tsc_probe(struct platform_device *pdev)
 		writel_relaxed(0x3B9AC9FF, timer->baseaddr + TSCSS_TSC_ROLLOVER_VAL);
 	} else {
 		cntr_val = 0x1CC;
+		fusa_irq = platform_get_irq_byname(pdev, "tscss_fusa_irq");
+		if (fusa_irq < 0) {
+			dev_warn(&pdev->dev, "FUSA IRQ not available: %d\n", fusa_irq);
+		} else {
+			ret = devm_request_irq(timer->dev, fusa_irq, qcom_fusa_irq_handler,
+						IRQF_TRIGGER_RISING, "tscss_fusa_irq",
+						timer);
+			if (ret)
+				pr_debug("Failed to request fusa IRQ\n");
+			else
+				pr_debug("Fusa IRQ registered ret%d\n", ret);
+		}
 	}
 
 	writel_relaxed(cntr_val, timer->baseaddr + TSCSS_TSC_CONTROL_CNTCR);
