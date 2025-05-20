@@ -309,6 +309,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-addons-crd.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-crd.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-addons-qcp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-qcp.dtb
+dtb-$(CONFIG_ARCH_QCOM) += rubikpi3.dtb
 
 # External overlays
 dtb-$(CONFIG_ARCH_QCOM) += qcs6490-addons-rb3gen2-video-mezz-ovl.dtb
@@ -378,6 +379,13 @@ qcs9075-addons-rb8-ovl-dtbs := \
     sa8775p-video.dtbo \
     qcs9100-graphics.dtbo \
     qcs9075-camera-rb8.dtbo
+
+dtb-$(CONFIG_ARCH_QCOM) += rubikpi3-ovl.dtb
+rubikpi3-ovl-dtbs := \
+    rubikpi3.dtb \
+    qcm6490-graphics.dtbo \
+    qcm6490-camera-rubikpi3.dtbo \
+    qcm6490-video.dtbo
 
 dtb-$(CONFIG_ARCH_QCOM)	+= combined-dtb.dtb
 
