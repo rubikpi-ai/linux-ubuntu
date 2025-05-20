@@ -2036,3 +2036,4 @@ CONFIG_ZYNQMP_FIRMWARE_DEBUG                    policy<{'arm64': '-'}>
 CONFIG_ZYNQMP_IPI_MBOX                          policy<{'arm64': '-'}>
 CONFIG_ZYNQMP_PM_DOMAINS                        policy<{'arm64': '-'}>
 CONFIG_ZYNQMP_POWER                             policy<{'arm64': '-'}>
+CONFIG_AX88179B                                 policy<{'arm64': 'm'}>
