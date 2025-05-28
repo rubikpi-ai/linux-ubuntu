@@ -1190,22 +1190,6 @@
 };
 
 &soc {
-	vreg_sdc: regulator-sdc {
-		compatible = "regulator-gpio";
-
-		regulator-min-microvolt = <1800000>;
-		regulator-max-microvolt = <2950000>;
-		regulator-name = "vreg_sdc";
-		regulator-type = "voltage";
-
-		startup-delay-us = <100>;
-
-		gpios = <&expander1 7 GPIO_ACTIVE_HIGH>;
-
-		states = <1800000 0x1
-			  2950000 0x0>;
-	};
-
 	connector_usb1: connector-usb1 {
 		compatible = "gpio-usb-b-connector";
 		id-gpio = <&tlmm 51 GPIO_ACTIVE_HIGH>;
@@ -1223,6 +1207,22 @@
 				};
 			};
 		};
+	};
+
+	vreg_sdc: regulator-sdc {
+		compatible = "regulator-gpio";
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2950000>;
+		regulator-name = "vreg_sdc";
+		regulator-type = "voltage";
+
+		startup-delay-us = <100>;
+
+		gpios = <&expander1 7 GPIO_ACTIVE_HIGH>;
+
+		states = <1800000 0x1
+			  2950000 0x0>;
 	};
 
 	vbus_supply_regulator_0: vbus_supply_regulator_0 {
