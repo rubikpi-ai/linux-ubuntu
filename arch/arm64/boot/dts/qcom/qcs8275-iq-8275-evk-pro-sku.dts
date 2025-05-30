@@ -423,26 +423,19 @@
 	/* TODO: Add the required nodes once mdss_dp0 is available.*/
 	};
 
-	qup_i2c0_default: qup-i2c0-state {
-		pins = "gpio17", "gpio18";
-		function = "qup0_se0";
-		drive-strength = <2>;
-		bias-pull-up;
-	};
-
 	pcie0_default_state: pcie0-default-state {
-		perst-pins {
-			pins = "gpio2";
-			function = "gpio";
-			drive-strength = <2>;
-			bias-pull-down;
-		};
-
 		clkreq-pins {
 			pins = "gpio1";
 			function = "pcie0_clkreq";
 			drive-strength = <2>;
 			bias-pull-up;
+		};
+
+		perst-pins {
+			pins = "gpio2";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-down;
 		};
 
 		wake-pins {
@@ -454,18 +447,18 @@
 	};
 
 	pcie1_default_state: pcie1-default-state {
-		perst-pins {
-			pins = "gpio23";
-			function = "gpio";
-			drive-strength = <2>;
-			bias-pull-down;
-		};
-
 		clkreq-pins {
 			pins = "gpio22";
 			function = "pcie1_clkreq";
 			drive-strength = <2>;
 			bias-pull-up;
+		};
+
+		perst-pins {
+			pins = "gpio23";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-down;
 		};
 
 		wake-pins {
@@ -474,6 +467,13 @@
 			drive-strength = <2>;
 			bias-pull-up;
 		};
+	};
+
+	qup_i2c0_default: qup-i2c0-state {
+		pins = "gpio17", "gpio18";
+		function = "qup0_se0";
+		drive-strength = <2>;
+		bias-pull-up;
 	};
 
 	qup_i2c15_default: qup-i2c15-state {
