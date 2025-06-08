@@ -11,5 +11,5 @@
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/power/qcom-rpmpd.h>
 
-#include "qcs9075-camera-rb8.dtsi"
-#include "qcs9075-camera-sensor-rb8.dtsi"
+#include "qcs9075-camera-iq-9075-evk.dtsi"
+#include "qcs9075-camera-sensor-iq-9075-evk.dtsi"

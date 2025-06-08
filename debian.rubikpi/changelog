@@ -1,3 +1,77 @@
+linux-qcom (6.8.0-1042.42) noble; urgency=medium
+
+  * noble/linux-qcom: 6.8.0-1042.42 -proposed tracker (LP: #2112174)
+
+  * Miscellaneous Ubuntu changes
+    - [configs] change CONFIG_HWSPINLOCK_QCOM to y
+
+ -- Masahiro Yamada <masahiro.yamada@canonical.com>  Fri, 30 May 2025 17:59:33 +0900
+
+linux-qcom (6.8.0-1041.41) noble; urgency=medium
+
+  * noble/linux-qcom: 6.8.0-1041.41 -proposed tracker (LP: #2111886)
+
+  * [RB3][x02] spf core errors found in dmesg
+    - SAUCE: qcom: spf-core: use pr_info() for successful logs
+
+  * [RB3][x03] va_macro error found in dmesg
+    - SAUCE: ASoC: lpass-va-macro: change dt entry missing to dev_info()
+
+  * [RB8][x02] spmi errors found in dmesg
+    - SAUCE: arm64: sa8775: remove allow-set-time property from rtc
+
+  * Miscellaneous Ubuntu changes
+    - SAUCE: switch WIFI firmware to *.mbn from *.mdt
+
+  * Miscellaneous upstream changes
+    - msm: camera: icp: Remove Redundant Structure Field
+    - msm: camera: uapi: Adding flex array support to fix UBSAN kernel panic
+    - PENDING: rpmsg: glink: do not serve intent request if no callback present
+
+ -- Masahiro Yamada <masahiro.yamada@canonical.com>  Wed, 28 May 2025 16:55:09 +0900
+
+linux-qcom (6.8.0-1040.40) noble; urgency=medium
+
+  * noble/linux-qcom: 6.8.0-1040.40 -proposed tracker (LP: #2110187)
+
+  * "[6490][x02] tc956x_pci-eth errors found in dmesg"
+    - Ubuntu: SAUCE: change phy detection log-level from alert to info
+
+  * Miscellaneous Ubuntu changes
+    - SAUCE: follow-up renaming from qcs9075-rb8 to qcs9075-iq-9075-evk
+
+  * Miscellaneous upstream changes
+    - PENDING: qcom: ice: Add ice probe
+    - PENDING: arm64: dts: qcom: Rename qcs9075-rb8 to qcs9075-iq-9075-evk
+    - QCLINUX: arm64: dts: qcom: qcs9075-addons: Rename rb8 to iq-9075-evk
+    - PENDING: tty: serial: qcom-geni-serial: fix CTS control for UART in loopback
+      mode
+    - QCLINUX: arm64: deconfig: enable CONFIG_FW_DEVLINK_SYNC_STATE_TIMEOUT
+    - PENDING: misc: fastrpc: Remove PD status check
+    - Revert "FROMLIST: arm64: dts: qcom: sa8775p: Add CPUs to psci power domain"
+    - Revert "BACKPORT: UPSTREAM: arm64: dts: qcom: sa8775p: add CPU idle states"
+
+ -- Masahiro Yamada <masahiro.yamada@canonical.com>  Fri, 09 May 2025 17:00:23 +0900
+
+linux-qcom (6.8.0-1039.39) noble; urgency=medium
+
+  * noble/linux-qcom: 6.8.0-1039.39 -proposed tracker (LP: #2108955)
+
+  * [RB8][x02] hd3ss3220 not boud to the device
+    - Revert "usb: dwc3: core: set force_gen1 bit in USB31 devices if max speed is
+      SS"
+
+  * "[RB8][x02] The firmware for i2c_qcom_geni (qupv3fw.elf) not in
+    initramfs" // "[RB8][x02] qcom_geni_serial errors found in dmesg"
+    - SAUCE: qcom-geni-se.c: add MODULE_FIRMWARE() to copy firmware to initrd
+
+  * Miscellaneous upstream changes
+    - kgsl: Read DDR type from device tree node
+    - qcom: qtee_shmbridge: change pr_err() to pr_info() for bridge size
+    - qcom: qtee_shmbridge: change pr_err() to pr_info() for bridge size
+
+ -- Masahiro Yamada <masahiro.yamada@canonical.com>  Thu, 24 Apr 2025 12:47:31 +0900
+
 linux-qcom (6.8.0-1038.38) noble; urgency=medium
 
   * noble/linux-qcom: 6.8.0-1038.38 -proposed tracker (LP: #2107286)
