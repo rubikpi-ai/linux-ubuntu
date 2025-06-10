@@ -1240,7 +1240,7 @@
 		ranges = <0 0 0 0 0x10 0>;
 
 		gcc: clock-controller@100000 {
-			compatible = "qcom,sa8775p-gcc";
+			compatible = "qcom,sa8775p-gcc", "syscon";
 			reg = <0x0 0x00100000 0x0 0xc7018>;
 			#clock-cells = <1>;
 			#reset-cells = <1>;
@@ -9157,6 +9157,25 @@
 					};
 				};
 			};
+		};
+
+		apsscc: syscon@182a0000 {
+			compatible = "syscon";
+			reg = <0x0 0x182a0000 0x0 0x1c>;
+		};
+
+		mccc: syscon@90ba000 {
+			compatible = "syscon";
+			reg = <0x0 0x90ba000 0x0 0x54>;
+		};
+
+		debugcc: clock-controller@0 {
+			compatible = "qcom,measure-debugcc-sa8775p";
+			qcom,gcc = <&gcc>;
+			qcom,apsscc = <&apsscc>;
+			qcom,mccc = <&mccc>;
+			clocks = <&rpmhcc RPMH_CXO_CLK>;
+			clock-names = "xo_clk_src";
 		};
 
 		epss_l3_cl0: interconnect@18590000 {
