@@ -880,6 +880,7 @@ static int dwc3_qcom_probe_core(struct platform_device *pdev, struct dwc3_qcom *
 	struct dwc3_glue_data qcom_glue_data = {
 		.glue_data	= qcom,
 		.ops		= &dwc3_qcom_glue_hooks,
+		.ignore_resets  = true,
 	};
 
 	ret = dwc3_probe(&qcom->dwc,
@@ -1053,23 +1054,19 @@ static int dwc3_qcom_probe(struct platform_device *pdev)
 		}
 	}
 
-	/* dwc3/core.c will also get those clocks so it can't be exclusive */
-	qcom->resets = devm_reset_control_array_get_optional_shared(dev);
+	qcom->resets = devm_reset_control_array_get_optional_exclusive(dev);
 	if (IS_ERR(qcom->resets)) {
 		return dev_err_probe(&pdev->dev, PTR_ERR(qcom->resets),
-				"failed to get resets\n");
+					"failed to get resets\n");
 	}
 
-	if (legacy_binding) {
-		ret = reset_control_assert(qcom->resets);
-		if (ret) {
-			dev_err(&pdev->dev, "failed to assert resets, err=%d\n", ret);
-			return ret;
-		}
-
-		usleep_range(10, 1000);
-
+	ret = reset_control_assert(qcom->resets);
+	if (ret) {
+		dev_err(&pdev->dev, "failed to assert resets, err=%d\n", ret);
+		return ret;
 	}
+
+	usleep_range(10, 1000);
 
 	ret = reset_control_deassert(qcom->resets);
 	if (ret) {
