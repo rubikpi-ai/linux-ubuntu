@@ -405,6 +405,24 @@ static const struct iommu_flush_ops arm_smmu_s2_tlb_ops_v1 = {
 	.tlb_add_page	= arm_smmu_tlb_add_page_s2_v1,
 };
 
+int arm_smmu_get_first_dev(struct device *dev, void *data)
+{
+	struct device **fault_dev = data;
+	*fault_dev = dev;
+
+	return 1;
+}
+
+struct iommu_group *arm_smmu_find_group_by_cbndx(struct arm_smmu_device *smmu, int cbndx)
+{
+	for (int i = 0; i < smmu->num_mapping_groups; i++) {
+		if (smmu->s2crs[i].cbndx == cbndx)
+			return smmu->s2crs[i].group;
+	}
+
+	return NULL;
+}
+
 static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 {
 	u32 fsr, fsynr, cbfrsynra;
@@ -412,6 +430,8 @@ static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 	struct arm_smmu_domain *smmu_domain = dev;
 	struct arm_smmu_device *smmu = smmu_domain->smmu;
 	int idx = smmu_domain->cfg.cbndx;
+	struct iommu_group *group;
+	struct device *fault_dev = NULL;
 	int ret;
 
 	ret = arm_smmu_rpm_get(smmu);
@@ -433,7 +453,11 @@ static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 	iova = arm_smmu_cb_readq(smmu, idx, ARM_SMMU_CB_FAR);
 	cbfrsynra = arm_smmu_gr1_read(smmu, ARM_SMMU_GR1_CBFRSYNRA(idx));
 
-	ret = report_iommu_fault(&smmu_domain->domain, NULL, iova,
+	group = arm_smmu_find_group_by_cbndx(smmu, idx);
+	if (group)
+		iommu_group_for_each_dev(group, &fault_dev, arm_smmu_get_first_dev);
+
+	ret = report_iommu_fault(&smmu_domain->domain, fault_dev, iova,
 		fsynr & ARM_SMMU_FSYNR0_WNR ? IOMMU_FAULT_WRITE : IOMMU_FAULT_READ);
 
 	if (ret == -ENOSYS)
