@@ -30,7 +30,8 @@ Provides: linux-image, fuse-module, =PROVIDES=${linux:rprovides}
 Depends: ${misc:Depends}, ${shlibs:Depends}, kmod, linux-base (>= 4.5ubuntu1~16.04.1), linux-modules-PKGVER-ABINUM-FLAVOUR
 Recommends: BOOTLOADER, initramfs-tools | linux-initramfs-tool
 Breaks: flash-kernel (<< 3.90ubuntu2) [arm64 armhf], s390-tools (<< 2.3.0-0ubuntu3) [s390x]
-Conflicts: linux-image=SIGN-PEER-PKG=-PKGVER-ABINUM-FLAVOUR
+Conflicts: linux-qcom, linux-image=SIGN-PEER-PKG=-PKGVER-ABINUM-FLAVOUR, linux-qcom, linux-image-unsigned-6.8.0-1042-qcom, linux-image-unsigned-6.8.0-1038-qcom
+Replaces: linux-qcom, linux-image-unsigned-6.8.0-1042-qcom, linux-image-unsigned-6.8.0-1038-qcom
 Suggests: fdutils, SRCPKGNAME-tools, linux-headers-PKGVER-ABINUM-FLAVOUR
 Description: Linux kernel image for version PKGVER on DESC
  This package contains the=SIGN-ME-TXT= Linux kernel image for version PKGVER on
@@ -51,6 +52,8 @@ Section: kernel
 Priority: optional
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Built-Using: ${linux:BuiltUsing}
+Conflicts: linux-qcom, linux-modules-6.8.0-1042-qcom, linux-modules-6.8.0-1038-qcom
+Replaces: linux-qcom, linux-modules-6.8.0-1042-qcom, linux-modules-6.8.0-1038-qcom
 Description: Linux kernel modules for version PKGVER on DESC
  Contains the corresponding System.map file, the modules built by the
  packager, and scripts that try to ensure that the system is not left in an
@@ -71,6 +74,8 @@ Section: devel
 Priority: optional
 Depends: ${misc:Depends}, SRCPKGNAME-headers-PKGVER-ABINUM, ${shlibs:Depends}
 Provides: linux-headers, linux-headers-3.0
+Conflicts: linux-qcom, linux-headers-6.8.0-1042-qcom, linux-headers-6.8.0-1038-qcom
+Replaces: linux-qcom, linux-headers-6.8.0-1042-qcom, linux-headers-6.8.0-1038-qcom
 Description: Linux kernel headers for version PKGVER on DESC
  This package provides kernel header files for version PKGVER on
  DESC.
