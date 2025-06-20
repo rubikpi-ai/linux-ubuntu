@@ -8,7 +8,6 @@
  */
 
 #include <linux/firmware.h>
-#include <linux/iommu.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/notifier.h>
@@ -25,8 +24,6 @@
 #define to_glink_subdev(d) container_of(d, struct qcom_rproc_glink, subdev)
 #define to_smd_subdev(d) container_of(d, struct qcom_rproc_subdev, subdev)
 #define to_ssr_subdev(d) container_of(d, struct qcom_rproc_ssr, subdev)
-
-#define SID_MASK_DEFAULT	0xfUL
 
 struct qcom_ssr_subsystem {
 	const char *name;
@@ -364,55 +361,6 @@ void qcom_remove_ssr_subdev(struct rproc *rproc, struct qcom_rproc_ssr *ssr)
 	ssr->info = NULL;
 }
 EXPORT_SYMBOL_GPL(qcom_remove_ssr_subdev);
-
-/**
- * qcom_map_unmap_carveout() - iommu map and unmap carveout region
- *
- * @rproc:	rproc handle
- * @mem_phys:	starting physical address of carveout region
- * @mem_size:	size of carveout region
- * @map:	if true, map otherwise, unmap
- * @use_sid:	decision to append sid to iova
- * @sid:	SID value
- */
-int qcom_map_unmap_carveout(struct rproc *rproc, phys_addr_t mem_phys, size_t mem_size,
-			    bool map, bool use_sid, unsigned long sid)
-{
-	unsigned long iova = mem_phys;
-	unsigned long sid_def_val;
-	int ret = 0;
-
-	if (!rproc->has_iommu)
-		return 0;
-
-	if (!rproc->domain)
-		return -EINVAL;
-
-	/*
-	 * Remote processor like ADSP supports up to 36 bit device
-	 * address space and some of its clients like fastrpc uses
-	 * upper 32-35 bits to keep lower 4 bits of its SID to use
-	 * larger address space. To keep this consistent across other
-	 * use cases add remoteproc SID configuration for firmware
-	 * to IOMMU for carveouts.
-	 */
-	if (use_sid && sid) {
-		sid_def_val = sid & SID_MASK_DEFAULT;
-		iova |= ((uint64_t)sid_def_val << 32);
-	}
-
-	if (map) {
-		ret = iommu_map(rproc->domain, iova, mem_phys, mem_size,
-				IOMMU_READ | IOMMU_WRITE, GFP_KERNEL);
-		if (ret)
-			dev_err(&rproc->dev, "Unable to map IOVA Memory, ret: %d\n", ret);
-	} else {
-		iommu_unmap(rproc->domain, iova, mem_size);
-	}
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(qcom_map_unmap_carveout);
 
 MODULE_DESCRIPTION("Qualcomm Remoteproc helper driver");
 MODULE_LICENSE("GPL v2");
