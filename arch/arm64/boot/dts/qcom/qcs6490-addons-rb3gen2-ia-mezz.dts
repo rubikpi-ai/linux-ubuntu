@@ -416,6 +416,8 @@
 };
 
 &sound {
+	compatible = "qcom,qcs6490-rb3gen2-ia-sndcard";
+	model = "qcs6490-rb3gen2-ia-snd-card";
 	audio-routing =
 		"SpkrLeft IN", "WSA_SPK1 OUT",
 		"SpkrRight IN", "WSA_SPK2 OUT",
