@@ -7,6 +7,7 @@
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>
+#include <linux/mailbox_client.h>
 #include <linux/mailbox_controller.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
@@ -72,9 +73,29 @@ static inline u32 qcom_ipcc_get_hwirq(u16 client_id, u16 signal_id)
 	       FIELD_PREP(IPCC_SIGNAL_ID_MASK, signal_id);
 }
 
+static struct mbox_chan *qcom_ipcc_get_ipcc_chan(struct qcom_ipcc *ipcc, u32 hwirq)
+{
+	struct qcom_ipcc_chan_info *chan_info;
+	int chan_id;
+
+	for (chan_id = 0; chan_id < ipcc->num_chans; chan_id++) {
+		chan_info = ipcc->chans[chan_id].con_priv;
+		if (!chan_info)
+			continue;
+
+		if (chan_info->client_id == FIELD_GET(IPCC_CLIENT_ID_MASK, hwirq) &&
+		    chan_info->signal_id == FIELD_GET(IPCC_SIGNAL_ID_MASK, hwirq))
+			return &ipcc->chans[chan_id];
+	}
+
+	return NULL;
+}
+
 static irqreturn_t qcom_ipcc_irq_fn(int irq, void *data)
 {
+	struct qcom_ipcc_chan_info *mchan;
 	struct qcom_ipcc *ipcc = data;
+	struct mbox_chan *chan;
 	u32 hwirq;
 	int virq;
 
@@ -83,9 +104,18 @@ static irqreturn_t qcom_ipcc_irq_fn(int irq, void *data)
 		if (hwirq == IPCC_NO_PENDING_IRQ)
 			break;
 
-		virq = irq_find_mapping(ipcc->irq_domain, hwirq);
 		writel(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_CLEAR);
-		generic_handle_irq(virq);
+
+		virq = irq_find_mapping(ipcc->irq_domain, hwirq);
+		if (virq) {
+			generic_handle_irq(virq);
+			continue;
+		}
+
+		chan = qcom_ipcc_get_ipcc_chan(ipcc, hwirq);
+		if (chan)
+			mbox_chan_received_data(chan, NULL);
+
 	}
 
 	return IRQ_HANDLED;
@@ -94,20 +124,11 @@ static irqreturn_t qcom_ipcc_irq_fn(int irq, void *data)
 static void qcom_ipcc_update_irq_status(struct qcom_ipcc *ipcc,
 		irq_hw_number_t hwirq, bool is_enabled)
 {
-	struct qcom_ipcc_chan_info *qcom_ipcc_chan_info;
-	int chan_id;
+	struct mbox_chan *chan;
 
-	for (chan_id = 0; chan_id < ipcc->num_chans; chan_id++) {
-		qcom_ipcc_chan_info = ipcc->chans[chan_id].con_priv;
-		if (!qcom_ipcc_chan_info)
-			break;
-
-		if (qcom_ipcc_chan_info->client_id == FIELD_GET(IPCC_CLIENT_ID_MASK, hwirq) &&
-		    qcom_ipcc_chan_info->signal_id == FIELD_GET(IPCC_SIGNAL_ID_MASK, hwirq)) {
-			qcom_ipcc_chan_info->enabled = is_enabled;
-			break;
-		}
-	}
+	chan = qcom_ipcc_get_ipcc_chan(ipcc, hwirq);
+	if (chan && chan->con_priv)
+		((struct qcom_ipcc_chan_info *)chan->con_priv)->enabled = is_enabled;
 }
 
 static void qcom_ipcc_mask_irq(struct irq_data *irqd)
@@ -181,7 +202,33 @@ static int qcom_ipcc_mbox_send_data(struct mbox_chan *chan, void *data)
 
 static void qcom_ipcc_mbox_shutdown(struct mbox_chan *chan)
 {
+	struct qcom_ipcc_chan_info *mchan = chan->con_priv;
+
+	if (chan->cl && chan->cl->rx_callback) {
+		struct qcom_ipcc *ipcc = to_qcom_ipcc(chan->mbox);
+		u32 hwirq;
+
+		hwirq = qcom_ipcc_get_hwirq(mchan->client_id, mchan->signal_id);
+		qcom_ipcc_update_irq_status(ipcc, hwirq, false);
+		writel(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_DISABLE);
+	}
+
 	chan->con_priv = NULL;
+}
+
+static int qcom_ipcc_mbox_startup(struct mbox_chan *chan)
+{
+	if (chan->cl && chan->cl->rx_callback) {
+		struct qcom_ipcc *ipcc = to_qcom_ipcc(chan->mbox);
+		struct qcom_ipcc_chan_info *mchan = chan->con_priv;
+		u32 hwirq;
+
+		hwirq = qcom_ipcc_get_hwirq(mchan->client_id, mchan->signal_id);
+		qcom_ipcc_update_irq_status(ipcc, hwirq, true);
+		writel(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_ENABLE);
+	}
+
+	return 0;
 }
 
 static struct mbox_chan *qcom_ipcc_mbox_xlate(struct mbox_controller *mbox,
@@ -226,6 +273,7 @@ static struct mbox_chan *qcom_ipcc_mbox_xlate(struct mbox_controller *mbox,
 static const struct mbox_chan_ops ipcc_mbox_chan_ops = {
 	.send_data = qcom_ipcc_mbox_send_data,
 	.shutdown = qcom_ipcc_mbox_shutdown,
+	.startup = qcom_ipcc_mbox_startup,
 };
 
 static int qcom_ipcc_setup_mbox(struct qcom_ipcc *ipcc,
