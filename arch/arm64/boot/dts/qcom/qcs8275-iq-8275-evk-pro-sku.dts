@@ -290,6 +290,22 @@
 
 };
 
+&mdss {
+	status = "okay";
+};
+
+&mdss_dp0 {
+	status = "okay";
+};
+
+&mdss_dp_out {
+	data-lanes = <0 1 2 3>;
+	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+};
+
+&mdss_edp_phy {
+	status = "okay";
+};
 
 &pmm8620au_0_gpios {
 	usb2_id_det_default: usb2-id-det-default {
@@ -420,7 +436,9 @@
 &tlmm {
 
 	dp_hot_plug_det: dp-hot-plug-det-state {
-	/* TODO: Add the required nodes once mdss_dp0 is available.*/
+		pins = "gpio94";
+		function = "edp0_hot";
+		bias-disable;
 	};
 
 	pcie0_default_state: pcie0-default-state {
