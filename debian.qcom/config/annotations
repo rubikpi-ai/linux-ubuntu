@@ -701,6 +701,7 @@ CONFIG_I2C_OMAP                                 policy<{'arm64': '-'}>
 CONFIG_I2C_OWL                                  policy<{'arm64': '-'}>
 CONFIG_I2C_PXA                                  policy<{'arm64': '-'}>
 CONFIG_I2C_PXA_SLAVE                            policy<{'arm64': '-'}>
+CONFIG_I2C_QCOM_GENI                            policy<{'arm64': 'y'}>
 CONFIG_I2C_QUP                                  policy<{'arm64': 'y'}>
 CONFIG_I2C_RCAR                                 policy<{'arm64': '-'}>
 CONFIG_I2C_RIIC                                 policy<{'arm64': '-'}>
