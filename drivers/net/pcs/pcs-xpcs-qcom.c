@@ -764,8 +764,10 @@ void qcom_xpcs_link_up(struct phylink_pcs *pcs, unsigned int mode,
 	case PHY_INTERFACE_MODE_10GBASER:
 	case PHY_INTERFACE_MODE_5GBASER:
 		ret = qcom_xpcs_read(qxpcs, DW_VR_MII_PCS_DIG_CTRL1);
-		if (ret < 0)
-			goto read_err;
+		if (ret < 0) {
+			XPCSERR("Failed to read register\n");
+			break;
+		}
 
 		qcom_xpcs_write(qxpcs, DW_VR_MII_PCS_DIG_CTRL1, ret &= ~DW_USXGMII_EN);
 		fallthrough;
@@ -774,10 +776,8 @@ void qcom_xpcs_link_up(struct phylink_pcs *pcs, unsigned int mode,
 		break;
 	default:
 		XPCSERR("Invalid MII mode: %s\n", phy_modes(interface));
-		return;
+		break;
 	}
-read_err:
-	XPCSERR("Failed to read register\n");
 }
 EXPORT_SYMBOL_GPL(qcom_xpcs_link_up);
 
