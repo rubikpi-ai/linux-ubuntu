@@ -2882,4 +2882,9 @@
 			     <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
 			     <GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>;
 	};
+
+	uefi_log {
+		compatible = "qcom,nhlos-logs-mem", "qcom,nhlos-logs";
+		memory-region = <&uefi_log>;
+	};
 };
