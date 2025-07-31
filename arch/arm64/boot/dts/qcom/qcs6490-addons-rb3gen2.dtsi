@@ -3,7 +3,7 @@
  * qcm6490-addons-rb3gen2 device tree source include
  *
  * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
- *
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #include "qcm6490-addons.dtsi"
 
