@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 /dts-v1/;
@@ -44,8 +45,6 @@
 		compatible = "dp-connector";
 		label = "DP";
 		type = "mini";
-
-		hpd-gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
 
 		port {
 			dp_connector_in: endpoint {
@@ -874,7 +873,6 @@
 };
 
 &edp_hot_plug_det {
-	function = "gpio";
 	bias-disable;
 };
 
