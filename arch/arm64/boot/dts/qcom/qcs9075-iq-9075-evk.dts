@@ -24,13 +24,13 @@
 
 	aliases {
 		ethernet0 = &ethernet0;
+		mmc0 = &sdhc_1; /* SDC1 eMMC slot */
 		mmc1 = &sdhc_2; /* SDC2 SD card slot */
 		serial0 = &uart10;
 		serial1 = &uart17;
 		serial2 = &uart0;
 		spi16 = &spi16;
 		ufshc1 = &ufs_mem_hc;
-		mmc0 = &sdhc_1; /* SDC1 SD card slot */
 		i2c18 = &i2c18;
 	};
 
