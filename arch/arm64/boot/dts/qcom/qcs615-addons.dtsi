@@ -9,6 +9,12 @@
 #include "qcs615-dma-heaps.dtsi"
 
 / {
+	firmware {
+		qcom_smcinvoke {
+			compatible = "qcom,smcinvoke";
+		};
+	};
+
 	reserved-memory {
 		dump_mem: mem_dump_region {
 			compatible = "shared-dma-pool";
