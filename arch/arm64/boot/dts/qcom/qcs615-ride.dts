@@ -719,6 +719,12 @@
 	status = "okay";
 };
 
+&venus {
+	firmware-name = "qcom/venus-5.4/venus.mbn";
+
+	status = "okay";
+};
+
 &watchdog {
 	clocks = <&sleep_clk>;
 };
