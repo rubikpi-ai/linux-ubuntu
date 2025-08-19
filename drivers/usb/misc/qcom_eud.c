@@ -396,6 +396,7 @@ static int eud_probe(struct platform_device *pdev)
 		return dev_err_probe(chip->dev, PTR_ERR(chip->role_sw),
 				"failed to register role switch\n");
 
+	chip->current_role = USB_ROLE_DEVICE;
 	enable_irq_wake(chip->irq);
 
 	platform_set_drvdata(pdev, chip);
