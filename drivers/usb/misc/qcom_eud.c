@@ -342,6 +342,7 @@ static int eud_probe(struct platform_device *pdev)
 	struct resource *res;
 	const struct eud_cfg *cfg;
 	int ret;
+	u32 read_val;
 
 	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
 	if (!chip)
@@ -398,6 +399,21 @@ static int eud_probe(struct platform_device *pdev)
 
 	chip->current_role = USB_ROLE_DEVICE;
 	enable_irq_wake(chip->irq);
+
+	if (chip->mode_mgr_phys && !chip->mode_mgr) {
+		ret = qcom_scm_io_readl(chip->mode_mgr_phys + EUD_REG_EUD_EN2, &read_val);
+		if (ret)
+			return dev_err_probe(chip->dev, ret,
+				"failed to read EUD_REG_EUD_EN2 register\n");
+	} else {
+		read_val = readl(chip->mode_mgr_phys + EUD_REG_EUD_EN2);
+	}
+
+	if (read_val) {
+		ret = eud_phy_enable(chip);
+		if (ret)
+			return dev_err_probe(chip->dev, ret, "failed to enable EUD PHY\n");
+	}
 
 	platform_set_drvdata(pdev, chip);
 
