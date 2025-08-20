@@ -2,7 +2,7 @@
 /*
  * Synopsys DesignWare XPCS platform device driver
  *
- * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/delay.h>
@@ -26,7 +26,6 @@
 #define XPCSERR(fmt, args...) \
 	pr_err(DRV_NAME " %s:%d " fmt, __func__, __LINE__, ## args)
 
-phy_interface_t g_interface;
 static const int xpcs_usxgmii_features[] = {
 	ETHTOOL_LINK_MODE_Pause_BIT,
 	ETHTOOL_LINK_MODE_Asym_Pause_BIT,
@@ -689,8 +688,6 @@ static int qcom_xpcs_select_mode(struct dw_xpcs_qcom *qxpcs, phy_interface_t int
 {
 	int ret;
 
-	g_interface = interface;
-
 	if (interface == PHY_INTERFACE_MODE_USXGMII ||
 	    interface == PHY_INTERFACE_MODE_10GBASER ||
 	    interface == PHY_INTERFACE_MODE_5GBASER) {
@@ -939,9 +936,9 @@ void qcom_xpcs_destroy(struct phylink_pcs *pcs)
 			continue;
 
 		qxpcs->id = entry;
-		compat = xpcs_find_compat(entry, g_interface);
+		compat = xpcs_find_compat(entry, qxpcs->phy_interface);
 		if (!compat) {
-			XPCSERR("Incompatible MII interface: %d\n", g_interface);
+			XPCSERR("Incompatible MII interface: %d\n", qxpcs->phy_interface);
 			ret = -ENODEV;
 			goto out;
 		}
