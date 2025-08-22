@@ -489,60 +489,7 @@
 	status = "okay";
 };
 
-&i2c0 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c1 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c2 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c3 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c4 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c5 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c7 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c8 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c9 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c10 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
 &i2c11 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-
 	pinctrl-0 = <&qup_i2c11_default>, <&usb0_intr_state>;
 	pinctrl-names = "default";
 	status = "okay";
@@ -575,39 +522,7 @@
 	};
 };
 
-&i2c12 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c13 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c14 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c15 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c16 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&i2c17 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
 &i2c18 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
 	pinctrl-0 = <&qup_i2c18_default>;
 	pinctrl-names = "default";
 	status = "okay";
@@ -675,8 +590,6 @@
 };
 
 &i2c19 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
 	pinctrl-0 = <&qup_i2c19_default>;
 	pinctrl-names = "default";
 	status = "okay";
@@ -839,96 +752,6 @@
 
 &sleep_clk {
 	clock-frequency = <32768>;
-};
-
-&spi0 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi1 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi2 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi3 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi4 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi5 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi7 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi8 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi9 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi10 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi11 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi12 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi14 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi15 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi16 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi17 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi18 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&spi19 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
 };
 
 &tlmm {
@@ -1152,49 +975,7 @@
 /delete-node/ &qup_uart0_cts;
 
 &uart0 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
 	status = "okay";
-};
-
-&uart1 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart2 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart3 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart4 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart5 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart7 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart8 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart9 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
 };
 
 &uart10 {
@@ -1202,34 +983,7 @@
 	status = "okay";
 };
 
-&uart11 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart12 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart14 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart15 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart16 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
 &uart17 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
 	status = "okay";
 
 	/* HS UART Instance */
@@ -1238,16 +992,6 @@
 		pinctrl-names = "default";
 		max-speed = <3200000>;
 	};
-};
-
-&uart18 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
-};
-
-&uart19 {
-	qcom,load-firmware;
-	qcom,xfer-mode = <1>;
 };
 
 &ufs_mem_hc {
