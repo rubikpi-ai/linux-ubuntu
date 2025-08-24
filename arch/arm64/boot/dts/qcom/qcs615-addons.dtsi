@@ -10,6 +10,10 @@
 
 / {
 	firmware {
+		qcom_mem_object {
+			compatible = "qcom,mem-object";
+		};
+
 		qcom_smcinvoke {
 			compatible = "qcom,smcinvoke";
 		};
