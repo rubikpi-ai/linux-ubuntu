@@ -259,9 +259,17 @@ static void dwxgmac2_map_mtl_to_dma(struct mac_device_info *hw, u32 queue,
 	void __iomem *ioaddr = hw->pcsr;
 	u32 value, reg;
 
-	reg = (queue < 4) ? XGMAC_MTL_RXQ_DMA_MAP0 : XGMAC_MTL_RXQ_DMA_MAP1;
-	if (queue >= 4)
+	if (queue < 4) {
+		reg = XGMAC_MTL_RXQ_DMA_MAP0;
+	} else if (queue < 8) {
+		reg = XGMAC_MTL_RXQ_DMA_MAP1;
 		queue -= 4;
+	} else if (queue < 12) {
+		reg = XGMAC_MTL_RXQ_DMA_MAP2;
+		queue -= 8;
+	} else {
+		return;
+	}
 
 	value = readl(ioaddr + reg);
 	value &= ~XGMAC_QxMDMACH(queue);
