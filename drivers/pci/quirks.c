@@ -2542,6 +2542,49 @@ static void quirk_disable_aspm_l0s_l1(struct pci_dev *dev)
  */
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_ASMEDIA, 0x1080, quirk_disable_aspm_l0s_l1);
 
+static int disable_aspm_l1ss(struct pci_dev *dev, void *data)
+{
+	pci_disable_link_state(dev, PCIE_LINK_STATE_L1_1 | PCIE_LINK_STATE_L1_2);
+	return 0;
+}
+
+static void quirk_disable_aspm_l1ss(struct pci_dev *dev)
+{
+	struct pci_dev *root_port;
+	struct pci_dev *upstream;
+
+	pci_info(dev, "Disabling ASPM L1ss\n");
+
+	upstream = dev->bus->self;
+	while (upstream) {
+		if (pci_pcie_type(upstream) == PCI_EXP_TYPE_ROOT_PORT) {
+			root_port = upstream;
+			break;
+		}
+
+		/* Move further up the hierarchy */
+		upstream = upstream->bus->self;
+	}
+
+	if (!root_port) {
+		pci_err(dev, "Could not find root port, cannot disable L1ss\n");
+		return;
+	}
+
+	pci_info(dev, "Found root-port with VID: %04x PID: %04x, disabling l1ss\n",
+		root_port->vendor, root_port->device);
+
+	pci_walk_bus(root_port->subordinate, disable_aspm_l1ss, NULL);
+}
+
+/*
+ * When ASPM L1.1/L1.2 is enabled on the upstream link of QPS615 switch,
+ * and Renesas uPD720201 USB 3.0 Controller is connected to one of the switch
+ * downstream ports, then uPD dies down and stops responding to host commands;
+ * disabling l1 sub-states in uPD attach case helps mitigate this issue.
+ */
+DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_RENESAS, 0x0014, quirk_disable_aspm_l1ss);
+
 /*
  * Some Pericom PCIe-to-PCI bridges in reverse mode need the PCIe Retrain
  * Link bit cleared after starting the link retrain process to allow this
