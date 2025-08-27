@@ -132,35 +132,16 @@ static int msm_dp_aux_link_configure(struct drm_dp_aux *aux,
 	return 0;
 }
 
-void msm_dp_ctrl_push_idle(struct msm_dp_ctrl *msm_dp_ctrl)
+void msm_dp_ctrl_push_idle(struct msm_dp_ctrl *msm_dp_ctrl, struct msm_dp_panel *msm_dp_panel)
 {
 	struct msm_dp_ctrl_private *ctrl;
-
-	ctrl = container_of(msm_dp_ctrl, struct msm_dp_ctrl_private, msm_dp_ctrl);
-
-	reinit_completion(&ctrl->idle_comp);
-	msm_dp_catalog_ctrl_state_ctrl(ctrl->catalog, DP_STATE_CTRL_PUSH_IDLE);
-
-	if (!wait_for_completion_timeout(&ctrl->idle_comp,
-			IDLE_PATTERN_COMPLETION_TIMEOUT_JIFFIES))
-		pr_warn("PUSH_IDLE pattern timedout\n");
-
-	drm_dbg_dp(ctrl->drm_dev, "mainlink off\n");
-}
-
-void msm_dp_ctrl_push_vcpf(struct msm_dp_ctrl *msm_dp_ctrl, struct msm_dp_panel *msm_dp_panel)
-{
 	u32 state = 0x0;
-	struct msm_dp_ctrl_private *ctrl;
 
 	ctrl = container_of(msm_dp_ctrl, struct msm_dp_ctrl_private, msm_dp_ctrl);
 
-	if (msm_dp_panel->stream_id >= DP_STREAM_MAX) {
-		DRM_ERROR("invalid input\n");
-		return;
-	}
-
-	if (msm_dp_panel->stream_id == DP_STREAM_0)
+	if (!ctrl->mst_active)
+		state |= DP_STATE_CTRL_PUSH_IDLE;
+	else if (msm_dp_panel->stream_id == DP_STREAM_0)
 		state |= MST_DP0_PUSH_VCPF;
 	else if (msm_dp_panel->stream_id == DP_STREAM_1)
 		state |= MST_DP1_PUSH_VCPF;
@@ -177,8 +158,8 @@ void msm_dp_ctrl_push_vcpf(struct msm_dp_ctrl *msm_dp_ctrl, struct msm_dp_panel 
 		msm_dp_catalog_ctrl_state_ctrl(ctrl->catalog, state);
 
 	if (!wait_for_completion_timeout(&ctrl->idle_comp,
-					 IDLE_PATTERN_COMPLETION_TIMEOUT_JIFFIES))
-		pr_warn("PUSH_VCPF pattern timedout\n");
+			IDLE_PATTERN_COMPLETION_TIMEOUT_JIFFIES))
+		pr_warn("PUSH_IDLE pattern timedout\n");
 
 	drm_dbg_dp(ctrl->drm_dev, "mainlink off\n");
 }
@@ -1584,7 +1565,7 @@ void msm_dp_ctrl_set_psr(struct msm_dp_ctrl *msm_dp_ctrl, bool enter)
 			return;
 		}
 
-		msm_dp_ctrl_push_idle(msm_dp_ctrl);
+		msm_dp_ctrl_push_idle(msm_dp_ctrl, ctrl->panel);
 		msm_dp_catalog_ctrl_state_ctrl(ctrl->catalog, 0);
 
 		msm_dp_catalog_ctrl_psr_mainlink_enable(ctrl->catalog, false);
@@ -1706,7 +1687,7 @@ static int msm_dp_ctrl_link_maintenance(struct msm_dp_ctrl_private *ctrl)
 	int ret = 0;
 	int training_step = DP_TRAINING_NONE;
 
-	msm_dp_ctrl_push_idle(&ctrl->msm_dp_ctrl);
+	msm_dp_ctrl_push_idle(&ctrl->msm_dp_ctrl, ctrl->panel);
 
 	ctrl->link->phy_params.p_level = 0;
 	ctrl->link->phy_params.v_level = 0;
