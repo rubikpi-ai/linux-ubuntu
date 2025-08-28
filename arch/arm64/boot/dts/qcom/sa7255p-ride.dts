@@ -27,6 +27,7 @@
 		serial2 = &uart2;
 		spi10 = &spi10;
 		scmichannels = &scmichannels;
+		ufshc1 = &ufs_mem_hc;
 	};
 
 	chosen {
@@ -186,6 +187,10 @@
 	status = "okay";
 };
 
+&scmi3 {
+	status = "okay";
+};
+
 &scmi5 {
 	status = "okay";
 };
@@ -223,14 +228,14 @@
 };
 
 &scmi34 {
-	status = "okay";
+	status = "disabled";
 };
 
 &sdhc_1 {
 	power-domains = <&scmi34_pd 0>, <&scmi34_dvfs 0>;
 	power-domain-names = "power", "perf";
 
-	status = "okay";
+	status = "disabled";
 };
 
 &sleep_clk {
@@ -261,6 +266,13 @@
 &uart12 {
 	power-domains = <&scmi11_pd 12>, <&scmi11_dvfs 12>;
 	power-domain-names = "power", "perf";
+
+	status = "okay";
+};
+
+&ufs_mem_hc {
+	reset-gpios = <&tlmm 133 GPIO_ACTIVE_LOW>;
+	power-domains = <&scmi3_pd 0>;
 
 	status = "okay";
 };
