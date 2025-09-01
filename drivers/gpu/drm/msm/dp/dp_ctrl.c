@@ -2287,6 +2287,7 @@ void msm_dp_ctrl_off_link(struct msm_dp_ctrl *msm_dp_ctrl)
 	msm_dp_catalog_ctrl_mainlink_ctrl(ctrl->catalog, false);
 	msm_dp_catalog_mst_config(ctrl->catalog, false);
 
+	msm_dp_catalog_ctrl_reset(ctrl->catalog);
 	ctrl->mst_active = false;
 
 	dev_pm_opp_set_rate(ctrl->dev, 0);
