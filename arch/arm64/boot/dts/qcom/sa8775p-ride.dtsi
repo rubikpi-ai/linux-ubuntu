@@ -11,6 +11,8 @@
 #include "sa8775p.dtsi"
 #include "sa8775p-pmics.dtsi"
 
+/delete-node/ &usb_0_dwc3;
+
 / {
 	aliases {
 		ethernet0 = &ethernet0;
@@ -515,7 +517,12 @@
 };
 
 &eud {
+	usb-role-switch;
 	status = "okay";
+};
+
+&eud_ep {
+	remote-endpoint = <&usb_role_switch>;
 };
 
 &gpi_dma0 {
@@ -1223,19 +1230,49 @@
 };
 
 &usb_0 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&usb0_en_state>;
+	reg = <0x0 0x0a600000 0x0 0x200000>;
 
-	status = "okay";
-};
+	interrupts-extended = <&intc GIC_SPI 292 IRQ_TYPE_LEVEL_HIGH>,
+			      <&intc GIC_SPI 287 IRQ_TYPE_LEVEL_HIGH>,
+			      <&pdc 14 IRQ_TYPE_EDGE_BOTH>,
+			      <&pdc 15 IRQ_TYPE_EDGE_BOTH>,
+			      <&pdc 12 IRQ_TYPE_LEVEL_HIGH>;
+	interrupt-names = "dwc_usb3",
+			  "pwr_event",
+			  "dp_hs_phy_irq",
+			  "dm_hs_phy_irq",
+			  "ss_phy_irq";
 
-&usb_0_dwc3 {
+	iommus = <&apps_smmu 0x080 0x0>;
+	phys = <&usb_0_hsphy>, <&usb_0_qmpphy>;
+	phy-names = "usb2-phy", "usb3-phy";
+
+	dr_mode = "otg";
+	usb-role-switch;
 	snps,dis-u2-entry-quirk;
 	snps,dis-u1-entry-quirk;
 	snps,dis_u2_susphy_quirk;
-	snps,dis_u3_susphy_quirk;
+	snps,dis_u3_susphy_quirK;
+	snps,dis_enblslpm_quirk;
+	maximum-speed = "super-speed";
+	wakeup-source;
+	pinctrl-names = "default";
+	pinctrl-0 = <&usb0_en_state>;
+	status = "okay";
 
-	dr_mode = "peripheral";
+	ports {
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			usb_role_switch: endpoint {
+				remote-endpoint = <&eud_ep>;
+			};
+		};
+
+	};
 };
 
 &usb_0_hsphy {
