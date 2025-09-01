@@ -1845,7 +1845,26 @@
 			      <0x0 0x088E3000 0x0 0x1000>;
 			interrupts-extended = <&pdc 11 IRQ_TYPE_LEVEL_HIGH>;
 
+			phys = <&usb_0_hsphy>;
+			phy-names = "usb2-phy";
 			status = "disabled";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port@0 {
+					reg = <0>;
+					eud_ep: endpoint {
+					};
+				};
+
+				port@1 {
+					reg = <1>;
+					eud_con: endpoint {
+					};
+				};
+			};
 		};
 
 		qupv3_id_0: geniqup@9c0000 {
