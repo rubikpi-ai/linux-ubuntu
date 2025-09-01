@@ -12,6 +12,8 @@
 #include "qcs8300.dtsi"
 #include "qcs8300-pmics.dtsi"
 
+/delete-node/ &usb_1_dwc3;
+
 / {
 	model = "Qualcomm Technologies, Inc. QCS8300 Ride";
 	compatible = "qcom,qcs8300-ride", "qcom,qcs8275", "qcom,qcs8300";
@@ -395,7 +397,12 @@
 };
 
 &eud {
+	usb-role-switch;
 	status = "okay";
+};
+
+&eud_ep {
+	remote-endpoint = <&usb_role_switch>;
 };
 
 &gpu {
@@ -794,16 +801,49 @@
 };
 
 &usb_1 {
-	status = "okay";
-};
+	reg = <0x0 0x0a600000 0x0 0x20000>;
 
-&usb_1_dwc3 {
+	interrupts-extended = <&intc GIC_SPI 292 IRQ_TYPE_LEVEL_HIGH>,
+			      <&intc GIC_SPI 131 IRQ_TYPE_LEVEL_HIGH>,
+			      <&pdc 14 IRQ_TYPE_EDGE_BOTH>,
+			      <&pdc 15 IRQ_TYPE_EDGE_BOTH>,
+			      <&pdc 12 IRQ_TYPE_LEVEL_HIGH>;
+	interrupt-names = "dwc_usb3",
+			  "pwr_event",
+			  "dp_hs_phy_irq",
+			  "dm_hs_phy_irq",
+			  "ss_phy_irq";
+
+	iommus = <&apps_smmu 0x80 0x0>;
+
 	snps,dis-u2-entry-quirk;
 	snps,dis-u1-entry-quirk;
 	snps,dis_u2_susphy_quirk;
 	snps,dis_u3_susphy_quirk;
+	snps,dis_enblslpm_quirk;
+
+	phys = <&usb_1_hsphy>, <&usb_qmpphy>;
+	phy-names = "usb2-phy", "usb3-phy";
+	maximum-speed = "super-speed-plus";
 
 	dr_mode = "peripheral";
+	wakeup-source;
+
+	status = "okay";
+
+	ports {
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			usb_role_switch: endpoint {
+				remote-endpoint = <&eud_ep>;
+			};
+		};
+
+	};
 };
 
 &usb_2 {
