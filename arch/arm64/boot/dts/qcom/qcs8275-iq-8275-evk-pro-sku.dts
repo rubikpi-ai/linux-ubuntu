@@ -299,6 +299,19 @@
 	};
 };
 
+&eud {
+	usb-role-switch;
+	status = "okay";
+};
+
+&eud_con {
+	remote-endpoint = <&hd3ss3220_ep>;
+};
+
+&eud_ep {
+	remote-endpoint = <&usb_role_switch>;
+};
+
 &gpi_dma0 {
 	status = "okay";
 };
@@ -331,7 +344,7 @@
 				port@0 {
 					reg = <0>;
 					hd3ss3220_ep: endpoint {
-						remote-endpoint = <&usb_role_switch>;
+						remote-endpoint = <&eud_con>;
 					};
 				};
 			};
@@ -834,7 +847,7 @@
 		port@0 {
 			reg = <0>;
 			usb_role_switch: endpoint {
-				remote-endpoint = <&hd3ss3220_ep>;
+				remote-endpoint = <&eud_ep>;
 			};
 		};
 
