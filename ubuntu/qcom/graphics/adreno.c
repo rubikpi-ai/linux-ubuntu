@@ -78,6 +78,28 @@ static u32 get_ucode_version(const u32 *data)
 	return  version | ((data[3] & 0xfff000) >> 12);
 }
 
+int adreno_request_firmware(const struct firmware **fw, const char *name,
+		struct device *device, bool log_error)
+{
+	int ret;
+	char *newname;
+
+	if (!firmware_request_nowarn(fw, name, device))
+		return 0;
+
+	newname = kasprintf(GFP_KERNEL, "qcom/%s", name);
+	if (!newname)
+		return -ENOMEM;
+
+	ret = firmware_request_nowarn(fw, newname, device);
+	if (ret && log_error)
+		pr_err("Firmware request for %s failed with error %d\n",
+				name, ret);
+	kfree(newname);
+
+	return ret;
+}
+
 int adreno_get_firmware(struct adreno_device *adreno_dev,
 		const char *fwfile, struct adreno_firmware *firmware)
 {
@@ -88,13 +110,10 @@ int adreno_get_firmware(struct adreno_device *adreno_dev,
 	if (!IS_ERR_OR_NULL(firmware->memdesc))
 		return 0;
 
-	ret = request_firmware(&fw, fwfile, &device->pdev->dev);
+	ret = adreno_request_firmware(&fw, fwfile, &device->pdev->dev, true);
 
-	if (ret) {
-		dev_err(device->dev, "request_firmware(%s) failed: %d\n",
-				fwfile, ret);
+	if (ret)
 		return ret;
-	}
 
 	firmware->memdesc = kgsl_allocate_global(device, fw->size - 4, 0,
 				KGSL_MEMFLAGS_GPUREADONLY, KGSL_MEMDESC_UCODE,
@@ -2291,9 +2310,9 @@ static int _adreno_start(struct adreno_device *adreno_dev)
 
 	/*
 	 * There is a possible deadlock scenario during kgsl firmware reading
-	 * (request_firmware) and devfreq update calls. During first boot, kgsl
-	 * device mutex is held and then request_firmware is called for reading
-	 * firmware. request_firmware internally takes dev_pm_qos_mtx lock.
+	 * (firmware_request_nowarn) and devfreq update calls. During first boot, kgsl
+	 * device mutex is held and then firmware_request_nowarn is called for reading
+	 * firmware. firmware_request_nowarn internally takes dev_pm_qos_mtx lock.
 	 * Whereas in case of devfreq update calls triggered by thermal/bcl or
 	 * devfreq sysfs, it first takes the same dev_pm_qos_mtx lock and then
 	 * tries to take kgsl device mutex as part of get_dev_status/target

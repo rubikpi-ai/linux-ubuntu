@@ -1338,7 +1338,7 @@ int gen7_gmu_parse_fw(struct adreno_device *adreno_dev)
 
 	/*
 	 * If GMU fw already saved and verified, do nothing new.
-	 * Skip only request_firmware and allow preallocation to
+	 * Skip only requesting firmware and allow preallocation to
 	 * ensure in scenario where GMU request firmware succeeded
 	 * but preallocation fails, we don't return early without
 	 * successful preallocations on next open call.
@@ -1348,22 +1348,17 @@ int gen7_gmu_parse_fw(struct adreno_device *adreno_dev)
 		if (gen7_core->gmufw_name == NULL)
 			return -EINVAL;
 
-		ret = request_firmware(&gmu->fw_image, gmufw_name,
-				&gmu->pdev->dev);
+		ret = adreno_request_firmware(&gmu->fw_image, gmufw_name,
+				&gmu->pdev->dev, false);
 		if (ret) {
 			if (gen7_core->gmufw_bak_name) {
 				gmufw_name = gen7_core->gmufw_bak_name;
-				ret = request_firmware(&gmu->fw_image, gmufw_name,
-					&gmu->pdev->dev);
+				ret = adreno_request_firmware(&gmu->fw_image, gmufw_name,
+					&gmu->pdev->dev, true);
 			}
 
-			if (ret) {
-				dev_err(&gmu->pdev->dev,
-					"request_firmware (%s) failed: %d\n",
-					gmufw_name, ret);
-
+			if (ret)
 				return ret;
-			}
 		}
 	}
 
@@ -2933,9 +2928,9 @@ static int gen7_first_boot(struct adreno_device *adreno_dev)
 
 	/*
 	 * There is a possible deadlock scenario during kgsl firmware reading
-	 * (request_firmware) and devfreq update calls. During first boot, kgsl
-	 * device mutex is held and then request_firmware is called for reading
-	 * firmware. request_firmware internally takes dev_pm_qos_mtx lock.
+	 * (firmware_request_nowarn) and devfreq update calls. During first boot, kgsl
+	 * device mutex is held and then firmware_request_nowarn is called for reading
+	 * firmware. firmware_request_nowarn internally takes dev_pm_qos_mtx lock.
 	 * Whereas in case of devfreq update calls triggered by thermal/bcl or
 	 * devfreq sysfs, it first takes the same dev_pm_qos_mtx lock and then
 	 * tries to take kgsl device mutex as part of get_dev_status/target
