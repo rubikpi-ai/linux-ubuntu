@@ -28,6 +28,7 @@
 		i2c15 = &i2c15;
 		serial0 = &uart7;
 		serial1 = &uart2;
+		serial2 = &uart6;
 	};
 
 	chosen {
@@ -788,6 +789,10 @@
 		pinctrl-names = "default";
 		max-speed = <3200000>;
 	};
+};
+
+&uart6 {
+	status = "okay";
 };
 
 &uart7 {
