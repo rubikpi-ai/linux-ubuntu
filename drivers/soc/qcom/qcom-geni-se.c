@@ -22,7 +22,43 @@
 #include <linux/soc/qcom/qup-fw-load.h>
 
 #define CREATE_TRACE_POINTS
-#include <trace/events/qup_buses_trace.h>
+#include <trace/events/qup_i2c_trace.h>
+#include <trace/events/gpi_qup_trace.h>
+
+/**
+ * geni_trace_log() - Common trace logging function for GENI drivers
+ * @dev: Device pointer
+ * @driver_name: Name of the driver (e.g., "i2c", "gpi")
+ * @fmt: Format string
+ * @...: Variable arguments
+ *
+ * This function provides a unified trace logging mechanism that can be used
+ * by all GENI drivers. It formats the message and calls the appropriate
+ * driver-specific trace function based on the driver name.
+ */
+void geni_trace_log(struct device *dev, const char *driver_name, const char *fmt, ...)
+{
+	va_list args;
+	struct va_format vaf;
+
+	va_start(args, fmt);
+	vaf.fmt = fmt;
+	vaf.va = &args;
+
+	/* Call the appropriate trace function based on driver name */
+	if (strcmp(driver_name, "i2c") == 0) {
+		trace_i2c_log_info(dev_name(dev), &vaf);
+	} else if (strcmp(driver_name, "gpi") == 0) {
+		trace_gpi_log_info(dev_name(dev), &vaf);
+	} else {
+		/* Fallback for unknown driver types */
+		dev_dbg(dev, "[%s] %pV", driver_name, &vaf);
+	}
+
+	va_end(args);
+}
+EXPORT_SYMBOL_GPL(geni_trace_log);
+
 /**
  * DOC: Overview
  *

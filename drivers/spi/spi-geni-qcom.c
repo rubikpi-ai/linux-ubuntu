@@ -77,7 +77,7 @@
 #define GSI_CPOL		BIT(5)
 
 #define CREATE_TRACE_POINTS
-#include <trace/events/qup_buses_trace.h>
+#include <trace/events/qup_spi_trace.h>
 
 void spi_trace_log(struct device *dev, const char *fmt, ...)
 {
@@ -89,7 +89,7 @@ void spi_trace_log(struct device *dev, const char *fmt, ...)
 
 	va_start(args, fmt);
 	vaf.va = &args;
-	trace_buses_log_info(dev_name(dev), &vaf);
+	trace_spi_log_info(dev_name(dev), &vaf);
 	va_end(args);
 }
 
