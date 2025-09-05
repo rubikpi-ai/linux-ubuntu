@@ -3004,7 +3004,10 @@
 			compatible = "qcom,sa8775p-inline-crypto-engine",
 				     "qcom,inline-crypto-engine";
 			reg = <0x0 0x01d88000 0x0 0x18000>;
+			qcom,ice-use-hwkm;
 			clocks = <&gcc GCC_UFS_PHY_ICE_CORE_CLK>;
+
+			status = "disabled";
 		};
 
 		sdhc_1: mmc@0x87c4000 {
@@ -3044,6 +3047,7 @@
 			iommus = <&apps_smmu 0x0 0x0>;
 
 			resets = <&gcc GCC_SDCC1_BCR>;
+			qcom,ice = <&ice_mmc>;
 		};
 
 		sdhc_2: sdhci@0x87c4000 {
@@ -3094,6 +3098,15 @@
 					opp-avg-kBps = <390000 0>;
 				};
 			};
+		};
+
+		ice_mmc: crypto@87c8000 {
+			compatible = "qcom,inline-crypto-engine";
+			reg = <0x0 0x087c8000 0x0 0x18000>;
+			qcom,ice-use-hwkm;
+			clocks = <&gcc GCC_SDCC1_ICE_CORE_CLK>;
+
+			status = "disabled";
 		};
 
 		cryptobam: dma-controller@1dc4000 {

@@ -692,6 +692,10 @@
 	};
 };
 
+&ice {
+	status = "okay";
+};
+
 &llcc {
 	status = "okay";
 };
