@@ -40,6 +40,22 @@ enum geni_se_protocol_type {
 	GENI_SE_INVALID_PROTO = 255,
 };
 
+/**
+ * @enum DEBUG_LOG_LVL : Defines the levels of debug logging supported by the system.
+ *
+ * This enumeration is used to categorize log messages based on their severity
+ * or verbosity.
+ * LOG_LVL_ERROR: Critical errors that require immediate attention
+ * LOG_LVL_INFO: Informational messages
+ * LOG_LVL_VERBOSE: Detailed messages useful for in-depth debugging
+ */
+enum DEBUG_LOG_LVL {
+	LOG_LVL_ERROR,
+	LOG_LVL_INFO,
+	LOG_LVL_VERBOSE,
+	LOG_LVL_MAX,
+};
+
 struct geni_wrapper;
 struct clk;
 
@@ -554,5 +570,7 @@ int geni_icc_disable(struct geni_se *se);
 int geni_load_se_firmware(struct geni_se *se, enum geni_se_protocol_type protocol);
 
 void geni_se_clks_off(struct geni_se *se);
+
+void geni_trace_log(struct device *dev, const char *driver_name, const char *fmt, ...);
 #endif
 #endif
