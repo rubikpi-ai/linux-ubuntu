@@ -254,12 +254,16 @@
 
 &sound {
 
-	pinctrl-names = "default", "stub_aif0_active", "stub_aif0_sleep";
+	pinctrl-names = "default", "stub_aif0_active", "stub_aif0_sleep", "stub_aif1_active",
+			"stub_aif1_sleep";
 	pinctrl-0 = <&mi2s0_data0_sleep>, <&mi2s0_data1_sleep>, <&mi2s0_mclk_sleep>,
 		    <&mi2s0_sclk_sleep>, <&mi2s0_ws_sleep>;
 	pinctrl-1 = <&mi2s0_data0>, <&mi2s0_data1>, <&mi2s0_mclk>, <&mi2s0_sclk>, <&mi2s0_ws>;
 	pinctrl-2 = <&mi2s0_data0_sleep>, <&mi2s0_data1_sleep>, <&mi2s0_mclk_sleep>,
 		    <&mi2s0_sclk_sleep>, <&mi2s0_ws_sleep>;
+	pinctrl-3 = <&mi2s1_data0>, <&mi2s1_mclk>, <&mi2s1_sclk>, <&mi2s1_ws>;
+	pinctrl-4 = <&mi2s1_data0_sleep>, <&mi2s1_mclk_sleep>,
+		    <&mi2s1_sclk_sleep>, <&mi2s1_ws_sleep>;
 
 	mi2s-capture-dai-link {
 		link-name = "MI2S-LPAIF-TX-PRIMARY";
@@ -321,6 +325,18 @@
 		};
 	};
 
+	mi2s1-playback-dai-link {
+		link-name = "MI2S-LPAIF-RX-SECONDARY";
+
+		cpu {
+			sound-dai = <&q6apmbedai SECONDARY_MI2S_RX>;
+		};
+
+		codec {
+			sound-dai = <&msm_stub_codec 2>;
+		};
+	};
+
 };
 
 &tlmm {
@@ -358,6 +374,38 @@
 
 	mi2s0_ws_sleep: mi2s0-ws-sleep {
 		pins = "gpio100";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s1_data0_sleep: mi2s1-data0-sleep {
+		pins = "gpio107";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s1_mclk_sleep: mi2s1-mclk-sleep {
+		pins = "gpio105";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s1_sclk_sleep: mi2s1-sclk-sleep {
+		pins = "gpio106";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s1_ws_sleep: mi2s1-ws-sleep {
+		pins = "gpio108";
 		function = "gpio";
 		drive-strength = <2>;
 		bias-pull-down;
@@ -424,6 +472,29 @@
 };
 
 &mi2s0_ws {
+	drive-strength = <8>;
+	bias-disable;
+	output-high;
+};
+
+&mi2s1_data0 {
+	drive-strength = <8>;
+	bias-disable;
+};
+
+&mi2s1_mclk {
+	drive-strength = <8>;
+	bias-disable;
+	output-high;
+};
+
+&mi2s1_sclk {
+	drive-strength = <8>;
+	bias-disable;
+	output-high;
+};
+
+&mi2s1_ws {
 	drive-strength = <8>;
 	bias-disable;
 	output-high;
