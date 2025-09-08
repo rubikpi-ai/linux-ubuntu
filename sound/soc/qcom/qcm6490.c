@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 // Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 
 #include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
 #include <linux/input.h>
@@ -214,10 +215,13 @@ static int qcm6490_snd_startup(struct snd_pcm_substream *substream)
 static const struct snd_soc_dapm_widget qcm6490_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone Jack", NULL),
 	SND_SOC_DAPM_MIC("Mic Jack", NULL),
+	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
 	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
 };
 
 static const struct snd_soc_dapm_route qcm6490_dapm_routes[] = {
+	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
+	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
 	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
 	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
 };
@@ -236,10 +240,13 @@ static const struct snd_soc_dapm_route qcs6490_rubikpi3_dapm_routes[] = {
 static const struct snd_soc_dapm_widget qcs6490_rb3gen2_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone Jack", NULL),
 	SND_SOC_DAPM_MIC("Mic Jack", NULL),
+	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
 	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
 };
 
 static const struct snd_soc_dapm_route qcs6490_rb3gen2_dapm_routes[] = {
+	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
+	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
 	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
 	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
 };
@@ -252,10 +259,13 @@ static const struct snd_soc_dapm_widget qcs6490_rb3gen2_ia_dapm_widgets[] = {
 static const struct snd_soc_dapm_widget qcs6490_rb3gen2_ptz_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone Jack", NULL),
 	SND_SOC_DAPM_MIC("Mic Jack", NULL),
+	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
 	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
 };
 
 static const struct snd_soc_dapm_route qcs6490_rb3gen2_ptz_dapm_routes[] = {
+	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
+	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
 	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
 	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
 };
@@ -263,10 +273,13 @@ static const struct snd_soc_dapm_route qcs6490_rb3gen2_ptz_dapm_routes[] = {
 static const struct snd_soc_dapm_widget qcs6490_rb3gen2_video_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone Jack", NULL),
 	SND_SOC_DAPM_MIC("Mic Jack", NULL),
+	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
 	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
 };
 
 static const struct snd_soc_dapm_route qcs6490_rb3gen2_video_dapm_routes[] = {
+	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
+	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
 	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
 	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
 };
@@ -274,10 +287,13 @@ static const struct snd_soc_dapm_route qcs6490_rb3gen2_video_dapm_routes[] = {
 static const struct snd_soc_dapm_widget qcs6490_rb3gen2_vision_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone Jack", NULL),
 	SND_SOC_DAPM_MIC("Mic Jack", NULL),
+	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
 	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
 };
 
 static const struct snd_soc_dapm_route qcs6490_rb3gen2_vision_dapm_routes[] = {
+	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
+	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
 	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
 	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
 };
