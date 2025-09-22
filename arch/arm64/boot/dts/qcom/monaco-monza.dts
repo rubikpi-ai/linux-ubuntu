@@ -498,6 +498,14 @@
 			bias-pull-up;
 		};
 	};
+
+	wcn_usb_bt_n: wcn-usb-bt-n-state {
+		pins = "gpio55";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+		output-high;
+	};
 };
 
 &uart7 {
