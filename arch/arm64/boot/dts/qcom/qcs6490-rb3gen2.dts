@@ -150,6 +150,18 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
+		dp-dai-link {
+			link-name = "DISPLAY_PORT-RX";
+
+			cpu {
+				sound-dai = <&q6apmbedai DISPLAY_PORT_RX_0>;
+			};
+
+			codec {
+				sound-dai = <&mdss_dp>;
+			};
+		};
+
 		hdmi-dai-link {
 			link-name = "HDMI_PORT-RX";
 
