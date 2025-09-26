@@ -150,18 +150,6 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-		hdmi-dai-link {
-			link-name = "HDMI Playback";
-
-			cpu {
-				sound-dai = <&q6apmbedai DISPLAY_PORT_RX_1>;
-			};
-
-			codec {
-				sound-dai = <&lt9611_codec 0>;
-			};
-		};
-
 		wsa-dai-link {
 			link-name = "CODEC_DMA-LPAIF_WSA-RX-0";
 
@@ -516,7 +504,6 @@
 	lt9611_codec: hdmi-bridge@2b {
 		compatible = "lontium,lt9611uxc";
 		reg = <0x2b>;
-		#sound-dai-cells = <1>;
 
 		interrupts-extended = <&tlmm 24 IRQ_TYPE_EDGE_FALLING>;
 		reset-gpios = <&pm7250b_gpios 2 GPIO_ACTIVE_HIGH>;
