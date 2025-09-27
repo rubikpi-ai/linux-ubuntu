@@ -44,12 +44,20 @@
 		regulator-max-microvolt = <2950000>;
 	};
 
-	dummy_s4a: regulator-dummy-s4a {
-		compatible = "regulator-fixed";
-		regulator-name = "dummy-supply-s4a";
+	vreg_sdc: regulator-sdc {
+		compatible = "regulator-gpio";
 
-		regulator-min-microvolt = <2950000>;
+		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <2950000>;
+		regulator-name = "vreg_sdc";
+		regulator-type = "voltage";
+
+		startup-delay-us = <100>;
+
+		gpios = <&expander0 7 GPIO_ACTIVE_HIGH>;
+
+		states = <1800000 0x1
+			  2950000 0x0>;
 	};
 
 	vreg_s4a: vreg-s4a {
@@ -584,13 +592,11 @@
 
 &sdhc_2 {
 	vmmc-supply = <&dummy_reg>;
-	vqmmc-supply = <&dummy_s4a>;
+	vqmmc-supply = <&vreg_sdc>;
 
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc2_clk>, <&sdc2_cmd>, <&sdc2_data>, <&sd_cd>;
 	pinctrl-1 = <&sdc2_clk_sleep>, <&sdc2_cmd_sleep>, <&sdc2_data_sleep>, <&sd_cd>;
-
-	cap-sd-highspeed;
 
 	cd-gpios = <&tlmm 11 GPIO_ACTIVE_LOW>;
 	iommus = <&apps_smmu 0x0 0x0>;
