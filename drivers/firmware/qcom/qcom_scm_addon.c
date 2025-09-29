@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #define QCOM_SCM_MP_CP_SMMU_APERTURE_ID         0x1b
@@ -331,14 +332,14 @@ bool qcom_scm_kgsl_set_smmu_aperture_available(void)
 }
 EXPORT_SYMBOL_GPL(qcom_scm_kgsl_set_smmu_aperture_available);
 
-int qcom_scm_kgsl_set_smmu_aperture(unsigned int num_context_bank)
+static int __qcom_scm_kgsl_set_smmu_aperture(unsigned int reg_index, unsigned int num_context_bank)
 {
 	struct qcom_scm_desc desc = {
 		.svc = QCOM_SCM_SVC_MP,
 		.cmd = QCOM_SCM_MP_CP_SMMU_APERTURE_ID,
 		.owner = ARM_SMCCC_OWNER_SIP,
 		.args[0] = 0xffff0000
-				| ((QCOM_SCM_CP_APERTURE_REG & 0xff) << 8)
+				| ((reg_index & 0xff) << 8)
 				| (num_context_bank & 0xff),
 		.args[1] = 0xffffffff,
 		.args[2] = 0xffffffff,
@@ -347,9 +348,19 @@ int qcom_scm_kgsl_set_smmu_aperture(unsigned int num_context_bank)
 	};
 
 	return qcom_scm_call(__scm->dev, &desc, NULL);
+}
 
+int qcom_scm_kgsl_set_smmu_aperture(unsigned int num_context_bank)
+{
+	return __qcom_scm_kgsl_set_smmu_aperture(QCOM_SCM_CP_APERTURE_REG, num_context_bank);
 }
 EXPORT_SYMBOL_GPL(qcom_scm_kgsl_set_smmu_aperture);
+
+int qcom_scm_kgsl_set_smmu_gos_aperture(unsigned int reg_index, unsigned int num_context_bank)
+{
+	return __qcom_scm_kgsl_set_smmu_aperture(reg_index, num_context_bank);
+}
+EXPORT_SYMBOL_GPL(qcom_scm_kgsl_set_smmu_gos_aperture);
 
 int qcom_scm_kgsl_init_regs(u32 gpu_req)
 {
