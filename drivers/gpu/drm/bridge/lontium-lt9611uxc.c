@@ -60,6 +60,9 @@ struct lt9611uxc {
 	/* can be accessed from different threads, so protect this with ocm_lock */
 	bool hdmi_connected;
 	uint8_t fw_version;
+
+	struct device *codec_dev;
+	hdmi_codec_plugged_cb plugged_cb;
 };
 
 #define LT9611_PAGE_CONTROL	0xff
@@ -140,6 +143,21 @@ static void lt9611uxc_unlock(struct lt9611uxc *lt9611uxc)
 	mutex_unlock(&lt9611uxc->ocm_lock);
 }
 
+static void lt9611uxc_handle_plugged_change(struct lt9611uxc *lt9611uxc,
+					bool plugged)
+{
+	hdmi_codec_plugged_cb plugged_cb;
+	struct device *codec_dev;
+
+	mutex_lock(&lt9611uxc->ocm_lock);
+	plugged_cb = lt9611uxc->plugged_cb;
+	codec_dev = lt9611uxc->codec_dev;
+	mutex_unlock(&lt9611uxc->ocm_lock);
+
+	if (plugged_cb && codec_dev)
+		plugged_cb(codec_dev, plugged);
+}
+
 static irqreturn_t lt9611uxc_irq_thread_handler(int irq, void *dev_id)
 {
 	struct lt9611uxc *lt9611uxc = dev_id;
@@ -189,6 +207,9 @@ static void lt9611uxc_hpd_work(struct work_struct *work)
 				      connected ?
 				      connector_status_connected :
 				      connector_status_disconnected);
+
+		lt9611uxc_handle_plugged_change(lt9611uxc, connected);
+
 	}
 }
 
@@ -471,7 +492,7 @@ static enum drm_connector_status lt9611uxc_bridge_detect(struct drm_bridge *brid
 static int lt9611uxc_wait_for_edid(struct lt9611uxc *lt9611uxc)
 {
 	return wait_event_interruptible_timeout(lt9611uxc->wq, lt9611uxc->edid_read,
-			msecs_to_jiffies(500));
+			msecs_to_jiffies(2000));
 }
 
 static int lt9611uxc_get_edid_block(void *data, u8 *buf, unsigned int block, size_t len)
@@ -504,6 +525,7 @@ static struct edid *lt9611uxc_bridge_get_edid(struct drm_bridge *bridge,
 					      struct drm_connector *connector)
 {
 	struct lt9611uxc *lt9611uxc = bridge_to_lt9611uxc(bridge);
+	struct edid *edid;
 	int ret;
 
 	ret = lt9611uxc_wait_for_edid(lt9611uxc);
@@ -515,7 +537,21 @@ static struct edid *lt9611uxc_bridge_get_edid(struct drm_bridge *bridge,
 		return NULL;
 	}
 
-	return drm_do_get_edid(connector, lt9611uxc_get_edid_block, lt9611uxc);
+	if (!connector) {
+		dev_err(lt9611uxc->dev, "connector is NULL\n");
+		return NULL;
+	}
+
+	edid = drm_do_get_edid(connector, lt9611uxc_get_edid_block, lt9611uxc);
+	if (edid) {
+		drm_connector_update_edid_property(connector, edid);
+		mutex_lock(&lt9611uxc->ocm_lock);
+		memcpy(lt9611uxc->connector.eld, connector->eld,
+			sizeof(lt9611uxc->connector.eld));
+		mutex_unlock(&lt9611uxc->ocm_lock);
+	}
+
+	return edid;
 }
 
 static const struct drm_bridge_funcs lt9611uxc_bridge_funcs = {
@@ -632,10 +668,43 @@ static int lt9611uxc_hdmi_i2s_get_dai_id(struct snd_soc_component *component,
 	return -EINVAL;
 }
 
+static int lt9611uxc_audio_get_eld(struct device *dev,
+	void *data, uint8_t *buf, size_t len)
+{
+	struct lt9611uxc *lt9611uxc = (struct lt9611uxc *)data;
+
+	mutex_lock(&lt9611uxc->ocm_lock);
+	memcpy(buf, lt9611uxc->connector.eld,
+			min(sizeof(lt9611uxc->connector.eld), len));
+	mutex_unlock(&lt9611uxc->ocm_lock);
+
+	return 0;
+}
+
+static int lt9611uxc_audio_hook_plugged_cb(struct device *dev, void *data,
+		hdmi_codec_plugged_cb fn,
+		struct device *codec_dev)
+{
+	struct lt9611uxc *lt9611uxc = (struct lt9611uxc *)data;
+	bool plugged;
+
+	mutex_lock(&lt9611uxc->ocm_lock);
+	lt9611uxc->plugged_cb = fn;
+	lt9611uxc->codec_dev = codec_dev;
+	plugged = lt9611uxc->hdmi_connected;
+	mutex_unlock(&lt9611uxc->ocm_lock);
+
+	lt9611uxc_handle_plugged_change(lt9611uxc, plugged);
+
+	return 0;
+}
+
 static const struct hdmi_codec_ops lt9611uxc_codec_ops = {
-	.hw_params	= lt9611uxc_hdmi_hw_params,
-	.audio_shutdown = lt9611uxc_audio_shutdown,
-	.get_dai_id	= lt9611uxc_hdmi_i2s_get_dai_id,
+	.hw_params		= lt9611uxc_hdmi_hw_params,
+	.audio_shutdown		= lt9611uxc_audio_shutdown,
+	.get_dai_id		= lt9611uxc_hdmi_i2s_get_dai_id,
+	.get_eld		= lt9611uxc_audio_get_eld,
+	.hook_plugged_cb	= lt9611uxc_audio_hook_plugged_cb,
 };
 
 static int lt9611uxc_audio_init(struct device *dev, struct lt9611uxc *lt9611uxc)
@@ -994,6 +1063,13 @@ static void lt9611uxc_remove(struct i2c_client *client)
 	free_irq(client->irq, lt9611uxc);
 	cancel_work_sync(&lt9611uxc->work);
 	lt9611uxc_audio_exit(lt9611uxc);
+
+	/* Clear audio callback pointers */
+	mutex_lock(&lt9611uxc->ocm_lock);
+	lt9611uxc->plugged_cb = NULL;
+	lt9611uxc->codec_dev = NULL;
+	mutex_unlock(&lt9611uxc->ocm_lock);
+
 	drm_bridge_remove(&lt9611uxc->bridge);
 
 	mutex_destroy(&lt9611uxc->ocm_lock);
