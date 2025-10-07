@@ -1197,6 +1197,11 @@ static int qcom_ethqos_probe(struct platform_device *pdev)
 	ethqos->mac_base = stmmac_res.addr;
 
 	data = of_device_get_match_data(dev);
+	if (!data) {
+		dev_err(dev, "No match data found\n");
+		return -ENODEV;
+	}
+
 	ethqos->por = data->por;
 	ethqos->num_por = data->num_por;
 	ethqos->has_io_macro_ge_4 = data->has_io_macro_ge_4;
