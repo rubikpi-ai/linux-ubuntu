@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 
 #include <dt-bindings/sound/qcom,q6afe.h>
 #include <linux/input.h>
@@ -301,7 +301,8 @@ static void qcs9100_add_be_ops(struct snd_soc_card *card)
 	int i;
 
 	for_each_card_prelinks(card, i, link) {
-		if (link->no_pcm == 1 || link->num_codecs) {
+		/* Apply BE ops to backend links and links with codecs */
+		if (link->no_pcm == 1 || link->num_codecs > 0) {
 			link->init = qcs9100_snd_init;
 			link->be_hw_params_fixup = qcs9100_be_hw_params_fixup;
 			link->ops = &qcs9100_be_ops;
