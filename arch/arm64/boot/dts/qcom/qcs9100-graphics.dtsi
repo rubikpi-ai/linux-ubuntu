@@ -72,6 +72,7 @@
 
 		zap-shader {
 			memory-region = <&pil_gpu_mem>;
+			firmware-name = "qcom/sa8775p/a663_zap.mbn";
 		};
 
 		qcom,gpu-mempools {
