@@ -101,6 +101,13 @@ void dw25gmac_dma_init(struct stmmac_priv *priv, void __iomem *ioaddr,
 		value |= FIELD_PREP(XXVGMAC_RXPBL, dma_cfg->pbl);
 		wr_dma_ch_ind(ioaddr, MODE_RXEXTCFG, i, value);
 	}
+
+	if (dma_cfg->multi_irq_en) {
+		value = readl(ioaddr + XGMAC_DMA_MODE);
+		value &= ~XGMAC_DMA_MODE_INTM_MASK;
+		value |= (XGMAC_DMA_MODE_INTM_MODE1 << XGMAC_DMA_MODE_INTM_SHIFT);
+		writel(value, ioaddr + XGMAC_DMA_MODE);
+	}
 }
 
 void dw25gmac_dma_init_tx_chan(struct stmmac_priv *priv,
