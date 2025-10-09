@@ -2491,10 +2491,13 @@ static int fastrpc_req_mmap(struct fastrpc_user *fl, char __user *argp)
 			spin_unlock(&fl->lock);
 		}
 
-		if (copy_to_user((void __user *)argp, &req, sizeof(req))) {
-			err = -EFAULT;
-			goto err_assign;
-		}
+		if (copy_to_user((void __user *)argp, &req, sizeof(req)))
+			/*
+			 * The usercopy failed, but buf is already mapped
+			 * in the DSP and accessible for the current process.
+			 * Rely on the process exit path to do required cleanup.
+			 */
+			return -EFAULT;
 	} else {
 		err = fastrpc_map_create(fl, req.fd, req.size, 0, &map);
 		if (err) {
@@ -2534,10 +2537,13 @@ static int fastrpc_req_mmap(struct fastrpc_user *fl, char __user *argp)
 		/* let the client know the address to use */
 		req.vaddrout = rsp_msg.vaddr;
 
-		if (copy_to_user((void __user *)argp, &req, sizeof(req))) {
-			err = -EFAULT;
-			goto err_assign;
-		}
+		if (copy_to_user((void __user *)argp, &req, sizeof(req)))
+			/*
+			 * The usercopy failed, but buf is already mapped
+			 * in the DSP and accessible for the current process.
+			 * Rely on the process exit path to do required cleanup.
+			 */
+			return -EFAULT;
 	}
 	return 0;
 
@@ -2615,7 +2621,6 @@ static int fastrpc_req_mem_map(struct fastrpc_user *fl, char __user *argp)
 	struct fastrpc_invoke_v2 ioctl = {0};
 	struct fastrpc_mem_map_req_msg req_msg = { 0 };
 	struct fastrpc_mmap_rsp_msg rsp_msg = { 0 };
-	struct fastrpc_mem_unmap req_unmap = { 0 };
 	struct fastrpc_phy_page pages = { 0 };
 	struct fastrpc_mem_map req;
 	struct device *dev = fl->sctx->dev;
@@ -2672,13 +2677,13 @@ static int fastrpc_req_mem_map(struct fastrpc_user *fl, char __user *argp)
 	/* let the client know the address to use */
 	req.vaddrout = rsp_msg.vaddr;
 
-	if (copy_to_user((void __user *)argp, &req, sizeof(req))) {
-		/* unmap the memory and release the buffer */
-		req_unmap.vaddr = (uintptr_t) rsp_msg.vaddr;
-		req_unmap.length = map->len;
-		fastrpc_req_mem_unmap_impl(fl, &req_unmap);
+	if (copy_to_user((void __user *)argp, &req, sizeof(req)))
+		/*
+		 * The usercopy failed, but map is already mapped
+		 * in the DSP and accessible for the current process.
+		 * Rely on the process exit path to do required cleanup.
+		 */
 		return -EFAULT;
-	}
 
 	return 0;
 
