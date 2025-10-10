@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
  * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 /dts-v1/;
@@ -293,6 +294,34 @@
 
 &pmm8654au_3_thermal {
 	thermal-sensors = <&scmi23_sensor 3>;
+};
+
+&pmm8654au_4_thermal {
+	thermal-sensors = <&scmi23_sensor 14>;
+};
+
+&pmm8654au_5_thermal {
+	thermal-sensors = <&scmi23_sensor 10>;
+};
+
+&pmm8654au_6_thermal {
+	thermal-sensors = <&scmi23_sensor 11>;
+};
+
+&pmm8654au_7_thermal {
+	thermal-sensors = <&scmi23_sensor 9>;
+};
+
+&pmm8654au_8_thermal {
+	thermal-sensors = <&scmi23_sensor 7>;
+};
+
+&pmm8654au_9_thermal {
+	thermal-sensors = <&scmi23_sensor 13>;
+};
+
+&pmm8654au_10_thermal {
+	thermal-sensors = <&scmi23_sensor 20>;
 };
 
 &qupv3_id_0 {
