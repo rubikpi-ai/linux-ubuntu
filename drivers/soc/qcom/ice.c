@@ -598,6 +598,7 @@ struct qcom_ice *of_qcom_ice_get(struct device *dev)
 	void __iomem *base;
 	const __be32 *prop;
 	int len;
+	const char *status = NULL;
 
 
 	if (!dev || !dev->of_node)
@@ -625,6 +626,10 @@ struct qcom_ice *of_qcom_ice_get(struct device *dev)
 	 */
 	node = of_parse_phandle(dev->of_node, "qcom,ice", 0);
 	if (!node)
+		return ERR_PTR(-EOPNOTSUPP);
+
+	of_property_read_string(node, "status", &status);
+	if (status && strcmp(status, "disabled") == 0)
 		return ERR_PTR(-EOPNOTSUPP);
 
 	pdev = of_find_device_by_node(node);
