@@ -11,6 +11,7 @@
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/interrupt.h>
+#include <linux/iommu.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>
@@ -246,6 +247,22 @@ release_dtb_metadata:
 	return ret;
 }
 
+static void qcom_pas_unmap_carveout(struct rproc *rproc, phys_addr_t mem_phys, size_t size)
+{
+	if (rproc->has_iommu)
+		iommu_unmap(rproc->domain, mem_phys, size);
+}
+
+static int qcom_pas_map_carveout(struct rproc *rproc, phys_addr_t mem_phys, size_t size)
+{
+	int ret = 0;
+
+	if (rproc->has_iommu)
+		ret = iommu_map(rproc->domain, mem_phys, mem_phys, size,
+				IOMMU_READ | IOMMU_WRITE, GFP_KERNEL);
+	return ret;
+}
+
 static int adsp_start(struct rproc *rproc)
 {
 	struct qcom_adsp *adsp = rproc->priv;
@@ -280,11 +297,15 @@ static int adsp_start(struct rproc *rproc)
 	}
 
 	if (adsp->dtb_pas_id) {
-		ret = qcom_scm_pas_auth_and_reset(adsp->dtb_pas_id);
+		ret = qcom_pas_map_carveout(rproc, adsp->dtb_mem_phys, adsp->dtb_mem_size);
+		if (ret)
+			goto disable_px_supply;
+
+		ret = qcom_scm_pas_prepare_and_auth_reset(adsp->dtb_pas_ctx);
 		if (ret) {
 			dev_err(adsp->dev,
 				"failed to authenticate dtb image and release reset\n");
-			goto disable_px_supply;
+			goto unmap_dtb_carveout;
 		}
 	}
 
@@ -295,18 +316,22 @@ static int adsp_start(struct rproc *rproc)
 
 	qcom_pil_info_store(adsp->info_name, adsp->mem_phys, adsp->mem_size);
 
-	ret = qcom_scm_pas_auth_and_reset(adsp->pas_id);
+	ret = qcom_pas_map_carveout(rproc, adsp->mem_phys, adsp->mem_size);
+	if (ret)
+		goto release_pas_metadata;
+
+	ret = qcom_scm_pas_prepare_and_auth_reset(adsp->pas_ctx);
 	if (ret) {
 		dev_err(adsp->dev,
 			"failed to authenticate image and release reset\n");
-		goto release_pas_metadata;
+		goto unmap_carveout;
 	}
 
 	ret = qcom_q6v5_wait_for_start(&adsp->q6v5, msecs_to_jiffies(5000));
 	if (ret == -ETIMEDOUT) {
 		dev_err(adsp->dev, "start timed out\n");
 		qcom_scm_pas_shutdown(adsp->pas_id);
-		goto release_pas_metadata;
+		goto unmap_carveout;
 	}
 
 	qcom_scm_pas_metadata_release(adsp->pas_ctx);
@@ -318,10 +343,16 @@ static int adsp_start(struct rproc *rproc)
 
 	return 0;
 
+unmap_carveout:
+	qcom_pas_unmap_carveout(rproc, adsp->mem_phys, adsp->mem_size);
 release_pas_metadata:
 	qcom_scm_pas_metadata_release(adsp->pas_ctx);
 	if (adsp->dtb_pas_id)
 		qcom_scm_pas_metadata_release(adsp->dtb_pas_ctx);
+
+unmap_dtb_carveout:
+	if (adsp->dtb_pas_id)
+		qcom_pas_unmap_carveout(rproc, adsp->dtb_mem_phys, adsp->dtb_mem_size);
 disable_px_supply:
 	if (adsp->px_supply)
 		regulator_disable(adsp->px_supply);
@@ -377,7 +408,11 @@ static int adsp_stop(struct rproc *rproc)
 		ret = qcom_scm_pas_shutdown(adsp->dtb_pas_id);
 		if (ret)
 			dev_err(adsp->dev, "failed to shutdown dtb: %d\n", ret);
+
+		qcom_pas_unmap_carveout(rproc, adsp->dtb_mem_phys, adsp->dtb_mem_size);
 	}
+
+	qcom_pas_unmap_carveout(rproc, adsp->mem_phys, adsp->mem_size);
 
 	handover = qcom_q6v5_unprepare(&adsp->q6v5);
 	if (handover)
@@ -759,6 +794,7 @@ static int adsp_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
+	rproc->has_iommu = of_property_present(pdev->dev.of_node, "iommus");
 	rproc->auto_boot = desc->auto_boot;
 	rproc_coredump_set_elf_info(rproc, ELFCLASS32, EM_NONE);
 
@@ -837,6 +873,8 @@ static int adsp_probe(struct platform_device *pdev)
 		goto detach_proxy_pds;
 	}
 
+	adsp->pas_ctx->has_iommu = rproc->has_iommu;
+	adsp->dtb_pas_ctx->has_iommu = rproc->has_iommu;
 	ret = rproc_add(rproc);
 	if (ret)
 		goto remove_ssr_sysmon;
