@@ -496,23 +496,23 @@ int drm_of_get_data_lanes_count_ep(const struct device_node *port,
 EXPORT_SYMBOL_GPL(drm_of_get_data_lanes_count_ep);
 
 /**
-* drm_of_get_lane_mapping - Parse lane mapping from DT
-* @port: DT port node of the DSI/(e)DP source or sinky
-* @propname: property name ("lane-mapping")
-* @port_reg: identifier (value of reg property) of the parent port node
-* @reg: identifier (value of reg property) of the endpoint node
-* @min: minimum number of lanes expected
-* @max: maximum number of lanes expected
-* @lanes: array to fill with lane mapping
-*
-* Returns the number of lanes on success or a negative error code.
-*/
+ * drm_of_get_lane_mapping - Parse lane mapping from DT
+ * @port: DT port node of the DSI/(e)DP source or sinky
+ * @propname: property name ("lane-mapping")
+ * @port_reg: identifier (value of reg property) of the parent port node
+ * @reg: identifier (value of reg property) of the endpoint node
+ * @min: minimum number of lanes expected
+ * @max: maximum number of lanes expected
+ * @lanes: array to fill with lane mapping
+ *
+ * Returns the number of lanes on success or a negative error code.
+ */
 int drm_of_get_lane_mapping(const struct device_node *port,
-                           const char *propname,
-						   int port_reg, int reg,
-                           unsigned int min,
-                           unsigned int max,
-                           unsigned int *lanes)
+			    const char *propname,
+			    int port_reg, int reg,
+			    unsigned int min,
+			    unsigned int max,
+			    unsigned int *lanes)
 {
 	struct device_node *endpoint;
 	int count, ret;
@@ -522,13 +522,19 @@ int drm_of_get_lane_mapping(const struct device_node *port,
 		return -EINVAL;
 
 	count = of_property_count_u32_elems(endpoint, propname);
-	if (count < 0)
+	if (count < 0) {
+		of_node_put(endpoint);
 		return count;
-	if (count < min || count > max)
+	}
+	if (count < min || count > max) {
+		of_node_put(endpoint);
 		return -EINVAL;
+	}
 	ret = of_property_read_u32_array(endpoint, propname, lanes, count);
-	if (ret)
+	if (ret) {
+		of_node_put(endpoint);
 		return ret;
+	}
 	/* validate uniqueness of entries */
 	for (int i = 0; i < count; i++) {
 		if (lanes[i] >= max)
@@ -538,6 +544,8 @@ int drm_of_get_lane_mapping(const struct device_node *port,
 				return -EINVAL;
 		}
 	}
+	of_node_put(endpoint);
+
 	return count;
 }
 EXPORT_SYMBOL_GPL(drm_of_get_lane_mapping);
