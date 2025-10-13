@@ -37,6 +37,27 @@
 		#sound-dai-cells = <1>;
 	};
 
+	dp1-connector {
+		compatible = "dp-connector";
+		label = "DP";
+		type = "full-size";
+		hpd-gpios = <&tlmm 104 GPIO_ACTIVE_LOW>;
+
+		ports {
+			port@0 {
+				dp1_connector_in: endpoint {
+					remote-endpoint = <&mdss_dp_out>;
+				};
+			};
+
+			port@1 {
+				redriver_dp_in: endpoint {
+					remote-endpoint = <&redriver_ss_out>;
+				};
+			};
+		};
+	};
+
 	hdmi-connector {
 		status = "disabled";
 	};
@@ -130,6 +151,12 @@
 			};
 		};
 	};
+};
+
+&dp_hot_plug_det {
+	pins = "gpio104";
+	function = "gpio";
+	bias-disable;
 };
 
 &i2c1 {
@@ -317,6 +344,16 @@
 	status = "disabled";
 };
 
+&mdss_dp {
+	pinctrl-names = "default";
+	pinctrl-0 = <&dp_hot_plug_det>;
+};
+
+&mdss_dp_out {
+	lane-mapping = <1 0 3 2>;
+	remote-endpoint = <&dp1_connector_in>;
+};
+
 &mdss_dsi {
 	ports {
 		port@1 {
@@ -489,6 +526,10 @@
 			qcom,drive-strength = <3>;
 		};
 	};
+};
+
+&pmic_glink {
+	status = "disabled";
 };
 
 &pmic_glink_ss_in {
