@@ -113,8 +113,8 @@ struct qcom_adsp {
 	struct qcom_rproc_ssr ssr_subdev;
 	struct qcom_sysmon *sysmon;
 
-	struct qcom_scm_pas_metadata pas_metadata;
-	struct qcom_scm_pas_metadata dtb_pas_metadata;
+	struct qcom_scm_pas_context *pas_ctx;
+	struct qcom_scm_pas_context *dtb_pas_ctx;
 };
 
 static void adsp_segment_dump(struct rproc *rproc, struct rproc_dump_segment *segment,
@@ -206,9 +206,9 @@ static int adsp_unprepare(struct rproc *rproc)
 	 * auth_and_reset() was successful, but in other cases clean it up
 	 * here.
 	 */
-	qcom_scm_pas_metadata_release(&adsp->pas_metadata);
+	qcom_scm_pas_metadata_release(adsp->pas_ctx);
 	if (adsp->dtb_pas_id)
-		qcom_scm_pas_metadata_release(&adsp->dtb_pas_metadata);
+		qcom_scm_pas_metadata_release(adsp->dtb_pas_ctx);
 
 	return 0;
 }
@@ -231,7 +231,7 @@ static int adsp_load(struct rproc *rproc, const struct firmware *fw)
 
 		ret = qcom_mdt_pas_init(adsp->dev, adsp->dtb_firmware, adsp->dtb_firmware_name,
 					adsp->dtb_pas_id, adsp->dtb_mem_phys,
-					&adsp->dtb_pas_metadata);
+					adsp->dtb_pas_ctx);
 		if (ret)
 			goto release_dtb_firmware;
 
@@ -246,7 +246,7 @@ static int adsp_load(struct rproc *rproc, const struct firmware *fw)
 	return 0;
 
 release_dtb_metadata:
-	qcom_scm_pas_metadata_release(&adsp->dtb_pas_metadata);
+	qcom_scm_pas_metadata_release(adsp->dtb_pas_ctx);
 
 release_dtb_firmware:
 	release_firmware(adsp->dtb_firmware);
@@ -297,7 +297,7 @@ static int adsp_start(struct rproc *rproc)
 	}
 
 	ret = qcom_mdt_pas_init(adsp->dev, adsp->firmware, rproc->firmware, adsp->pas_id,
-				adsp->mem_phys, &adsp->pas_metadata);
+				adsp->mem_phys, adsp->pas_ctx);
 	if (ret)
 		goto disable_px_supply;
 
@@ -323,9 +323,9 @@ static int adsp_start(struct rproc *rproc)
 		goto release_pas_metadata;
 	}
 
-	qcom_scm_pas_metadata_release(&adsp->pas_metadata);
+	qcom_scm_pas_metadata_release(adsp->pas_ctx);
 	if (adsp->dtb_pas_id)
-		qcom_scm_pas_metadata_release(&adsp->dtb_pas_metadata);
+		qcom_scm_pas_metadata_release(adsp->dtb_pas_ctx);
 
 	/* Remove pointer to the loaded firmware, only valid in adsp_load() & adsp_start() */
 	adsp->firmware = NULL;
@@ -333,9 +333,9 @@ static int adsp_start(struct rproc *rproc)
 	return 0;
 
 release_pas_metadata:
-	qcom_scm_pas_metadata_release(&adsp->pas_metadata);
+	qcom_scm_pas_metadata_release(adsp->pas_ctx);
 	if (adsp->dtb_pas_id)
-		qcom_scm_pas_metadata_release(&adsp->dtb_pas_metadata);
+		qcom_scm_pas_metadata_release(adsp->dtb_pas_ctx);
 disable_px_supply:
 	if (adsp->px_supply)
 		regulator_disable(adsp->px_supply);
@@ -781,6 +781,21 @@ static int adsp_probe(struct platform_device *pdev)
 	}
 
 	qcom_add_ssr_subdev(rproc, &adsp->ssr_subdev, desc->ssr_name);
+
+	adsp->pas_ctx = qcom_scm_pas_context_init(adsp->dev, adsp->pas_id, adsp->mem_phys,
+						  adsp->mem_size);
+	if (IS_ERR(adsp->pas_ctx)) {
+		ret = PTR_ERR(adsp->pas_ctx);
+		goto detach_proxy_pds;
+	}
+
+	adsp->dtb_pas_ctx = qcom_scm_pas_context_init(adsp->dev, adsp->dtb_pas_id,
+						      adsp->dtb_mem_phys, adsp->dtb_mem_size);
+	if (IS_ERR(adsp->dtb_pas_ctx)) {
+		ret = PTR_ERR(adsp->dtb_pas_ctx);
+		goto detach_proxy_pds;
+	}
+
 	ret = rproc_add(rproc);
 	if (ret)
 		goto remove_ssr_sysmon;
