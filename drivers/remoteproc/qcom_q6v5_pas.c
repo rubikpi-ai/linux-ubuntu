@@ -229,16 +229,9 @@ static int adsp_load(struct rproc *rproc, const struct firmware *fw)
 			return ret;
 		}
 
-		ret = qcom_mdt_pas_init(adsp->dev, adsp->dtb_firmware, adsp->dtb_firmware_name,
-					adsp->dtb_pas_id, adsp->dtb_mem_phys,
-					adsp->dtb_pas_ctx);
-		if (ret)
-			goto release_dtb_firmware;
-
-		ret = qcom_mdt_load_no_init(adsp->dev, adsp->dtb_firmware, adsp->dtb_firmware_name,
-					    adsp->dtb_pas_id, adsp->dtb_mem_region,
-					    adsp->dtb_mem_phys, adsp->dtb_mem_size,
-					    &adsp->dtb_mem_reloc);
+		ret = qcom_mdt_pas_load(adsp->dtb_pas_ctx, adsp->dtb_firmware,
+					adsp->dtb_firmware_name, adsp->dtb_mem_region,
+					&adsp->dtb_mem_reloc);
 		if (ret)
 			goto release_dtb_metadata;
 	}
@@ -247,8 +240,6 @@ static int adsp_load(struct rproc *rproc, const struct firmware *fw)
 
 release_dtb_metadata:
 	qcom_scm_pas_metadata_release(adsp->dtb_pas_ctx);
-
-release_dtb_firmware:
 	release_firmware(adsp->dtb_firmware);
 
 	return ret;
@@ -296,14 +287,8 @@ static int adsp_start(struct rproc *rproc)
 		}
 	}
 
-	ret = qcom_mdt_pas_init(adsp->dev, adsp->firmware, rproc->firmware, adsp->pas_id,
-				adsp->mem_phys, adsp->pas_ctx);
-	if (ret)
-		goto disable_px_supply;
-
-	ret = qcom_mdt_load_no_init(adsp->dev, adsp->firmware, rproc->firmware, adsp->pas_id,
-				    adsp->mem_region, adsp->mem_phys, adsp->mem_size,
-				    &adsp->mem_reloc);
+	ret = qcom_mdt_pas_load(adsp->pas_ctx, adsp->firmware, rproc->firmware,
+				adsp->mem_region, &adsp->mem_reloc);
 	if (ret)
 		goto release_pas_metadata;
 
