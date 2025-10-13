@@ -26,6 +26,9 @@
 #define XPCSERR(fmt, args...) \
 	pr_err(DRV_NAME " %s:%d " fmt, __func__, __LINE__, ## args)
 
+#define XPCSDBG(fmt, args...) \
+	pr_debug(DRV_NAME " %s:%d " fmt, __func__, __LINE__, ## args)
+
 static const int xpcs_usxgmii_features[] = {
 	ETHTOOL_LINK_MODE_Pause_BIT,
 	ETHTOOL_LINK_MODE_Asym_Pause_BIT,
@@ -445,6 +448,80 @@ static int qcom_xpcs_config(struct phylink_pcs *pcs, unsigned int mode, phy_inte
 	return qcom_xpcs_do_config(qxpcs, interface);
 }
 
+static int qcom_xpcs_get_link_status(struct dw_xpcs_qcom *qxpcs,
+				     struct phylink_link_state *state)
+{
+	unsigned int retries = 32;
+	unsigned int count = 0;
+	int ret = -EFAULT;
+
+	if (!qxpcs)
+		goto failure;
+
+/* Try to recover the link before posting link failure */
+recover:
+	count++;
+
+	if (count >= retries) {
+		XPCSERR("Link recovery failed\n");
+		goto failure;
+	}
+
+	/* Reset the link to make sure XPCS is aligned to Serdes for accuracy */
+	ret = qcom_xpcs_read(qxpcs, DW_VR_MII_PCS_DIG_CTRL1);
+	if (ret < 0)
+		goto failure;
+
+	qcom_xpcs_write(qxpcs, DW_VR_MII_PCS_DIG_CTRL1, ret | SOFT_RST);
+
+	ret = qcom_xpcs_poll_reset(qxpcs, DW_VR_MII_PCS_DIG_CTRL1, SW_RST_BIT_STATUS);
+
+	if (ret < 0) {
+		XPCSDBG("Poll reset failed\n");
+		goto recover;
+	}
+
+	if (!qxpcs->intr_en) {
+		switch (qxpcs->phy_interface) {
+		case PHY_INTERFACE_MODE_USXGMII:
+			/* Check for Link status */
+			ret = qcom_xpcs_poll_bit_set(qxpcs,
+						     DW_SR_MII_MMD_STS, DW_SR_MII_STS_LINK_STS);
+			if (ret < 0)
+				goto recover;
+			fallthrough;
+		case PHY_INTERFACE_MODE_10GBASER:
+		case PHY_INTERFACE_MODE_5GBASER:
+			/* Check for remote Link status */
+			ret = qcom_xpcs_poll_bit_set(qxpcs,
+						     DW_SR_MII_PCS_STS1, DW_SR_XS_PCS_STS1);
+			if (ret < 0) {
+				XPCSDBG("Link is down try to recover\n");
+				goto recover;
+			}
+			/* Check for block lock status */
+			ret = qcom_xpcs_poll_bit_set(qxpcs,
+						     DW_SR_MII_PCS_KR_STS2, DW_LAT_BL);
+			if (ret < 0) {
+				XPCSDBG("DW_LAT_BL goto recover\n");
+				goto recover;
+			}
+			/* Check for block error  status */
+			ret = qcom_xpcs_poll_reset(qxpcs, DW_SR_MII_PCS_KR_STS2, DW_ERR_BLK);
+			if (ret < 0) {
+				XPCSDBG("DW_ERR_BLK goto recover\n");
+				goto recover;
+			}
+		}
+		state->link = true;
+		return 0;
+	}
+
+failure:
+	state->link = false;
+	return ret;
+}
+
 static int xpcs_get_state_c37_usxgmii(struct dw_xpcs_qcom *qxpcs,
 				      struct phylink_link_state *state)
 {
@@ -475,9 +552,17 @@ static void qcom_xpcs_get_state(struct phylink_pcs *pcs,
 
 	switch (compat->an_mode) {
 	case DW_AN_C37_USXGMII:
-		ret = xpcs_get_state_c37_usxgmii(qxpcs, state);
+		if (!qxpcs->intr_en)
+			ret = qcom_xpcs_get_link_status(qxpcs, state);
+		else
+			ret = xpcs_get_state_c37_usxgmii(qxpcs, state);
 		if (ret < 0)
 			XPCSERR("Failed to get USXGMII state\n");
+		break;
+	case DW_10GBASER:
+		ret = qcom_xpcs_get_link_status(qxpcs, state);
+		if (ret < 0)
+			XPCSERR("Failed to get BaseR state\n");
 		break;
 	default:
 		return;
@@ -542,7 +627,7 @@ static int qcom_xpcs_enable(struct phylink_pcs *pcs)
 	struct dw_xpcs_qcom *qxpcs = phylink_pcs_to_xpcs(pcs);
 	int ret = 0;
 
-	if (qxpcs->pcs_fusa_intr)
+	if (qxpcs->pcs_fusa_intr > 0)
 		ret = qcom_xpcs_fusa_intr_enable(qxpcs);
 
 	return ret;
@@ -552,7 +637,7 @@ static void qcom_xpcs_disable(struct phylink_pcs *pcs)
 {
 	struct dw_xpcs_qcom *qxpcs = phylink_pcs_to_xpcs(pcs);
 
-	if (qxpcs->pcs_fusa_intr)
+	if (qxpcs->pcs_fusa_intr > 0)
 		qcom_xpcs_fusa_intr_disable(qxpcs);
 }
 
