@@ -34,6 +34,7 @@ struct stmmac_resources {
 	int sfty_irq;
 	int sfty_ce_irq;
 	int sfty_ue_irq;
+	int tx_rx_irq[STMMAC_CH_MAX];
 	int rx_irq[MTL_MAX_RX_QUEUES];
 	int tx_irq[MTL_MAX_TX_QUEUES];
 };
@@ -305,6 +306,7 @@ struct stmmac_priv {
 	int sfty_irq;
 	int sfty_ce_irq;
 	int sfty_ue_irq;
+	int tx_rx_irq[STMMAC_CH_MAX];
 	int rx_irq[MTL_MAX_RX_QUEUES];
 	int tx_irq[MTL_MAX_TX_QUEUES];
 	/*irq name */
@@ -314,6 +316,7 @@ struct stmmac_priv {
 	char int_name_sfty[IFNAMSIZ + 10];
 	char int_name_sfty_ce[IFNAMSIZ + 10];
 	char int_name_sfty_ue[IFNAMSIZ + 10];
+	char int_name_tx_rx_irq[STMMAC_CH_MAX][IFNAMSIZ + 18];
 	char int_name_rx_irq[MTL_MAX_TX_QUEUES][IFNAMSIZ + 14];
 	char int_name_tx_irq[MTL_MAX_TX_QUEUES][IFNAMSIZ + 18];
 
