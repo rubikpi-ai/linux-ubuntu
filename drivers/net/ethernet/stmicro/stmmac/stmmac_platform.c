@@ -758,6 +758,17 @@ int stmmac_get_platform_resources(struct platform_device *pdev,
 		dev_info(&pdev->dev, "IRQ sfty not found\n");
 	}
 
+	/* For RX and TX Channel */
+	for (i = 0; i < STMMAC_CH_MAX; i++) {
+		snprintf(irq_name, sizeof(irq_name), "dma_tx_rx%i", i);
+		irq = platform_get_irq_byname_optional(pdev, irq_name);
+		if (irq == -EPROBE_DEFER)
+			return irq;
+		else if (irq < 0)
+			continue;
+
+		stmmac_res->tx_rx_irq[i] = irq;
+	}
 	/* For RX Channel */
 	for (i = 0; i < MTL_MAX_RX_QUEUES; i++) {
 		snprintf(irq_name, sizeof(irq_name), "dma_rx%i", i);
