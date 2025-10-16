@@ -1315,6 +1315,10 @@ static int qcom_ethqos_probe(struct platform_device *pdev)
 	if (data->dma_addr_width)
 		plat_dat->host_dma_width = data->dma_addr_width;
 
+	if (stmmac_res.tx_rx_irq[0] > 0 ||
+	    (stmmac_res.rx_irq[0] > 0 && stmmac_res.tx_irq[0] > 0))
+		plat_dat->flags |= STMMAC_FLAG_MULTI_IRQ_EN;
+
 	if (ethqos->serdes_phy) {
 		plat_dat->serdes_powerup = qcom_ethqos_serdes_powerup;
 		plat_dat->serdes_powerdown  = qcom_ethqos_serdes_powerdown;
