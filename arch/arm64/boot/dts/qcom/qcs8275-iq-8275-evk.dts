@@ -51,7 +51,7 @@
 
 		startup-delay-us = <100>;
 
-		gpios = <&expander0 7 GPIO_ACTIVE_HIGH>;
+		gpios = <&expander1 7 GPIO_ACTIVE_HIGH>;
 
 		states = <1800000 0x1
 			  2950000 0x0>;
