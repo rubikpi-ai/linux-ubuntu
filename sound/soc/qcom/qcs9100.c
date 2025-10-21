@@ -104,8 +104,10 @@ static int qcs9100_snd_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
+	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
 	struct qcs9100_snd_data *pdata = snd_soc_card_get_drvdata(rtd->card);
 	int ret = 0;
+	int mclk = 0;
 
 	switch (cpu_dai->id) {
 	case TERTIARY_MI2S_RX:
@@ -133,6 +135,32 @@ static int qcs9100_snd_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		break;
+	}
+
+	switch (params_rate(params)) {
+	case 8000:
+	case 16000:
+	case 24000:
+	case 32000:
+	case 48000:
+	case 64000:
+	case 96000:
+		mclk = 12288000;
+		break;
+	case 11025:
+	case 22050:
+	case 44100:
+	case 88200:
+		mclk = 11289600;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	ret = snd_soc_dai_set_sysclk(codec_dai, 0, mclk, SND_SOC_CLOCK_IN);
+	if (ret) {
+		dev_err(codec_dai->dev, "Can't set codec DAI clock: %d\n", ret);
+		return ret;
 	}
 
 	return qcom_snd_sdw_hw_params(substream, params, &pdata->sruntime[cpu_dai->id]);
@@ -209,6 +237,31 @@ static const struct snd_soc_dapm_route iq8_8275_evk_dapm_routes[] = {
 	{"TX", NULL, "MI2S_OUT_PINCTRL"},
 };
 
+static const struct snd_soc_dapm_widget monaco_monza_dapm_widgets[] = {
+	SND_SOC_DAPM_HP("Headphone", NULL),
+	SND_SOC_DAPM_MIC("Headset Mic", NULL),
+	SND_SOC_DAPM_MIC("Int Mic", NULL),
+	SND_SOC_DAPM_SPK("Speaker", NULL),
+};
+
+static const struct snd_soc_dapm_route monaco_monza_dapm_routes[] = {
+	{"IN34", NULL, "Headset Mic"},
+	{"Headset Mic", NULL, "MICBIAS"},
+	{"DMICL", NULL, "Int Mic"},
+	{"Int Mic", NULL, "MICBIAS"},
+	{"Headphone", NULL, "HPL"},
+	{"Headphone", NULL, "HPR"},
+	{"Speaker", NULL, "SPKL"},
+	{"Speaker", NULL, "SPKR"},
+};
+
+static const struct snd_kcontrol_new monaco_monza_max98090_controls[] = {
+	SOC_DAPM_PIN_SWITCH("Headset Mic"),
+	SOC_DAPM_PIN_SWITCH("Headphone"),
+	SOC_DAPM_PIN_SWITCH("Int Mic"),
+	SOC_DAPM_PIN_SWITCH("Speaker"),
+};
+
 static const struct snd_soc_dapm_widget qcs8300_dapm_widgets[] = {
 	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
 	SND_SOC_DAPM_PINCTRL("STUB_AIF2_PINCTRL", "stub_aif2_active", "stub_aif2_sleep"),
@@ -270,6 +323,16 @@ static struct snd_soc_card snd_soc_iq8_8275_evk_data = {
 	.num_dapm_routes = ARRAY_SIZE(iq8_8275_evk_dapm_routes),
 };
 
+static struct snd_soc_card snd_soc_monaco_monza_data = {
+	.name = "monaco-monza",
+	.dapm_widgets = monaco_monza_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(monaco_monza_dapm_widgets),
+	.dapm_routes = monaco_monza_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(monaco_monza_dapm_routes),
+	.controls = monaco_monza_max98090_controls,
+	.num_controls = ARRAY_SIZE(monaco_monza_max98090_controls),
+};
+
 static struct snd_soc_card snd_soc_qcs8300_data = {
 	.name = "qcs8300-ride",
 	.driver_name = "qcs8300",
@@ -308,6 +371,8 @@ static void qcs9100_add_be_ops(struct snd_soc_card *card)
 			link->init = qcs9100_snd_init;
 			link->be_hw_params_fixup = qcs9100_be_hw_params_fixup;
 			link->ops = &qcs9100_be_ops;
+			link->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF
+				| SND_SOC_DAIFMT_CBM_CFM;
 		}
 	}
 }
@@ -361,6 +426,7 @@ static const struct of_device_id snd_qcs9100_dt_match[] = {
 	{.compatible = "qcom,qcs8300-sndcard", .data = &snd_soc_qcs8300_data},
 	{.compatible = "qcom,qcs9100-sndcard", .data = &snd_soc_qcs9100_data},
 	{.compatible = "qcom,qcs9075-rb8-sndcard", .data = &snd_soc_qcs9075_rb8_data},
+	{.compatible = "qcom,monaco-monza-sndcard", .data = &snd_soc_monaco_monza_data},
 	{}
 };
 
