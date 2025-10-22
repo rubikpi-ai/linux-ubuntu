@@ -77,7 +77,7 @@
 		};
 
 		dp0-dai-link {
-			link-name = "DISPLAY_PORT-RX0";
+			link-name = "DISPLAY_PORT-RX";
 
 			cpu {
 				sound-dai = <&q6apmbedai DISPLAY_PORT_RX_0>;
@@ -85,18 +85,6 @@
 
 			codec {
 				sound-dai = <&mdss0_dp0>;
-			};
-		};
-
-		dp1-dai-link {
-			link-name = "DISPLAY_PORT-RX1";
-
-			cpu {
-				sound-dai = <&q6apmbedai DISPLAY_PORT_RX_1>;
-			};
-
-			codec {
-				sound-dai = <&mdss0_dp1>;
 			};
 		};
 
