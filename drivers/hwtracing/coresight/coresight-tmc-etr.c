@@ -880,6 +880,7 @@ static struct etr_buf *tmc_alloc_etr_buf(struct tmc_drvdata *drvdata,
 					 int node, void **pages)
 {
 	int rc = -ENOMEM;
+	bool has_sw_usb;
 	bool has_etr_sg, has_iommu;
 	bool has_sg, has_catu;
 	struct etr_buf *etr_buf;
@@ -888,6 +889,7 @@ static struct etr_buf *tmc_alloc_etr_buf(struct tmc_drvdata *drvdata,
 	has_etr_sg = tmc_etr_has_cap(drvdata, TMC_ETR_SG);
 	has_iommu = iommu_get_domain_for_dev(dev->parent);
 	has_catu = !!tmc_etr_get_catu_device(drvdata);
+	has_sw_usb = fwnode_property_present(dev->fwnode, "qcom,sw-usb");
 
 	has_sg = has_catu || has_etr_sg;
 
@@ -909,7 +911,7 @@ static struct etr_buf *tmc_alloc_etr_buf(struct tmc_drvdata *drvdata,
 	 * Fallback to available mechanisms.
 	 *
 	 */
-	if (!pages && (drvdata->out_mode != TMC_ETR_OUT_MODE_USB) &&
+	if (!pages && !has_sw_usb &&
 	    (!has_sg || has_iommu || size < SZ_1M))
 		rc = tmc_etr_mode_alloc_buf(ETR_MODE_FLAT, drvdata,
 					    etr_buf, node, pages);
