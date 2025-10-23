@@ -34,7 +34,6 @@
 #include "remoteproc_internal.h"
 
 #define ADSP_DECRYPT_SHUTDOWN_DELAY_MS	100
-#define MAX_RSCTABLE_SIZE	SZ_16K
 
 #define MAX_ASSIGN_COUNT 3
 
