@@ -3997,6 +3997,7 @@ static void btusb_generate_qca_nvm_name(char *fwname, size_t max_size,
 	u16 board_id = 0;
 
 	fw_subdir = qca_get_fw_subdirectory(ver);
+
 	if (with_bid)
 		board_id = qca_extract_board_id(ver);
 
