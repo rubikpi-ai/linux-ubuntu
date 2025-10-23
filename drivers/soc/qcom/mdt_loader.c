@@ -10,12 +10,32 @@
 #include <linux/device.h>
 #include <linux/elf.h>
 #include <linux/firmware.h>
+#include <linux/iommu.h>
 #include <linux/kernel.h>
+#include <linux/hashtable.h>
+#include <linux/list.h>
 #include <linux/module.h>
 #include <linux/firmware/qcom/qcom_scm.h>
+#include <linux/remoteproc.h>
 #include <linux/sizes.h>
 #include <linux/slab.h>
 #include <linux/soc/qcom/mdt_loader.h>
+
+#define RSC_TABLE_HASH_BITS	     5  // 32 buckets
+
+DEFINE_HASHTABLE(qcom_pas_rsc_table_map, RSC_TABLE_HASH_BITS);
+
+struct qcom_pas_devmem_rsc {
+	struct fw_rsc_devmem *devmem;
+	struct list_head node;
+};
+
+struct qcom_pas_rsc_table_info {
+	struct resource_table *rsc_table;
+	struct list_head devmem_list;
+	struct hlist_node hnode;
+	int pas_id;
+};
 
 static bool mdt_phdr_valid(const struct elf32_phdr *phdr)
 {
@@ -480,6 +500,159 @@ int qcom_mdt_pas_load(struct qcom_scm_pas_context *ctx, const struct firmware *f
 			       ctx->mem_phys, ctx->mem_size, reloc_base, false);
 }
 EXPORT_SYMBOL_GPL(qcom_mdt_pas_load);
+
+static void __qcom_mdt_unmap_devmem_rscs(struct qcom_pas_rsc_table_info *info,
+					 struct iommu_domain *domain)
+{
+	struct qcom_pas_devmem_rsc *entry, *tmp;
+
+	list_for_each_entry_safe(entry, tmp, &info->devmem_list, node) {
+		iommu_unmap(domain, entry->devmem->da, entry->devmem->len);
+		list_del(&entry->node);
+		kfree(entry);
+	}
+}
+
+void qcom_mdt_pas_unmap_devmem_rscs(struct qcom_scm_pas_context *ctx, struct iommu_domain *domain)
+{
+	struct qcom_pas_rsc_table_info *info;
+
+	if (!ctx || !domain)
+		return;
+
+	if (!ctx->has_iommu)
+		return;
+
+	hash_for_each_possible(qcom_pas_rsc_table_map, info, hnode, ctx->pas_id) {
+		if (info->pas_id == ctx->pas_id)
+			__qcom_mdt_unmap_devmem_rscs(info, domain);
+
+		hash_del(&info->hnode);
+		kfree(info->rsc_table);
+	}
+}
+EXPORT_SYMBOL_GPL(qcom_mdt_pas_unmap_devmem_rscs);
+
+static int __qcom_mdt_map_devmem_rscs(struct device *dev, void *ptr, int avail,
+				      struct iommu_domain *domain,
+				      struct qcom_pas_rsc_table_info *info)
+{
+	struct qcom_pas_devmem_rsc *devmem_info;
+	struct fw_rsc_devmem *rsc = ptr;
+	int ret;
+
+	if (sizeof(*rsc) > avail) {
+		dev_err(dev, "devmem rsc is truncated\n");
+		return -EINVAL;
+	}
+
+	if (rsc->reserved) {
+		dev_err(dev, "devmem rsc has non zero reserved bytes\n");
+		return -EINVAL;
+	}
+
+	devmem_info = kzalloc(sizeof(*devmem_info), GFP_KERNEL);
+	if (!devmem_info)
+		return -ENOMEM;
+
+	ret = iommu_map(domain, rsc->da, rsc->pa, rsc->len, rsc->flags, GFP_KERNEL);
+	if (ret) {
+		dev_err(dev, "failed to map devmem: %d\n", ret);
+		kfree(devmem_info);
+		return ret;
+	}
+
+	devmem_info->devmem = rsc;
+	list_add_tail(&devmem_info->node, &info->devmem_list);
+
+	dev_dbg(dev, "mapped devmem pa 0x%x, da 0x%x, len 0x%x\n",
+		rsc->pa, rsc->da, rsc->len);
+
+	return ret;
+}
+
+/**
+ * qcom_mdt_pas_map_devmem_rscs() - IOMMU map device memory resources for
+ *				     a given Peripheral
+ *
+ * This routine should be called when it is known that the SoC is running
+ * with Linux as hypervisor at EL2 where it is in control of the IOMMU map
+ * of the resources for the remote processors.
+ *
+ * @ctx:	    pas context data structure
+ * @domain:	    IOMMU domain
+ * @input_rt:	    input resource table buffer when resource table is part of firmware
+ *		    binary, if not, pass NULL
+ * @input_rt_size:  input resource table size, if input_rt is NULL, then pass zero.
+ *
+ * Returns 0 on success, negative errno otherwise.
+ *
+ */
+int qcom_mdt_pas_map_devmem_rscs(struct qcom_scm_pas_context *ctx, struct iommu_domain *domain,
+				 void *input_rt, size_t input_rt_size)
+{
+	size_t output_rt_size = MAX_RSCTABLE_SIZE;
+	struct resource_table *rsc_table;
+	struct qcom_pas_rsc_table_info *info;
+	void *output_rt;
+	int ret;
+	int i;
+
+	if (!ctx || !domain)
+		return -EINVAL;
+
+	if (!ctx->has_iommu)
+		return 0;
+
+	ret = qcom_scm_pas_get_rsc_table(ctx, input_rt, input_rt_size, &output_rt,
+					 &output_rt_size);
+	if (ret) {
+		dev_err(ctx->dev, "error %d getting resource_table\n", ret);
+		return ret;
+	}
+
+	rsc_table = output_rt;
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) {
+		ret = -ENOMEM;
+		goto free_output_rt;
+	}
+
+	info->pas_id = ctx->pas_id;
+	info->rsc_table = output_rt;
+	INIT_LIST_HEAD(&info->devmem_list);
+	for (i = 0; i < rsc_table->num; i++) {
+		int offset = rsc_table->offset[i];
+		struct fw_rsc_hdr *hdr = (void *)rsc_table + offset;
+		int avail = output_rt_size - offset - sizeof(*hdr);
+		void *ptr = (void *)hdr + sizeof(*hdr);
+
+		if (avail < 0) {
+			dev_err(ctx->dev, "rsc table is truncated\n");
+			ret = -EINVAL;
+			goto undo_mapping;
+		}
+
+		if (hdr->type == RSC_DEVMEM) {
+			ret = __qcom_mdt_map_devmem_rscs(ctx->dev, ptr, avail, domain, info);
+			if (ret)
+				goto undo_mapping;
+		}
+	}
+
+	hash_add(qcom_pas_rsc_table_map, &info->hnode, ctx->pas_id);
+
+	return 0;
+
+undo_mapping:
+	__qcom_mdt_unmap_devmem_rscs(info, domain);
+
+free_output_rt:
+	kfree(output_rt);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(qcom_mdt_pas_map_devmem_rscs);
 
 MODULE_DESCRIPTION("Firmware parser for Qualcomm MDT format");
 MODULE_LICENSE("GPL v2");
