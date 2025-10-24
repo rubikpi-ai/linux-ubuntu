@@ -622,6 +622,15 @@ static int qca808x_led_polarity_set(struct phy_device *phydev, int index,
 			      active_low ? 0 : QCA808X_LED_ACTIVE_HIGH);
 }
 
+static int qca808x_get_rate_matching(struct phy_device *phydev,
+				     phy_interface_t iface)
+{
+	if (iface == PHY_INTERFACE_MODE_2500BASEX)
+		return RATE_MATCH_PAUSE;
+
+	return RATE_MATCH_NONE;
+}
+
 static struct phy_driver qca808x_driver[] = {
 {
 	/* Qualcomm QCA8081 */
@@ -651,6 +660,7 @@ static struct phy_driver qca808x_driver[] = {
 	.led_hw_control_set	= qca808x_led_hw_control_set,
 	.led_hw_control_get	= qca808x_led_hw_control_get,
 	.led_polarity_set	= qca808x_led_polarity_set,
+	.get_rate_matching	= qca808x_get_rate_matching,
 }, };
 
 module_phy_driver(qca808x_driver);
