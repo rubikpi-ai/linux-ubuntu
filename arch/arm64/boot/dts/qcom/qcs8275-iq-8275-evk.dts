@@ -321,50 +321,6 @@
 	};
 };
 
-&eud {
-	usb-role-switch;
-	status = "okay";
-};
-
-&eud_con {
-	remote-endpoint = <&hd3ss3220_ep>;
-};
-
-&eud_ep {
-	remote-endpoint = <&usb_role_switch>;
-};
-
-&i2c0 {
-	pinctrl-0 = <&qup_i2c0_default>;
-	pinctrl-names = "default";
-	status = "okay";
-
-	hd3ss3220@67 {
-		compatible = "ti,hd3ss3220";
-		reg = <0x67>;
-		interrupts = < 45 IRQ_TYPE_EDGE_FALLING>;
-		wakeup-source;
-
-		connector@0 {
-			compatible = "usb-c-connector";
-			label = "USB-C";
-			data-role = "dual";
-			power-role = "dual";
-
-			ports {
-				#address-cells = <1>;
-				#size-cells = <0>;
-
-				port@0 {
-					reg = <0>;
-					hd3ss3220_ep: endpoint {
-						remote-endpoint = <&eud_con>;
-					};
-				};
-			};
-		};
-	};
-};
 
 &gpu {
 	status = "okay";
@@ -427,11 +383,11 @@
 		gpio-controller;
 		reg = <0x39>;
 
-		io-exp-hog2 {
+		io-exp-hog3 {
 			gpio-hog;
-			gpios = <2 GPIO_ACTIVE_HIGH>;
+			gpios = <3 GPIO_ACTIVE_HIGH>;
 			output-low;
-			line-name = "io_exp_gpio2";
+			line-name = "io_exp_gpio3";
 		};
 	};
 
@@ -462,6 +418,13 @@
 		gpio-controller;
 		reg = <0x3d>;
 		vcc-supply = <&vreg_s4a>;
+
+		io-exp-hog5 {
+			gpio-hog;
+			gpios = <5 GPIO_ACTIVE_HIGH>;
+			output-high;
+			line-name = "usb1-ss-high-gpio5";
+		};
 	};
 
 	expander6: pca953x@3e {
@@ -635,6 +598,25 @@
 };
 
 &soc {
+	connector_usb1: connector-usb1 {
+		compatible = "gpio-usb-b-connector";
+		id-gpio = <&tlmm 8 GPIO_ACTIVE_HIGH>;
+		vbus-supply = <&vbus_supply_regulator_1>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb1_id_det_default>;
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				usb1_port_connector: endpoint {
+					remote-endpoint = <&usb1_port>;
+				};
+			};
+		};
+	};
+
 	connector_usb2: connector-usb2 {
 		compatible = "gpio-usb-b-connector";
 		id-gpio = <&pmm8620au_0_gpios 9 GPIO_ACTIVE_HIGH>;
@@ -654,10 +636,10 @@
 		};
 	};
 
-	vbus_supply_regulator_0: vbus_supply_regulator_0 {
+	vbus_supply_regulator_1: vbus_supply_regulator_1 {
 		compatible = "regulator-fixed";
-		regulator-name = "vbus_supply_0";
-		gpio = <&expander1 2 GPIO_ACTIVE_HIGH>;
+		regulator-name = "vbus_supply_1";
+		gpio = <&expander1 3 GPIO_ACTIVE_HIGH>;
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 		enable-active-high;
@@ -709,6 +691,20 @@
 			drive-strength = <16>;
 			bias-pull-up;
 		};
+	};
+
+	gpio7_hog: gpio7-hog {
+		gpio-hog;
+		gpios = <7 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "bootup-high-gpio7";
+	};
+
+	gpio14_hog: gpio14-hog {
+		gpio-hog;
+		gpios = <14 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "usb1-hs-high-gpio14";
 	};
 
 	pcie0_default_state: pcie0-default-state {
@@ -819,6 +815,13 @@
 		function = "gpio";
 		bias-pull-up;
 	};
+
+	usb1_id_det_default: usb1-id-det-default {
+		pins = "gpio8";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+	};
 };
 
 &uart2 {
@@ -879,11 +882,9 @@
 
 	usb-role-switch;
 	dr_mode = "otg";
-
+	role-switch-default-mode = "host";
 	qcom,enable-rt;
 	wakeup-source;
-	maximum-speed = "super-speed";
-	vbus_dwc3-supply = <&vbus_supply_regulator_0>;
 	status = "okay";
 
 	ports {
@@ -893,8 +894,8 @@
 
 		port@0 {
 			reg = <0>;
-			usb_role_switch: endpoint {
-				remote-endpoint = <&eud_ep>;
+			usb1_port: endpoint {
+				remote-endpoint = <&usb1_port_connector>;
 			};
 		};
 
