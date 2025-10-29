@@ -650,7 +650,8 @@ static int stmmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 		   __func__, config.flags, config.tx_type, config.rx_filter);
 
 	if (config.tx_type != HWTSTAMP_TX_OFF &&
-	    config.tx_type != HWTSTAMP_TX_ON)
+	    config.tx_type != HWTSTAMP_TX_ON &&
+	    config.tx_type != HWTSTAMP_TX_EXTERNAL_TIME_SRC)
 		return -ERANGE;
 
 	if (priv->adv_ts) {
@@ -791,6 +792,11 @@ static int stmmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 	priv->hwts_tx_en = config.tx_type == HWTSTAMP_TX_ON;
 
 	priv->systime_flags = STMMAC_HWTS_ACTIVE;
+
+	if (config.tx_type == HWTSTAMP_TX_EXTERNAL_TIME_SRC) {
+		priv->hwts_tx_en = 1;
+		priv->systime_flags |= PTP_TCR_ESTI;
+	}
 
 	if (priv->hwts_tx_en || priv->hwts_rx_en) {
 		priv->systime_flags |= tstamp_all | ptp_v2 |
