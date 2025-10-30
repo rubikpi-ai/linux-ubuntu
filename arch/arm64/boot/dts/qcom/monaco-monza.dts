@@ -303,6 +303,12 @@
 };
 
 &qupv3_id_0 {
+	firmware-name = "qcom/qcs8300/qupv3fw.elf";
+	status = "okay";
+};
+
+&qupv3_id_1 {
+	firmware-name = "qcom/qcs8300/qupv3fw.elf";
 	status = "okay";
 };
 
@@ -413,6 +419,14 @@
 &sdc1_clk {
 	bias-disable;
 	drive-strength = <16>;
+};
+
+&gpi_dma0 {
+	status = "okay";
+};
+
+&gpi_dma1 {
+	status = "okay";
 };
 
 &sdc1_cmd {
