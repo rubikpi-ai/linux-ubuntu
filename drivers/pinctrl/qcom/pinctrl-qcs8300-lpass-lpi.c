@@ -128,7 +128,7 @@ static const struct lpi_pingroup qcs8300_groups[] = {
 	LPI_PINGROUP(2, LPI_NO_SLEW, qua_mi2s_data, _, _, _),
 	LPI_PINGROUP(3, LPI_NO_SLEW, qua_mi2s_data, _, _, _),
 	LPI_PINGROUP(4, LPI_NO_SLEW, qua_mi2s_data, _, _, _),
-	LPI_PINGROUP(5, LPI_NO_SLEW, ext_mclk1_c, qua_mi2s_data, _, _),
+	LPI_PINGROUP(5, LPI_NO_SLEW, _, ext_mclk1_c, qua_mi2s_data, _),
 	LPI_PINGROUP(6, LPI_NO_SLEW, dmic1_clk, i2s1_clk, _, _),
 	LPI_PINGROUP(7, LPI_NO_SLEW, dmic1_data, i2s1_ws, _, _),
 	LPI_PINGROUP(8, LPI_NO_SLEW, dmic2_clk, i2s1_data, _, _),
