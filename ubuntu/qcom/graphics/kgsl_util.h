@@ -164,27 +164,6 @@ static inline int kgsl_scm_gpu_init_regs(struct device *dev, u32 gpu_req)
 }
 #endif
 
-/**
- * kgsl_zap_shader_load - Load a zap shader
- * @dev: Pointer to the struct device for the GPU platform device
- * @name: Basename of the zap shader to load (without the postfix)
- *
- * Load and install the zap shader named @name. Name should be specified without
- * the extension for example "a660_zap" instead of "a660_zap.mdt".
- *
- * Return: 0 on success or negative on failure
- */
-int kgsl_zap_shader_load(struct device *dev, const char *name);
-
-/**
- * kgsl_zap_shader_unload - Unload a zap shader
- * @dev: Pointer to the struct device for the GPU platform device
- *
- * Unload zap_shader and shutdown the peripheral
- * Return: 0 on success or negative on failure
- */
-int kgsl_zap_shader_unload(struct device *dev);
-
 #if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
 /**
  * kgsl_add_to_minidump - Add a physically contiguous section to minidump

@@ -10,6 +10,7 @@
 #include <linux/interconnect.h>
 #include <linux/io.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 #include <linux/of_device.h>
 #include <linux/of_fdt.h>
 #include <linux/module.h>
@@ -17,8 +18,14 @@
 #include <linux/regulator/consumer.h>
 #include <linux/nvmem-consumer.h>
 #include <linux/soc/qcom/llcc-qcom.h>
+#include <linux/soc/qcom/mdt_loader.h>
 #include <linux/trace.h>
 #include <linux/version.h>
+#if (KERNEL_VERSION(6, 3, 0) <= LINUX_VERSION_CODE)
+#include <linux/firmware/qcom/qcom_scm.h>
+#else
+#include <linux/qcom_scm.h>
+#endif
 #include <soc/qcom/dcvs.h>
 #include <soc/qcom/socinfo.h>
 #include <linux/suspend.h>
@@ -104,17 +111,108 @@ int adreno_get_firmware(struct adreno_device *adreno_dev,
 	return ret;
 }
 
+/*
+ * The PASID has stayed consistent across all targets thus far so we are
+ * cautiously optimistic that we can hard code it
+ */
+#define GPU_PASID 13
 
 int adreno_zap_shader_load(struct adreno_device *adreno_dev,
 		const char *name)
 {
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
+	struct device_node *np, *mem_np;
+	struct device *dev = &device->pdev->dev;
+	const char *firmware_name;
+	const struct firmware *fw;
+	void *mem_region = NULL;
+	phys_addr_t mem_phys;
+	struct resource res;
+	ssize_t mem_size;
 	int ret;
 
-	if (!name || adreno_dev->zap_loaded || IS_ENABLED(CONFIG_QCOM_KVM_ENABLED))
+	/* Skip loading zap if already done or if KVM is enabled */
+	if (adreno_dev->zap_loaded || IS_ENABLED(CONFIG_QCOM_KVM_ENABLED))
 		return 0;
 
-	ret = kgsl_zap_shader_load(&device->pdev->dev, name);
+	np = of_get_child_by_name(dev->of_node, "zap-shader");
+
+	/*
+	 * While loading the zap firmware, follow the priority order below to determine
+	 * the firmware name:
+	 * 1. Check the "firmware-name" property in the device tree to identify the
+	 * firmware path.
+	 * 2. If not specified, fall back to the zap entry defined in the GPU list.
+	 * 3. If both are missing, skip zap fw loading and use direct register write
+	 * to switch secure state.
+	 */
+	if (np)
+		of_property_read_string(np, "firmware-name", &firmware_name);
+	firmware_name = firmware_name ?: name;
+
+	if (!firmware_name) {
+		of_node_put(np);
+		return 0;
+	}
+
+	if (!np) {
+		dev_err(device->dev, "zap-shader node not found. Please update the device tree\n");
+		of_node_put(np);
+		return -ENODEV;
+	}
+
+	mem_np = of_parse_phandle(np, "memory-region", 0);
+	of_node_put(np);
+	if (!mem_np) {
+		dev_err(dev, "Couldn't parse the mem-region from the zap-shader node\n");
+		return -EINVAL;
+	}
+
+	ret = of_address_to_resource(mem_np, 0, &res);
+	of_node_put(mem_np);
+	if (ret)
+		return ret;
+
+	ret = request_firmware(&fw, firmware_name, dev);
+	if (ret) {
+		dev_err(dev, "Couldn't load the firmware %s\n", firmware_name);
+		return ret;
+	}
+
+	mem_size = qcom_mdt_get_size(fw);
+	if (mem_size < 0) {
+		ret = mem_size;
+		goto out;
+	}
+
+	if (mem_size > resource_size(&res)) {
+		ret = -E2BIG;
+		goto out;
+	}
+
+	mem_phys = res.start;
+
+	mem_region = memremap(mem_phys, mem_size, MEMREMAP_WC);
+	if (!mem_region) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	ret = qcom_mdt_load(dev, fw, firmware_name, GPU_PASID, mem_region,
+		mem_phys, mem_size, NULL);
+	if (ret) {
+		dev_err(dev, "Error %d while loading the MDT\n", ret);
+		goto out;
+	}
+
+	ret = qcom_scm_pas_auth_and_reset(GPU_PASID);
+
+out:
+	if (mem_region)
+		memunmap(mem_region);
+
+	release_firmware(fw);
+
 	if (!ret)
 		adreno_dev->zap_loaded = true;
 
@@ -128,8 +226,10 @@ static void adreno_zap_shader_unload(struct adreno_device *adreno_dev)
 	int ret;
 
 	if (adreno_dev->zap_loaded) {
-		ret = kgsl_zap_shader_unload(&device->pdev->dev);
-		if (!ret)
+		ret = qcom_scm_pas_shutdown_retry(GPU_PASID);
+		if (ret)
+			dev_err(&device->pdev->dev, "Error %d while PAS shutdown\n", ret);
+		else
 			adreno_dev->zap_loaded = false;
 	}
 }
