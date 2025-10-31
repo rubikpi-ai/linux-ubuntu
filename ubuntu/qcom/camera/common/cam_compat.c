@@ -459,12 +459,11 @@ int cam_get_ddr_type(void)
 	ddr = qcom_smem_get(QCOM_SMEM_HOST_ANY, SMEM_DDR_BUILD_ID, &ddr_item_sz);
 
 	if (IS_ERR(ddr) || ddr_item_sz < sizeof(struct ddrinfo)) {
-		CAM_ERR(CAM_UTIL, "Unable to find ddr_info err %llu, expected size %zu,\
-			actual size %zu",PTR_ERR(ddr), sizeof(struct ddrinfo), ddr_item_sz);
-
+		CAM_ERR(CAM_UTIL,
+			"Unable to find ddr_info err %llu, expected size %zu, actual size %zu",
+			PTR_ERR(ddr), sizeof(struct ddrinfo), ddr_item_sz);
 		return PTR_ERR(ddr);
-	}
-	else {
+	} else {
 		ddr_type = ddr->device_type;
 		CAM_DBG(CAM_UTIL, "DDR Type %lld", ddr_type);
 	}
@@ -483,15 +482,15 @@ int cam_get_ddr_info(struct ddrinfo *ddr)
 	ddr_data = qcom_smem_get(QCOM_SMEM_HOST_ANY, SMEM_DDR_BUILD_ID, &ddr_item_sz);
 
 	if (IS_ERR(ddr_data) || ddr_item_sz < sizeof(struct ddrinfo)) {
-		CAM_ERR(CAM_UTIL, "Unable to find ddr_info err %ld, expected size %zu,\
-				actual size %zu",
-				PTR_ERR(ddr_data), sizeof(struct ddrinfo), ddr_item_sz);
+		CAM_ERR(CAM_UTIL,
+			"Unable to find ddr_info err %llu, expected size %zu, actual size %zu",
+			PTR_ERR(ddr_data), sizeof(struct ddrinfo), ddr_item_sz);
 		return PTR_ERR(ddr_data);
 	}
 
 	memcpy(ddr, ddr_data, sizeof(struct ddrinfo));
 
-	offset = snprintf(dbg_buf, sizeof(dbg_buf),
+	offset = scnprintf(dbg_buf, sizeof(dbg_buf),
 			"DDR Info:\n"
 			"  manuf_id: %u\n"
 			"  device_type: %u\n"
@@ -506,9 +505,9 @@ int cam_get_ddr_info(struct ddrinfo *ddr)
 			ddr->hbb[1][0], ddr->hbb[1][1]);
 
 	for (i = 0; i < MAX_IDX_CH; i++) {
-		offset += snprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
-				"  ddr_params[%d]: rev1: %02x%02x, rev2: %02x%02x,\
-				width: %02x%02x, density: %02x%02x\n",
+		offset += scnprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
+				"  ddr_params[%d]: rev1: %02x%02x, rev2: %02x%02x,"
+				"  width: %02x%02x, density: %02x%02x\n",
 				i,
 				ddr->ddr_params[i].revision_id1[0],
 				ddr->ddr_params[i].revision_id1[1],
@@ -522,22 +521,22 @@ int cam_get_ddr_info(struct ddrinfo *ddr)
 
 	CAM_DBG(CAM_UTIL, "%s", dbg_buf);
 
-	offset = snprintf(dbg_buf, sizeof(dbg_buf), "DDR Frequency Table:\n");
+	offset = scnprintf(dbg_buf, sizeof(dbg_buf), "DDR Frequency Table:\n");
 
 	for (i = 0; i < ddr->ddr_freq_tbl.num_ddr_freqs && i < 14; i++) {
-		offset += snprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
+		offset += scnprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
 				"    Freq[%d]: %u kHz, enable: %u\n",
 				i,
 				ddr->ddr_freq_tbl.ddr_freq[i].freq_khz,
 				ddr->ddr_freq_tbl.ddr_freq[i].enable);
 	}
 
-	offset += snprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
+	offset += scnprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
 			"  max_nom_ddr_freq: %u kHz\n",
 			ddr->ddr_freq_tbl.max_nom_ddr_freq);
 
 	if (ddr->ddr_freq_tbl.clk_period_address) {
-		offset += snprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
+		offset += scnprintf(dbg_buf + offset, sizeof(dbg_buf) - offset,
 				"  clk_period_address: %p\n",
 				ddr->ddr_freq_tbl.clk_period_address);
 	}

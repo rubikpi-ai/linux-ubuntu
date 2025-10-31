@@ -29,16 +29,19 @@ module_param(debug_drv, uint, 0644);
 uint debug_bypass_drivers;
 module_param(debug_bypass_drivers, uint, 0644);
 
-static struct kobject *ddr_info_kobj = NULL;
+static struct kobject *ddr_info_kobj;
 static struct ddrinfo g_ddr_info;
 
 static ssize_t cam_device_type_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
 static ssize_t cam_num_channels_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
 static ssize_t cam_num_ranks_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
 
-static struct kobj_attribute device_type_attr = __ATTR(device_type, 0444, cam_device_type_show, NULL);
-static struct kobj_attribute num_channels_attr = __ATTR(num_channels, 0444, cam_num_channels_show, NULL);
-static struct kobj_attribute num_ranks_attr = __ATTR(num_ranks, 0444, cam_num_ranks_show, NULL);
+static struct kobj_attribute device_type_attr =
+	__ATTR(device_type, 0444, cam_device_type_show, NULL);
+static struct kobj_attribute num_channels_attr =
+	__ATTR(num_channels, 0444, cam_num_channels_show, NULL);
+static struct kobj_attribute num_ranks_attr =
+	__ATTR(num_ranks, 0444, cam_num_ranks_show, NULL);
 
 struct camera_debug_settings cam_debug;
 
@@ -364,29 +367,36 @@ void cam_print_log(int type, int module, int tag, const char *func,
 
 static ssize_t cam_device_type_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	int ret = cam_get_ddr_info(&g_ddr_info);
+	int ret = 0;
+
+	ret = cam_get_ddr_info(&g_ddr_info);
 	if (ret)
 		return -EINVAL;
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", g_ddr_info.device_type);
+	return scnprintf(buf, PAGE_SIZE, "%u\n", g_ddr_info.device_type);
 }
 
 static ssize_t cam_num_channels_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	int ret = cam_get_ddr_info(&g_ddr_info);
+	int ret = 0;
+
+	ret = cam_get_ddr_info(&g_ddr_info);
 	if (ret)
 		return -EINVAL;
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", g_ddr_info.num_channels);
+	return scnprintf(buf, PAGE_SIZE, "%u\n", g_ddr_info.num_channels);
 }
 
 static ssize_t cam_num_ranks_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	int ret = cam_get_ddr_info(&g_ddr_info);
+	int ret = 0;
+
+	ret = cam_get_ddr_info(&g_ddr_info);
 	if (ret)
 		return -EINVAL;
 
-	return snprintf(buf, PAGE_SIZE, "%u %u\n", g_ddr_info.num_ranks[0], g_ddr_info.num_ranks[1]);
+	return scnprintf(buf, PAGE_SIZE, "%u %u\n",
+			g_ddr_info.num_ranks[0], g_ddr_info.num_ranks[1]);
 }
 
 int cam_ddr_info_create_sysfs(void)
