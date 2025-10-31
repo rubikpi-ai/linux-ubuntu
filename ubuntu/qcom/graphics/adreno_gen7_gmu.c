@@ -2532,8 +2532,12 @@ int gen7_gmu_probe(struct kgsl_device *device,
 	gmu->pdev->dev.dma_mask = &gmu->pdev->dev.coherent_dma_mask;
 	set_dma_ops(&gmu->pdev->dev, NULL);
 
-	res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM,
-		"rscc");
+	/* In standard device tree bindings, rscc range is part of GMU pdev */
+	res = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM, "rscc");
+	if (!res)
+		res = platform_get_resource_byname(device->pdev,
+			IORESOURCE_MEM, "rscc");
+
 	if (!res) {
 		dev_err(&gmu->pdev->dev, "Failed to get rscc resource\n");
 		return -ENODEV;

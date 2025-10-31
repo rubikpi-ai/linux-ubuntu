@@ -398,8 +398,14 @@ int a6xx_load_pdc_ucode(struct adreno_device *adreno_dev)
 	/* Get pointers to each of the possible PDC resources */
 	res_pdc = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM,
 			"kgsl_gmu_pdc_reg");
-	res_cfg = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM,
-			"kgsl_gmu_pdc_cfg");
+	/*
+	 * Try to get the "gmu_pdc" resource, fallback to legacy "kgsl_gmu_pdc_cfg"
+	 * if not found
+	 */
+	res_cfg = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM, "gmu_pdc");
+	if (!res_cfg)
+		res_cfg = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM,
+				"kgsl_gmu_pdc_cfg");
 
 	/*
 	 * Map the starting address for pdc_cfg programming. If the pdc_cfg
@@ -430,8 +436,15 @@ int a6xx_load_pdc_ucode(struct adreno_device *adreno_dev)
 	 * resource is not available use an offset from the base PDC resource.
 	 */
 	if (gmu->pdc_seq_base == NULL) {
+		/*
+		 * Try to get the "gmu_pdc_seq" resource, fallback to legacy
+		 * "kgsl_gmu_pdc_seq" if not found.
+		 */
 		res_seq = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM,
-				"kgsl_gmu_pdc_seq");
+				"gmu_pdc_seq");
+		if (!res_seq)
+			res_seq = platform_get_resource_byname(gmu->pdev,
+					IORESOURCE_MEM, "kgsl_gmu_pdc_seq");
 
 		if (res_seq)
 			gmu->pdc_seq_base = devm_ioremap(&gmu->pdev->dev,
@@ -2727,8 +2740,13 @@ static int a6xx_gmu_reg_probe(struct adreno_device *adreno_dev)
 	struct a6xx_gmu_device *gmu = to_a6xx_gmu(adreno_dev);
 	int ret;
 
+	/* Try to get the "gmu" resource, fallback to legacy "kgsl_gmu_reg" if not found */
 	ret = kgsl_regmap_add_region(&device->regmap, gmu->pdev,
-		"kgsl_gmu_reg", NULL, NULL);
+		"gmu", NULL, NULL);
+	if (ret)
+		ret = kgsl_regmap_add_region(&device->regmap, gmu->pdev,
+			"kgsl_gmu_reg", NULL, NULL);
+
 	if (ret)
 		dev_err(&gmu->pdev->dev, "Unable to map the GMU registers\n");
 
@@ -2912,8 +2930,13 @@ int a6xx_gmu_probe(struct kgsl_device *device,
 	set_dma_ops(&gmu->pdev->dev, NULL);
 
 	if (adreno_is_a650_family(adreno_dev)) {
-		res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM,
+		/* In standard device tree bindings, rscc range is part of GMU pdev */
+		res = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM,
 			"rscc");
+		if (!res)
+			res = platform_get_resource_byname(device->pdev,
+				IORESOURCE_MEM, "rscc");
+
 		if (!res) {
 			dev_err(&gmu->pdev->dev, "Failed to get rscc resource\n");
 			return -ENODEV;

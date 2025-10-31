@@ -1044,10 +1044,11 @@ static void adreno_cx_misc_probe(struct kgsl_device *device)
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
 	struct resource *res;
 
-	res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM,
-					   "cx_misc");
-
-	if (res == NULL)
+	/* Try to get the "cx_mem" resource, fallback to legacy "cx_misc" if not found */
+	res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM, "cx_mem");
+	if (!res)
+		res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM, "cx_misc");
+	if (!res)
 		return;
 
 	adreno_dev->cx_misc_len = resource_size(res);
