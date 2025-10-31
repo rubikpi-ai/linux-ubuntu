@@ -1455,22 +1455,33 @@ static int enable_gdscs(struct kgsl_device *device)
 }
 
 #ifdef CONFIG_QCOM_KGSL_UPSTREAM
-static int kgsl_device_link_add_cxpd_iommu(struct kgsl_device *device, struct platform_device *pdev)
+static int kgsl_device_link_add_cxpd_iommu(struct kgsl_device *device)
 {
 	struct device_node *phandle;
+	struct kgsl_iommu *iommu = KGSL_IOMMU(device);
+	struct platform_device *pdev = iommu->user_context.pdev;
 	struct platform_device *iommu_pdev;
 
-	phandle = of_parse_phandle(pdev->dev.of_node, "iommus", 0);
+	if (!device->pwrctrl.cx_pd)
+		return 0;
+
+	/*
+	 * With standard bindings, iommus property is defined in the GPU node.
+	 * If the property is not found in GPU node, try the legacy way by
+	 * checking for the property in user context node.
+	 */
+	phandle = of_parse_phandle(device->pdev->dev.of_node, "iommus", 0);
+	if (!phandle)
+		phandle = of_parse_phandle(pdev->dev.of_node, "iommus", 0);
 
 	if (!phandle)
 		return -ENOENT;
 
 	iommu_pdev = of_find_device_by_node(phandle);
+	of_node_put(phandle);
 
-	if (!iommu_pdev) {
-		of_node_put(phandle);
+	if (!iommu_pdev)
 		return -ENOENT;
-	}
 
 	/*
 	 * As part of runtime_resume PM callback, the smmu driver resets the device.
@@ -1481,17 +1492,19 @@ static int kgsl_device_link_add_cxpd_iommu(struct kgsl_device *device, struct pl
 	 * of the device is done only during resume PM callback.
 	 */
 	if (!device_link_add(device->pwrctrl.cx_pd, &iommu_pdev->dev, DL_FLAG_PM_RUNTIME |
-				DL_FLAG_AUTOREMOVE_SUPPLIER))
+				DL_FLAG_AUTOREMOVE_SUPPLIER)) {
 		dev_err(device->dev,
 				"Unable to create device link between cxpd and iommu\n");
+		put_device(&iommu_pdev->dev);
+		return -EINVAL;
+	}
 
 	put_device(&iommu_pdev->dev);
-	of_node_put(phandle);
 
 	return 0;
 }
 #else
-static int kgsl_device_link_add_cxpd_iommu(struct kgsl_device *device, struct platform_device *pdev)
+static int kgsl_device_link_add_cxpd_iommu(struct kgsl_device *device)
 {
 	return 0;
 }
@@ -1511,8 +1524,6 @@ static int kgsl_pwrctrl_probe_cx_gdsc(struct kgsl_device *device, struct platfor
 			return IS_ERR(cx_pd) ? PTR_ERR(cx_pd) : -EINVAL;
 		}
 		pwr->cx_pd = cx_pd;
-
-		return kgsl_device_link_add_cxpd_iommu(device, pdev);
 	} else {
 		struct regulator *cx_regulator = devm_regulator_get(&pdev->dev, "vddcx");
 
@@ -1835,6 +1846,10 @@ int kgsl_pwrctrl_init(struct kgsl_device *device)
 	if (of_property_read_bool(pdev->dev.of_node, "vdd-supply") ||
 		(of_property_match_string(pdev->dev.of_node, "power-domain-names", "gx") >= 0))
 		kgsl_pwrctrl_probe_gx_gdsc(device, pdev);
+
+	result = kgsl_device_link_add_cxpd_iommu(device);
+	if (result)
+		return result;
 
 	if (of_property_read_bool(pdev->dev.of_node, "vdd-parent-supply")) {
 		pwr->gx_regulator_parent = devm_regulator_get(&pdev->dev,
