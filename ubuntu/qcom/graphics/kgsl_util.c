@@ -66,6 +66,22 @@ int kgsl_clk_set_rate(struct clk_bulk_data *clks, int num_clks,
 	struct clk *clk;
 
 	clk = kgsl_of_clk_by_name(clks, num_clks, id);
+
+	/*
+	 * If the downstream clock name isn't found, try removing "_clk" and retry
+	 * with corresponding standard clock name.
+	 */
+	if (!clk && (strlen(id) > 4) && (strcmp(id + strlen(id) - 4, "_clk") == 0)) {
+		char alt_id[32];
+		size_t new_len = strlen(id) - 4;
+
+		if (new_len < sizeof(alt_id)) {
+			memcpy(alt_id, id, new_len);
+			alt_id[new_len] = '\0';
+			clk = kgsl_of_clk_by_name(clks, num_clks, alt_id);
+		}
+	}
+
 	if (!clk)
 		return -ENODEV;
 

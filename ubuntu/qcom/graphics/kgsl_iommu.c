@@ -2620,8 +2620,10 @@ int kgsl_iommu_bind(struct kgsl_device *device, struct platform_device *pdev)
 	int ret, i;
 	struct kgsl_iommu *iommu = KGSL_IOMMU(device);
 	struct kgsl_mmu *mmu = &device->mmu;
-	struct device_node *node = pdev->dev.of_node;
+	struct device_node *iommu_np, *node = pdev->dev.of_node;
+	struct platform_device *iommu_pdev;
 	struct kgsl_global_memdesc *md;
+	struct of_phandle_args args;
 
 	/* Create a kmem cache for the pagetable address objects */
 	if (!addr_entry_cache) {
@@ -2657,17 +2659,47 @@ int kgsl_iommu_bind(struct kgsl_device *device, struct platform_device *pdev)
 		goto err;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(kgsl_iommu_clocks); i++) {
-		struct clk *c;
+	/*
+	 * Initialize IOMMU clocks for the GPU.
+	 *
+	 * If the GPU device tree node defines an 'iommus' property with a valid phandle,
+	 * retrieve all clocks from the referenced IOMMU device node.
+	 *
+	 * If the 'iommus' property is not defined or invalid, fall back to the legacy
+	 * method by initializing clocks from the predefined kgsl_iommu_clocks[] list.
+	 */
+	if (!of_parse_phandle_with_args(device->pdev->dev.of_node, "iommus",
+		"#iommu-cells", 0, &args)) {
+		iommu_np = args.np;
+		iommu_pdev = of_find_device_by_node(iommu_np);
 
-		c = devm_clk_get(&device->pdev->dev, kgsl_iommu_clocks[i]);
-		if (IS_ERR(c))
-			continue;
+		if (!iommu_pdev) {
+			of_node_put(iommu_np);
+			return -EPROBE_DEFER;
+		}
 
-		iommu->clks[iommu->num_clks].id = kgsl_iommu_clocks[i];
-		iommu->clks[iommu->num_clks++].clk = c;
+		ret = devm_clk_bulk_get_all(&iommu_pdev->dev, &iommu->clks);
+		if (ret < 0) {
+			put_device(&iommu_pdev->dev);
+			of_node_put(iommu_np);
+			return ret;
+		}
+
+		iommu->num_clks = ret;
+		put_device(&iommu_pdev->dev);
+		of_node_put(iommu_np);
+	} else {
+		for (i = 0; i < ARRAY_SIZE(kgsl_iommu_clocks); i++) {
+			struct clk *c;
+
+			c = devm_clk_get(&device->pdev->dev, kgsl_iommu_clocks[i]);
+			if (IS_ERR(c))
+				continue;
+
+			iommu->clks[iommu->num_clks].id = kgsl_iommu_clocks[i];
+			iommu->clks[iommu->num_clks++].clk = c;
+		}
 	}
-
 	/*
 	 * IOMMU device is already bound to power domain by core framework
 	 * as there is only single power domain
