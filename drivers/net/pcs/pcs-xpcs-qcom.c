@@ -766,6 +766,17 @@ void qcom_xpcs_link_up_usxgmii(struct dw_xpcs_qcom *qxpcs, int speed)
 read_err:
 	XPCSERR("Failed to read register\n");
 out:
+	/* ERROR CASE:
+	 * Enable Loopback RX clock as we expect the Phy or switch
+	 * to be able to supply the required Rx clock by this time
+	 * But since XPCS link up failed we dont know what went wrong on the
+	 * far end side.
+	 * This can happen if Phy hardware configuration done is incorrect
+	 * or Phy is not supplying consistent RX clocks due to hardware issue.
+	 */
+	if (qxpcs->pcs.rxc_always_on)
+		qcom_xpcs_loopback(qxpcs, true);
+
 	XPCSERR("Failed to bring up USXGMII link\n");
 }
 
