@@ -1418,7 +1418,6 @@ static int a6xx_rgmu_remove_dev(struct platform_device *pdev)
 
 static const struct of_device_id a6xx_rgmu_match_table[] = {
 	{ .compatible = "qcom,gpu-rgmu" },
-	{ .compatible = "qcom,adrneo-rgmu" },
 	{ },
 };
 

@@ -721,7 +721,6 @@ adreno_identify_gpu(struct platform_device *pdev, u32 *chipid)
 static const struct of_device_id adreno_match_table[] = {
 	{ .compatible = "qcom,kgsl-3d0", .data = &device_3d0 },
 	{ .compatible = "qcom,kgsl", .data = &device_3d0 },
-	{ .compatible = "qcom,adreno", .data = &device_3d0 },
 	{ },
 };
 
@@ -1498,8 +1497,6 @@ static const struct of_device_id adreno_component_match[] = {
 	{ .compatible = "qcom,gen7-gmu" },
 	{ .compatible = "qcom,gpu-gmu" },
 	{ .compatible = "qcom,gpu-rgmu" },
-	{ .compatible = "qcom,adreno-gmu" },
-	{ .compatible = "qcom,adreno-rgmu" },
 	/* Legacy components for kgsl-smmu */
 	{ .compatible = "qcom,kgsl-smmu-v2" },
 	{ .compatible = "qcom,smmu-kgsl-cb" },
