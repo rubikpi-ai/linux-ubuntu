@@ -199,7 +199,15 @@ done:
 
 	validate_pwrlevels(device, pwr->ddr_table, pwr->ddr_table_count);
 
-	pwr->icc_path = of_icc_get(&pdev->dev, "gpu_icc_path");
+	/*
+	 * In standard device tree bindings, the interconnect path is named "gfx-mem",
+	 * whereas downstream bindings use "gpu_icc_path". Since multiple GPU interconnect
+	 * paths have not been maintained in gpu device-tree, invoke of_icc_get() with a NULL
+	 * path name to default to index 0. This will work for both standard and downstream
+	 * bindings.
+	 */
+	pwr->icc_path = of_icc_get(&pdev->dev, NULL);
+
 	if (IS_ERR(pwr->icc_path) && !gmu_core_scales_bandwidth(device)) {
 		WARN(1, "The CPU has no way to set the GPU bus levels\n");
 
