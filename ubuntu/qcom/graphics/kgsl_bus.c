@@ -7,9 +7,11 @@
 #include <dt-bindings/interconnect/qcom,icc.h>
 #include <linux/interconnect.h>
 #include <linux/of.h>
+#include <linux/sort.h>
 
 #include "kgsl_bus.h"
 #include "kgsl_device.h"
+#include "kgsl_pwrctrl.h"
 #include "kgsl_trace.h"
 #include "kgsl_util.h"
 
@@ -112,39 +114,53 @@ void kgsl_icc_set_tag(struct kgsl_pwrctrl *pwr, int buslevel)
 }
 #endif
 
-static void validate_pwrlevels(struct kgsl_device *device, u32 *ibs,
-		int count)
+static u32 *kgsl_bus_get_table_from_opp_freqs(struct platform_device *pdev, int *count)
 {
-	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
-	int i;
+	struct device_node *node, *child;
+	u32 bus_freq = 0;
+	u32 *levels;
+	int index = 0, j = 0;
 
-	for (i = 0; i < pwr->num_pwrlevels - 1; i++) {
-		struct kgsl_pwrlevel *pwrlevel = &pwr->pwrlevels[i];
+	node = of_parse_phandle(pdev->dev.of_node, "operating-points-v2", 0);
+	if (!node)
+		return ERR_PTR(-EINVAL);
 
-		if (pwrlevel->bus_freq >= count) {
-			dev_err(device->dev, "Bus setting for GPU freq %d is out of bounds\n",
-				pwrlevel->gpu_freq);
-			pwrlevel->bus_freq = count - 1;
+	levels = kcalloc(KGSL_MAX_PWRLEVELS, sizeof(*levels), GFP_KERNEL);
+	if (!levels)
+		return ERR_PTR(-ENOMEM);
+
+	for_each_child_of_node(node, child) {
+		if (index >= KGSL_MAX_PWRLEVELS) {
+			dev_err(&pdev->dev, "opp-table items exceed the capacity\n");
+			kfree(levels);
+			return ERR_PTR(-EINVAL);
 		}
 
-		if (pwrlevel->bus_max >= count) {
-			dev_err(device->dev, "Bus max for GPU freq %d is out of bounds\n",
-				pwrlevel->gpu_freq);
-			pwrlevel->bus_max = count - 1;
+		if (of_property_read_u32(child, "opp-peak-kBps", &bus_freq)) {
+			dev_warn(&pdev->dev, "Missing opp-peak-kBps in OPP node\n");
+			continue;
 		}
 
-		if (pwrlevel->bus_min >= count) {
-			dev_err(device->dev, "Bus min for GPU freq %d is out of bounds\n",
-				pwrlevel->gpu_freq);
-			pwrlevel->bus_min = count - 1;
+		if (!bus_freq)
+			continue;
+
+		for (j = 0; j < index; j++) {
+			if (levels[j] == bus_freq)
+				break;
 		}
 
-		if (pwrlevel->bus_min > pwrlevel->bus_max) {
-			dev_err(device->dev, "Bus min is bigger than bus max for GPU freq %d\n",
-				pwrlevel->gpu_freq);
-			pwrlevel->bus_min = pwrlevel->bus_max;
-		}
+		if (j == index)
+			levels[index++] = bus_freq;
 	}
+
+	if (!index) {
+		kfree(levels);
+		return ERR_PTR(-EINVAL);
+	}
+
+	sort(levels, index, sizeof(u32), cmp_u32, NULL);
+	*count = index;
+	return levels;
 }
 
 u32 *kgsl_bus_get_table(struct platform_device *pdev,
@@ -188,6 +204,14 @@ int kgsl_bus_init(struct kgsl_device *device, struct platform_device *pdev)
 
 	/* Look if a generic table is present */
 	pwr->ddr_table = kgsl_bus_get_table(pdev, "qcom,bus-table-ddr", &count);
+	if (!IS_ERR(pwr->ddr_table))
+		goto done;
+
+	/*
+	 * If ddr table is not present in DT, create ddr table from set of opp-peak-kBps
+	 * values from OPP table.
+	 */
+	pwr->ddr_table = kgsl_bus_get_table_from_opp_freqs(pdev, &count);
 	if (IS_ERR(pwr->ddr_table)) {
 		int ret = PTR_ERR(pwr->ddr_table);
 
@@ -196,8 +220,6 @@ int kgsl_bus_init(struct kgsl_device *device, struct platform_device *pdev)
 	}
 done:
 	pwr->ddr_table_count = count;
-
-	validate_pwrlevels(device, pwr->ddr_table, pwr->ddr_table_count);
 
 	/*
 	 * In standard device tree bindings, the interconnect path is named "gfx-mem",

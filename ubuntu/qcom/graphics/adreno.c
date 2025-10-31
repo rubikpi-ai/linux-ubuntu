@@ -741,7 +741,7 @@ static void adreno_build_opp_table(struct device *dev, struct kgsl_pwrctrl *pwr)
 		dev_pm_opp_add(dev, pwr->pwrlevels[i].gpu_freq, 0);
 }
 
-static int adreno_of_parse_pwrlevels(struct adreno_device *adreno_dev,
+static int adreno_of_parse_legacy_pwrlevels(struct adreno_device *adreno_dev,
 		struct device_node *node)
 {
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
@@ -888,7 +888,7 @@ static int adreno_of_get_legacy_pwrlevels(struct adreno_device *adreno_dev,
 		return -EINVAL;
 	}
 
-	ret = adreno_of_parse_pwrlevels(adreno_dev, node);
+	ret = adreno_of_parse_legacy_pwrlevels(adreno_dev, node);
 
 	if (!ret) {
 		adreno_of_get_initial_pwrlevels(&device->pwrctrl, parent);
@@ -899,7 +899,128 @@ static int adreno_of_get_legacy_pwrlevels(struct adreno_device *adreno_dev,
 	return ret;
 }
 
-static int adreno_of_get_pwrlevels(struct adreno_device *adreno_dev,
+static int adreno_parse_ib_votes(struct kgsl_device *device,
+		struct dev_pm_opp *opp, struct kgsl_pwrlevel *level)
+{
+	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
+	struct device_node *child;
+	u32 bus_freq;
+	int ret, i;
+
+	child = dev_pm_opp_get_of_node(opp);
+
+	/* Initialize bus_freq, bus_min, and bus_max using "qcom,bus-freq" if available.
+	 * If not, fall back to "opp-peak-kBps" and map it to ddr_table index.
+	 * Return error if neither property is found or if mapping fails.
+	 */
+	ret = kgsl_of_property_read_ddrtype(child, "qcom,bus-freq", &bus_freq);
+	if (!ret) {
+		level->bus_freq = bus_freq;
+		level->bus_min = bus_freq;
+		kgsl_of_property_read_ddrtype(child, "qcom,bus-min", &level->bus_min);
+		level->bus_max = bus_freq;
+		kgsl_of_property_read_ddrtype(child, "qcom,bus-max", &level->bus_max);
+
+		of_node_put(child);
+		return 0;
+	}
+
+	ret = of_property_read_u32(child, "opp-peak-kBps", &bus_freq);
+	if (!ret) {
+		for (i = 0; i < pwr->ddr_table_count && pwr->ddr_table[i] != bus_freq; i++)
+			;
+
+		if (i == pwr->ddr_table_count) {
+			dev_err(device->dev, "%pOF: bus_freq %u not found in ddr_table\n",
+				child, bus_freq);
+			return -EINVAL;
+		}
+
+		level->bus_freq = i;
+		level->bus_min = i;
+		level->bus_max = i;
+
+		of_node_put(child);
+		return 0;
+	}
+
+	/* Neither "qcom,bus-freq" nor "opp-peak-kBps" was found */
+	dev_err(device->dev, "%pOF: Missing bus frequency properties\n", child);
+	of_node_put(child);
+	return -EINVAL;
+}
+
+static int adreno_parse_opp_node(struct kgsl_device *device,
+		struct dev_pm_opp *opp, struct kgsl_pwrlevel *level)
+{
+	int ret;
+
+	level->voltage_level = dev_pm_opp_get_level(opp);
+	dev_pm_opp_put(opp);
+
+	level->cx_level = 0xffffffff;
+	of_property_read_u32(dev_pm_opp_get_of_node(opp), "qcom,opp-acd-level", &level->acd_level);
+
+	ret = adreno_parse_ib_votes(device, opp, level);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+static int adreno_of_parse_pwrlevels(struct adreno_device *adreno_dev)
+{
+	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
+	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
+	struct device *dev = &device->pdev->dev;
+	struct dev_pm_opp *opp;
+	u32 index = 0, count = 0, i;
+	unsigned long freq = ULONG_MAX;
+	int ret;
+
+	ret = devm_pm_opp_of_add_table(&device->pdev->dev);
+	if (ret) {
+		dev_err(&device->pdev->dev, "Unable to initialize opp table from device tree\n");
+		return ret;
+	}
+
+	count = dev_pm_opp_get_opp_count(dev);
+	if (count <= 0) {
+		dev_err(dev, "No OPPs found for device\n");
+		return -ENODEV;
+	}
+
+	for (i = 0; i < count && index < KGSL_MAX_PWRLEVELS; i++) {
+		struct kgsl_pwrlevel *level = &pwr->pwrlevels[index];
+
+		opp = dev_pm_opp_find_freq_floor(dev, &freq);
+		if (IS_ERR(opp))
+			break;
+
+		level->gpu_freq = (u32)freq;
+		adreno_parse_opp_node(device, opp, level);
+
+		dev_pm_opp_put(opp);
+		freq--;
+		index++;
+	}
+
+	pwr->num_pwrlevels = index;
+
+	/* Set the initial power level */
+	pwr->active_pwrlevel = pwr->num_pwrlevels - 1;
+	pwr->default_pwrlevel = pwr->num_pwrlevels - 1;
+
+	/* Set the max power level */
+	pwr->max_pwrlevel = 0;
+
+	/* Set the min power level */
+	pwr->min_pwrlevel = pwr->num_pwrlevels - 1;
+
+	return 0;
+}
+
+static int adreno_of_get_legacy_pwrlevels_bins(struct adreno_device *adreno_dev,
 		struct device_node *parent)
 {
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
@@ -954,7 +1075,7 @@ static int adreno_of_get_pwrlevels(struct adreno_device *adreno_dev,
 		if (match) {
 			int ret;
 
-			ret = adreno_of_parse_pwrlevels(adreno_dev, child);
+			ret = adreno_of_parse_legacy_pwrlevels(adreno_dev, child);
 			if (ret) {
 				of_node_put(child);
 				return ret;
@@ -1025,9 +1146,18 @@ static int adreno_of_get_power(struct adreno_device *adreno_dev,
 		struct platform_device *pdev)
 {
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
+	struct device_node *node;
 	int ret;
 
-	ret = adreno_of_get_pwrlevels(adreno_dev, pdev->dev.of_node);
+	node = of_parse_phandle(pdev->dev.of_node, "operating-points-v2", 0);
+
+	if (node && of_device_is_compatible(node, "operating-points-v2")) {
+		ret = adreno_of_parse_pwrlevels(adreno_dev);
+		if (!ret)
+			adreno_of_get_limits(adreno_dev, node);
+	} else
+		ret = adreno_of_get_legacy_pwrlevels_bins(adreno_dev, pdev->dev.of_node);
+
 	if (ret)
 		return ret;
 
@@ -1337,6 +1467,40 @@ static const struct of_device_id adreno_component_match[] = {
 	{},
 };
 
+static void validate_pwrlevels(struct kgsl_device *device)
+{
+	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
+	int i, count = pwr->ddr_table_count;
+
+	for (i = 0; i < pwr->num_pwrlevels - 1; i++) {
+		struct kgsl_pwrlevel *pwrlevel = &pwr->pwrlevels[i];
+
+		if (pwrlevel->bus_freq >= count) {
+			dev_err(device->dev, "Bus setting for GPU freq %d is out of bounds\n",
+				pwrlevel->gpu_freq);
+			pwrlevel->bus_freq = count - 1;
+		}
+
+		if (pwrlevel->bus_max >= count) {
+			dev_err(device->dev, "Bus max for GPU freq %d is out of bounds\n",
+				pwrlevel->gpu_freq);
+			pwrlevel->bus_max = count - 1;
+		}
+
+		if (pwrlevel->bus_min >= count) {
+			dev_err(device->dev, "Bus min for GPU freq %d is out of bounds\n",
+				pwrlevel->gpu_freq);
+			pwrlevel->bus_min = count - 1;
+		}
+
+		if (pwrlevel->bus_min > pwrlevel->bus_max) {
+			dev_err(device->dev, "Bus min is bigger than bus max for GPU freq %d\n",
+				pwrlevel->gpu_freq);
+			pwrlevel->bus_min = pwrlevel->bus_max;
+		}
+	}
+}
+
 int adreno_device_probe(struct platform_device *pdev,
 		struct adreno_device *adreno_dev)
 {
@@ -1363,13 +1527,15 @@ int adreno_device_probe(struct platform_device *pdev,
 
 	device->speed_bin = status;
 
+	status = kgsl_bus_init(device, pdev);
+	if (status)
+		goto err;
+
 	status = adreno_of_get_power(adreno_dev, pdev);
 	if (status)
 		goto err;
 
-	status = kgsl_bus_init(device, pdev);
-	if (status)
-		goto err;
+	validate_pwrlevels(device);
 
 	status = kgsl_regmap_init(pdev, &device->regmap, "kgsl_3d0_reg_memory",
 		&adreno_regmap_ops, device);

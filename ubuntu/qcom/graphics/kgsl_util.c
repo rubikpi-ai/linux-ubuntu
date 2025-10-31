@@ -22,6 +22,14 @@
 #include "adreno.h"
 #include "kgsl_util.h"
 
+int cmp_u32(const void *first, const void *second)
+{
+	u32 va = *(u32 *)first;
+	u32 vb = *(u32 *)second;
+
+	return (va > vb) - (va < vb);
+}
+
 bool kgsl_genpd_is_enabled(struct device *dev)
 {
 	struct generic_pm_domain *genpd;

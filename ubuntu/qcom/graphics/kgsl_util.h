@@ -263,6 +263,16 @@ static inline int qcom_scm_kgsl_init_regs(u32 gpu_req)
  */
 void isdb_write(void __iomem *base, u32 offset);
 
+/**
+ * cmp_u32 - Comparator function for sorting u32 values
+ * @first: Pointer to the first element
+ * @second: Pointer to the second element
+ *
+ * It is intended for use with the kernel's sort() function to sort
+ * arrays of u32 in ascending order.
+ */
+int cmp_u32(const void *first, const void *second);
+
 #if KERNEL_VERSION(6, 15, 0) <= LINUX_VERSION_CODE
 #define kgsl_delete_timer(timer) timer_delete(timer)
 #define kgsl_delete_timer_sync(timer) timer_delete_sync(timer)
