@@ -30,6 +30,7 @@
 #define CSIPHY_VERSION_V124                       0x124
 #define CSIPHY_VERSION_V125                       0x125
 #define CSIPHY_VERSION_V130                       0x130
+#define CSIPHY_VERSION_V131                       0x131
 #define CSIPHY_VERSION_V20                        0x20
 #define CSIPHY_VERSION_V200                       0x200
 #define CSIPHY_VERSION_V201                       0x201
