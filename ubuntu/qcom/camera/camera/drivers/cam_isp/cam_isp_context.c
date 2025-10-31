@@ -7415,6 +7415,7 @@ static int __cam_isp_ctx_config_dev_in_top_state(
 	} else {
 
 		if ((ctx_isp->offline_context) || (ctx_isp->vfps_aux_context)) {
+			__cam_isp_ctx_enqueue_request_in_order(ctx, req, true);
 			if (req->num_in_map_entries > 0) {
 				for (j = 0; j < req->num_in_map_entries; j++) {
 					s_id = req_isp->fence_map_in[j].sync_id;
@@ -7451,7 +7452,6 @@ static int __cam_isp_ctx_config_dev_in_top_state(
 						s_id, rc);
 				}
 			}
-			__cam_isp_ctx_enqueue_request_in_order(ctx, req, true);
 		} else if (ctx->ctx_crm_intf->add_req) {
 			if ((ctx->state == CAM_CTX_FLUSHED) || (ctx->state < CAM_CTX_READY)) {
 				rc = -EINVAL;
