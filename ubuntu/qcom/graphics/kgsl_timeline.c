@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/dma-fence.h>
@@ -13,6 +13,7 @@
 #include "kgsl_device.h"
 #include "kgsl_eventlog.h"
 #include "kgsl_sharedmem.h"
+#include "kgsl_sync.h"
 #include "kgsl_timeline.h"
 #include "kgsl_trace.h"
 
@@ -235,9 +236,30 @@ static const struct dma_fence_ops timeline_fence_ops = {
 	.signaled = timeline_fence_signaled,
 	.release = timeline_fence_release,
 	.enable_signaling = timeline_fence_enable_signaling,
+
+#if (KERNEL_VERSION(6, 16, 0) > LINUX_VERSION_CODE)
 	.timeline_value_str = timeline_get_value_str,
+#endif
 	.use_64bit_seqno = true,
 };
+
+void kgsl_fences_timeline_value_str(struct dma_fence *fence, char *value,
+	size_t size)
+{
+	if (!fence || !fence->ops || !value || !size)
+		return;
+
+#if (KERNEL_VERSION(6, 16, 0) > LINUX_VERSION_CODE)
+	if (fence->ops->timeline_value_str)
+		fence->ops->timeline_value_str(fence, value, size);
+#else
+	if (fence->ops == &timeline_fence_ops)
+		timeline_get_value_str(fence, value, size);
+
+	if (fence->ops == &kgsl_sync_fence_ops)
+		kgsl_sync_timeline_value_str(fence, value, size);
+#endif
+}
 
 static void kgsl_timeline_add_fence(struct kgsl_timeline *timeline,
 		struct kgsl_timeline_fence *fence)
