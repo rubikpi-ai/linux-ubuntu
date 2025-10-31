@@ -195,7 +195,18 @@ static int cam_req_mgr_close(struct file *filep)
 	struct v4l2_subdev *sd;
 	struct cam_subdev *csd;
 	struct v4l2_fh *vfh = filep->private_data;
-	struct v4l2_subdev_fh *subdev_fh = to_v4l2_subdev_fh(vfh);
+	struct v4l2_subdev_fh *subdev_fh = NULL;
+
+	if (!vfh) {
+		CAM_ERR(CAM_CRM, "filep->private_data (vfh) is NULL!");
+		return -EINVAL;
+	}
+
+	subdev_fh = to_v4l2_subdev_fh(vfh);
+	if (!subdev_fh) {
+		CAM_ERR(CAM_CRM, "Failed to convert vfh to subdev_fh!");
+		return -EINVAL;
+	}
 
 	CAM_WARN(CAM_CRM,
 		"release invoked associated userspace process has died, open_cnt: %d",
@@ -206,6 +217,7 @@ static int cam_req_mgr_close(struct file *filep)
 	mutex_lock(&g_dev.cam_lock);
 
 	if (g_dev.open_cnt <= 0) {
+		CAM_WARN(CAM_CRM, "open_cnt <= 0 in close!");
 		mutex_unlock(&g_dev.cam_lock);
 		cam_req_mgr_rwsem_write_op(CAM_SUBDEV_UNLOCK);
 		return -EINVAL;
@@ -215,7 +227,13 @@ static int cam_req_mgr_close(struct file *filep)
 	g_dev.shutdown_state = true;
 
 	list_for_each_entry(csd, &cam_req_mgr_ordered_sd_list, list) {
+		if (!csd)
+			continue;
+
 		sd = &csd->sd;
+		if (!sd)
+			continue;
+
 		if (!(sd->flags & V4L2_SUBDEV_FL_HAS_DEVNODE))
 			continue;
 		if (sd->internal_ops) {
