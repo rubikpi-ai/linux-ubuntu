@@ -727,6 +727,44 @@ static const struct of_device_id adreno_match_table[] = {
 
 MODULE_DEVICE_TABLE(of, adreno_match_table);
 
+static u32 fuse_to_supp_hw(const struct adreno_gpu_core *gpucore, u32 fuse)
+{
+	int i;
+
+	if (!gpucore->speedbins)
+		return UINT_MAX;
+
+	for (i = 0; gpucore->speedbins[i].fuse != SHRT_MAX; i++)
+		if (gpucore->speedbins[i].fuse == fuse)
+			return BIT(gpucore->speedbins[i].speedbin);
+
+	return UINT_MAX;
+}
+
+static int adreno_set_support_hw(struct kgsl_device *device, int speedbin)
+{
+	struct device *dev = &device->pdev->dev;
+	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
+	const struct adreno_gpu_core *gpucore = adreno_dev->gpucore;
+	u32 supp_hw;
+	int ret;
+
+	supp_hw = fuse_to_supp_hw(gpucore, speedbin);
+
+	if (supp_hw == UINT_MAX) {
+		dev_err(dev,
+			"missing support for speed-bin: %u. Some OPPs may not be supported by hardware\n",
+			speedbin);
+		supp_hw = BIT(0); /* Default */
+	}
+
+	ret = devm_pm_opp_set_supported_hw(dev, &supp_hw, 1);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 /* Dynamically build the OPP table for the GPU device */
 static void adreno_build_opp_table(struct device *dev, struct kgsl_pwrctrl *pwr)
 {
@@ -1506,6 +1544,7 @@ int adreno_device_probe(struct platform_device *pdev,
 {
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
 	struct device *dev = &pdev->dev;
+	struct device_node *node;
 	unsigned int priv = 0;
 	int status;
 	u32 size;
@@ -1526,6 +1565,13 @@ int adreno_device_probe(struct platform_device *pdev,
 		goto err;
 
 	device->speed_bin = status;
+
+	node = of_parse_phandle(pdev->dev.of_node, "operating-points-v2", 0);
+	if (node) {
+		status = adreno_set_support_hw(device, device->speed_bin);
+		if (status)
+			goto err;
+	}
 
 	status = kgsl_bus_init(device, pdev);
 	if (status)

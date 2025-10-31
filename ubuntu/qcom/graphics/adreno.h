@@ -466,6 +466,13 @@ struct adreno_gpu_core {
 	 * using standard devicetree bindings.
 	 */
 	u32 chipid;
+	/**
+	 * @speedbins: Optional table of fuse to speedbin mappings
+	 *
+	 * Consists of pairs of fuse, index mappings, terminated with
+	 * {SHRT_MAX, 0} sentinel.
+	 */
+	struct kgsl_speedbin *speedbins;
 };
 
 /**

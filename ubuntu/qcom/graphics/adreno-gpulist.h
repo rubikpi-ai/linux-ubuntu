@@ -2520,6 +2520,11 @@ static const struct adreno_a6xx_core adreno_gpu_core_a663 = {
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
 		.chipid = 0x06060300,
+		.speedbins = KGSL_SPEEDBINS(
+			{ 0,   0 },
+			{ 169, 0 },
+			{ 113, 1 },
+		),
 	},
 	.prim_fifo_threshold = 0x00300000,
 	.gmu_major = 2,
@@ -2553,6 +2558,11 @@ static const struct adreno_a6xx_core adreno_gpu_core_a623 = {
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
 		.chipid = 0x06020300,
+		.speedbins = KGSL_SPEEDBINS(
+			{ 0,   0 },
+			{ 185, 0 },
+			{ 127, 1 },
+		),
 	},
 	.prim_fifo_threshold = 0x0010000,
 	.gmu_major = 2,
