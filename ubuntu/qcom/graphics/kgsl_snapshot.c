@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/of.h>
@@ -746,9 +746,15 @@ static int snapshot_release(struct kgsl_device *device,
 }
 
 /* Dump the sysfs binary data to the user */
+#if (KERNEL_VERSION(6, 16, 0) > LINUX_VERSION_CODE)
 static ssize_t snapshot_show(struct file *filep, struct kobject *kobj,
 	struct bin_attribute *attr, char *buf, loff_t off,
 	size_t count)
+#else
+static ssize_t snapshot_show(struct file *filep, struct kobject *kobj,
+	const struct bin_attribute *attr, char *buf, loff_t off,
+	size_t count)
+#endif
 {
 	struct kgsl_device *device = kobj_to_device(kobj);
 	struct kgsl_snapshot *snapshot;
