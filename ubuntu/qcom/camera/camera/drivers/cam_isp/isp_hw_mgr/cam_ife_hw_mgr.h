@@ -273,8 +273,7 @@ struct cam_ife_mgr_bw_data {
  * in_ports:              context input ports
  * unpacker_fmt:          IFE input unpacker for offline isp
  * is_offline:            indicates if context is used for offline processing
- * stop_done_complete:    completion signaled when context is ceased operation
- * is_stopping:           if context is about to cease operation
+ * stop_done:             indicates if HW stop done for Context
  * @virtual_rdi_mapping_cb Callback query for virtual rdi mapping
  *
  */
@@ -290,6 +289,7 @@ struct cam_ife_hw_mgr_ctx {
 	struct cam_isp_in_port_generic_info    *in_ports;
 	uint32_t                                unpacker_fmt;
 	bool                                    is_offline;
+	bool                                    stop_done;
 	cam_hw_get_virtual_rdi_mapping_cb_func  virtual_rdi_mapping_cb;
 };
 
@@ -672,6 +672,7 @@ enum cam_isp_irq_inject_common_param_pos {
  * @nom_clk_threshold:     nominal sfe clock
  * @min_clk_threshold:     Min sfe clock
  * @offline_reconfig:      offline ISP need to reconfigure or not
+ * @offline_outport_sync:  Offline ISP HW needs to check outport to sync with correct hw
  */
 struct cam_ife_hw_mgr {
 	struct cam_isp_hw_mgr          mgr_common;
@@ -718,6 +719,7 @@ struct cam_ife_hw_mgr {
 	uint32_t                         min_clk_threshold;
 	uint32_t                         bytes_per_clk;
 	bool                             offline_reconfig;
+	bool                             offline_outport_sync;
 };
 
 /**

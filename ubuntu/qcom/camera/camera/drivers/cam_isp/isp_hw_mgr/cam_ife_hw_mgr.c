@@ -18692,7 +18692,7 @@ static int cam_ife_mgr_v_acquire(void *hw_mgr_priv, void *acquire_hw_args)
 	bool is_fe, is_offline, allocated;
 	int i;
 	int rc = -1;
-	int ctx_idx;
+	int ctx_idx, req_hw = 0;
 
 	if (!ife_hw_mgr) {
 		CAM_ERR(CAM_ISP, "ife hw mgr is NULL");
@@ -18718,6 +18718,7 @@ static int cam_ife_mgr_v_acquire(void *hw_mgr_priv, void *acquire_hw_args)
 			ife_mgr_ctx->ctx_in_use = true;
 			ife_mgr_ctx->ctx_idx = i;
 			ife_mgr_ctx->is_offline = false;
+			ife_mgr_ctx->stop_done = false;
 			break;
 		}
 	}
@@ -18752,10 +18753,12 @@ static int cam_ife_mgr_v_acquire(void *hw_mgr_priv, void *acquire_hw_args)
 		mutex_lock(&ife_hw_mgr->ctx_mutex);
 		ctx_idx =
 			atomic_read(&ife_hw_mgr->num_acquired_offline_ctx);
+		req_hw = cam_ife_mgr_required_hw(hw_mgr_priv, false);
 		/* TODO: update the condition for allocating additional HWs */
-		if (ctx_idx <
-			cam_ife_mgr_required_hw(hw_mgr_priv, false)) {
+		if (ctx_idx < req_hw) {
 			mutex_unlock(&ife_hw_mgr->ctx_mutex);
+			if (req_hw > 1)
+				ife_hw_mgr->offline_outport_sync = true;
 			rc =  cam_ife_mgr_acquire(hw_mgr_priv, acq_args_ptr);
 			if (rc) {
 				if (!ctx_idx) {
@@ -18888,7 +18891,7 @@ static int cam_ife_mgr_v_stop_hw(void *hw_mgr_priv, void *stop_hw_args)
 	struct cam_ife_hw_mgr            *ife_hw_mgr = hw_mgr_priv;
 	struct cam_ife_hw_mgr_ctx        *hw_mgr_ctx;
 	struct cam_ife_hw_concrete_ctx   *c_ctx = NULL;
-	uint32_t                          num_ctx;
+	uint32_t                          num_ctx, num_hw;
 
 	if (!hw_mgr_priv || !stop_hw_args) {
 		CAM_ERR(CAM_ISP, "Invalid arguments");
@@ -18919,6 +18922,7 @@ static int cam_ife_mgr_v_stop_hw(void *hw_mgr_priv, void *stop_hw_args)
 				CAM_ERR(CAM_ISP, "Offline IFE busy on stop!");
 		}
 
+		hw_mgr_ctx->stop_done = true;
 		hw_mgr_ctx->concr_ctx = c_ctx;
 		if (c_ctx) {
 			atomic_set(&c_ctx->ctx_state,
@@ -18929,7 +18933,9 @@ static int cam_ife_mgr_v_stop_hw(void *hw_mgr_priv, void *stop_hw_args)
 			mutex_unlock(&ife_hw_mgr->ctx_mutex);
 			return 0;
 		}
-
+		num_hw = atomic_read(&ife_hw_mgr->num_acquired_offline_ctx);
+		if (num_hw <= 1)
+			ife_hw_mgr->offline_outport_sync = false;
 	}
 	return cam_ife_mgr_stop_hw(hw_mgr_priv, stop_hw_args);
 }
@@ -18960,6 +18966,7 @@ static int cam_ife_mgr_v_release_hw(void *hw_mgr_priv, void *release_hw_args)
 		}
 	}
 	rc = cam_ife_mgr_release_hw(hw_mgr_priv, release_hw_args);
+	hw_mgr_ctx->stop_done = false;
 	hw_mgr_ctx->ctx_in_use = false;
 	hw_mgr_ctx->is_offline = false;
 	return rc;
