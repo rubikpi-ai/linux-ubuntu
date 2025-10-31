@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2002,2007-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #define ANY_ID (~0)
@@ -1506,6 +1506,7 @@ static const struct adreno_a6xx_core adreno_gpu_core_a612 = {
 		.gmem_size = (SZ_128K + SZ_4K),
 		.bus_width = 32,
 		.snapshot_size = SZ_1M,
+		.chipid = 0x06010200,
 	},
 	.prim_fifo_threshold = 0x00080000,
 	.sqefw_name = "a630_sqe.fw",
@@ -1814,6 +1815,7 @@ static const struct adreno_a6xx_core adreno_gpu_core_a643 = {
 		.gmem_size = SZ_512K,
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
+		.chipid = 0x06030500,
 	},
 	.prim_fifo_threshold = 0x00200000,
 	.gmu_major = 2,
@@ -2517,6 +2519,7 @@ static const struct adreno_a6xx_core adreno_gpu_core_a663 = {
 		.gmem_size = SZ_1M + SZ_512K,
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
+		.chipid = 0x06060300,
 	},
 	.prim_fifo_threshold = 0x00300000,
 	.gmu_major = 2,
@@ -2549,6 +2552,7 @@ static const struct adreno_a6xx_core adreno_gpu_core_a623 = {
 		.gmem_size = SZ_512K,
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
+		.chipid = 0x06020300,
 	},
 	.prim_fifo_threshold = 0x0010000,
 	.gmu_major = 2,

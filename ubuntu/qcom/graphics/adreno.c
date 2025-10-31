@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2002,2007-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #include <linux/component.h>
 #include <linux/delay.h>
@@ -455,10 +455,44 @@ static inline bool _rev_match(unsigned int id, unsigned int entry)
 }
 
 static const struct adreno_gpu_core *
+_get_gpu_core_standard(struct platform_device *pdev, u32 *chipid)
+{
+	const char *compat;
+	u32 core, major, minor, patchid;
+	int i;
+
+	if (of_property_read_string_index(pdev->dev.of_node, "compatible", 0, &compat)) {
+		dev_err(&pdev->dev, "Failed to read compatible string\n");
+		return NULL;
+	}
+
+	/*
+	 * Match "qcom,adreno-<core><major><minor>.<patch>" or version-style
+	 * "qcom,adreno-<chipid>"; Extract chip ID and search the GPU list entry.
+	 */
+	if (sscanf(compat, "qcom,adreno-%1u%1u%1u.%u", &core, &major, &minor, &patchid) == 4)
+		*chipid = (core << 24) | (major << 16) | (minor << 8) | patchid;
+	else if (sscanf(compat, "qcom,adreno-%08x", chipid) != 1)
+		return NULL;
+
+	for (i = 0; i < ARRAY_SIZE(adreno_gpulist); i++) {
+		if (adreno_gpulist[i]->chipid == *chipid)
+			return adreno_gpulist[i];
+	}
+
+	return NULL;
+}
+
+static const struct adreno_gpu_core *
 _get_gpu_core(struct platform_device *pdev, u32 *chipid)
 {
 	int i;
 	struct device_node *node;
+	const struct adreno_gpu_core *core;
+
+	core = _get_gpu_core_standard(pdev, chipid);
+	if (core)
+		return core;
 
 	/*
 	 * When "qcom,gpu-models" is defined, use gpu model node to match
@@ -587,6 +621,7 @@ adreno_identify_gpu(struct platform_device *pdev, u32 *chipid)
 static const struct of_device_id adreno_match_table[] = {
 	{ .compatible = "qcom,kgsl-3d0", .data = &device_3d0 },
 	{ .compatible = "qcom,kgsl", .data = &device_3d0 },
+	{ .compatible = "qcom,adreno", .data = &device_3d0 },
 	{ },
 };
 
