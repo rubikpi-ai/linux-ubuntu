@@ -3415,6 +3415,7 @@ static int gen7_gmu_remove_dev(struct platform_device *pdev)
 
 static const struct of_device_id gen7_gmu_match_table[] = {
 	{ .compatible = "qcom,gen7-gmu" },
+	{ .compatible = "qcom,adreno-gmu" },
 	{ },
 };
 

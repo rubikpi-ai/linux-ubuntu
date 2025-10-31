@@ -3874,6 +3874,7 @@ static int a6xx_gmu_remove_dev(struct platform_device *pdev)
 
 static const struct of_device_id a6xx_gmu_match_table[] = {
 	{ .compatible = "qcom,gpu-gmu" },
+	{ .compatible = "qcom,adreno-gmu" },
 	{ },
 };
 
