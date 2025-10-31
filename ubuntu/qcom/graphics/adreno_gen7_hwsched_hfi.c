@@ -2719,7 +2719,7 @@ int gen7_hwsched_hfi_probe(struct adreno_device *adreno_dev)
 	struct gen7_gmu_device *gmu = to_gen7_gmu(adreno_dev);
 	struct gen7_hwsched_hfi *hw_hfi = to_gen7_hwsched_hfi(adreno_dev);
 
-	gmu->hfi.irq = kgsl_request_irq(gmu->pdev, "hfi",
+	gmu->hfi.irq = kgsl_request_irq(gmu->pdev, "hfi", NULL, -EINVAL,
 		gen7_hwsched_hfi_handler, adreno_dev);
 
 	if (gmu->hfi.irq < 0)

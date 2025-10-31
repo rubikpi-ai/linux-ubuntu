@@ -1462,7 +1462,8 @@ int a6xx_hwsched_hfi_probe(struct adreno_device *adreno_dev)
 	struct a6xx_gmu_device *gmu = to_a6xx_gmu(adreno_dev);
 	struct a6xx_hwsched_hfi *hw_hfi = to_a6xx_hwsched_hfi(adreno_dev);
 
-	gmu->hfi.irq = kgsl_request_irq(gmu->pdev, "kgsl_hfi_irq",
+	/* Try with "hfi" irq first. Use Fallback legacy name "kgsl_hfi_irq" if not found. */
+	gmu->hfi.irq = kgsl_request_irq(gmu->pdev, "hfi", "kgsl_hfi_irq", -EINVAL,
 		a6xx_hwsched_hfi_handler, adreno_dev);
 
 	if (gmu->hfi.irq < 0)

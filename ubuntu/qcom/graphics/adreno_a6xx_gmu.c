@@ -2992,7 +2992,8 @@ int a6xx_gmu_probe(struct kgsl_device *device,
 	of_property_read_u32(gmu->pdev->dev.of_node, "qcom,gmu-perf-ddr-bw",
 		&gmu->perf_ddr_bw);
 
-	gmu->irq = kgsl_request_irq(gmu->pdev, "kgsl_gmu_irq",
+	/* Try with "gmu" irq first. Use Fallback legacy name "kgsl_gmu_irq" if not found. */
+	gmu->irq = kgsl_request_irq(gmu->pdev, "gmu", "kgsl_gmu_irq", -EINVAL,
 		a6xx_gmu_irq_handler, device);
 
 	if (gmu->irq >= 0)
@@ -3747,7 +3748,8 @@ int a6xx_gmu_hfi_probe(struct adreno_device *adreno_dev)
 	struct a6xx_gmu_device *gmu = to_a6xx_gmu(adreno_dev);
 	struct a6xx_hfi *hfi = &gmu->hfi;
 
-	hfi->irq = kgsl_request_irq(gmu->pdev, "kgsl_hfi_irq",
+	/* Try with "hfi" irq first. Use Fallback legacy name "kgsl_hfi_irq" if not found. */
+	hfi->irq = kgsl_request_irq(gmu->pdev, "hfi", "kgsl_hfi_irq", -EINVAL,
 		a6xx_hfi_irq_handler, KGSL_DEVICE(adreno_dev));
 
 	return hfi->irq < 0 ? hfi->irq : 0;

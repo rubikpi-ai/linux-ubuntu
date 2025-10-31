@@ -5076,20 +5076,43 @@ static int _register_device(struct kgsl_device *device)
 	return 0;
 }
 
-int kgsl_request_irq(struct platform_device *pdev, const  char *name,
-		irq_handler_t handler, void *data)
+int kgsl_request_irq(struct platform_device *pdev, const char *name,
+		const char *alt_name, int index, irq_handler_t handler, void *data)
 {
-	int ret, num = platform_get_irq_byname(pdev, name);
+	int ret, num = -EINVAL;
+	const char *irq_name = name;
+	char index_name[32];
 
-	if (num < 0)
+	/*
+	 * Get IRQ by name if available, else try alt_name if previous failed,
+	 * otherwise fall back to index-based retrieval.
+	 */
+	if (name) {
+		num = platform_get_irq_byname_optional(pdev, name);
+		if (num < 0 && alt_name) {
+			num = platform_get_irq_byname_optional(pdev, alt_name);
+			irq_name = alt_name;
+		}
+	}
+
+	if (index != -EINVAL && num < 0) {
+		num = platform_get_irq(pdev, index);
+		snprintf(index_name, sizeof(index_name), "irq-index-%d", index);
+		irq_name = index_name;
+	}
+
+	if (num < 0) {
+		dev_err(&pdev->dev, "Unable to retrieve IRQ '%s' (alt: '%s', index: %d): error %d\n",
+			name ? name : "N/A", alt_name ? alt_name : "N/A", index, num);
 		return num;
+	}
 
 	ret = devm_request_irq(&pdev->dev, num, handler, IRQF_TRIGGER_HIGH,
-		name, data);
+		irq_name, data);
 
 	if (ret) {
 		dev_err(&pdev->dev, "Unable to get interrupt %s: %d\n",
-			name, ret);
+			irq_name, ret);
 		return ret;
 	}
 

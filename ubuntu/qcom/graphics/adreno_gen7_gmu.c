@@ -2618,7 +2618,7 @@ int gen7_gmu_probe(struct kgsl_device *device,
 
 	spin_lock_init(&gmu->hfi.cmdq_lock);
 
-	gmu->irq = kgsl_request_irq(gmu->pdev, "gmu",
+	gmu->irq = kgsl_request_irq(gmu->pdev, "gmu", NULL, -EINVAL,
 		gen7_gmu_irq_handler, device);
 
 	if (gmu->irq >= 0)
@@ -3317,7 +3317,7 @@ int gen7_gmu_hfi_probe(struct adreno_device *adreno_dev)
 	struct gen7_gmu_device *gmu = to_gen7_gmu(adreno_dev);
 	struct gen7_hfi *hfi = &gmu->hfi;
 
-	hfi->irq = kgsl_request_irq(gmu->pdev, "hfi",
+	hfi->irq = kgsl_request_irq(gmu->pdev, "hfi", NULL, -EINVAL,
 		gen7_hfi_irq_handler, KGSL_DEVICE(adreno_dev));
 
 	return hfi->irq < 0 ? hfi->irq : 0;

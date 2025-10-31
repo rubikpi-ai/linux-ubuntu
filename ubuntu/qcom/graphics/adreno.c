@@ -1423,7 +1423,13 @@ int adreno_device_probe(struct platform_device *pdev,
 	if (status)
 		goto err_remove_llcc;
 
-	status = kgsl_request_irq(pdev, "kgsl_3d0_irq", adreno_irq_handler, device);
+	/*
+	 * Try to get the irq based on gpu irq name (i.e. "kgsl_3d0_irq") else fall back
+	 * to requesting it by index.
+	 * Note: kgsl_3d0_irq should always be the first in the gpu irq list.
+	 */
+	status = kgsl_request_irq(pdev, "kgsl_3d0_irq", NULL, 0, adreno_irq_handler, device);
+
 	if (status < 0)
 		goto err_unbind;
 
