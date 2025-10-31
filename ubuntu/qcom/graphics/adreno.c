@@ -1500,6 +1500,7 @@ static const struct of_device_id adreno_component_match[] = {
 	{ .compatible = "qcom,gpu-rgmu" },
 	{ .compatible = "qcom,adreno-gmu" },
 	{ .compatible = "qcom,adreno-rgmu" },
+	/* Legacy components for kgsl-smmu */
 	{ .compatible = "qcom,kgsl-smmu-v2" },
 	{ .compatible = "qcom,smmu-kgsl-cb" },
 	{},

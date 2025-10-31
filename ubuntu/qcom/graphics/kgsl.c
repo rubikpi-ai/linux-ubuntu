@@ -1429,7 +1429,8 @@ static int kgsl_release(struct inode *inodep, struct file *filep)
 	device->ftbl->device_private_destroy(dev_priv);
 
 	result = kgsl_close_device(device);
-	pm_runtime_put(&device->pdev->dev);
+	if (!of_device_is_compatible(device->pdev->dev.of_node, "qcom,adreno"))
+		pm_runtime_put(&device->pdev->dev);
 
 	return result;
 }
@@ -1463,12 +1464,15 @@ static int kgsl_open(struct inode *inodep, struct file *filep)
 		return -ENODEV;
 	}
 
-	result = pm_runtime_get_sync(&device->pdev->dev);
-	if (result < 0) {
-		dev_err(device->dev,
+	if (!of_device_is_compatible(device->pdev->dev.of_node, "qcom,adreno")) {
+		result = pm_runtime_get_sync(&device->pdev->dev);
+		if (result < 0) {
+			dev_err(device->dev,
 			     "Runtime PM: Unable to wake up the device, rc = %d\n",
 			     result);
-		return result;
+
+			return result;
+		}
 	}
 	result = 0;
 
@@ -5146,6 +5150,8 @@ int kgsl_of_property_read_ddrtype(struct device_node *node, const char *base,
 	return of_property_read_u32(node, base, ptr);
 }
 
+int kgsl_iommu_probe_standard(struct kgsl_device *device, struct platform_device *pdev);
+
 int kgsl_device_platform_probe(struct kgsl_device *device)
 {
 	struct platform_device *pdev = device->pdev;
@@ -5154,6 +5160,10 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 	status = _register_device(device);
 	if (status)
 		return status;
+
+	/* Probe standard kgsl smmu dt bindings */
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,adreno"))
+		kgsl_iommu_probe_standard(device, pdev);
 
 	/* Can return -EPROBE_DEFER */
 	status = kgsl_pwrctrl_init(device);

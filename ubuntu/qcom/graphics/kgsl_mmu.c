@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2002,2007-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/component.h>
@@ -730,6 +730,11 @@ static const struct of_device_id mmu_match_table[] = {
 	{},
 };
 
+/*
+ * Legacy pdev for kgsl-smmu component. This is required
+ * with non-standard GPU DT bindings which maintains dummy
+ * IOMMU device.
+ */
 static struct platform_driver kgsl_mmu_driver = {
 	.probe = kgsl_mmu_dev_probe,
 	.remove = kgsl_mmu_dev_remove,
