@@ -2911,12 +2911,17 @@ int a6xx_gmu_probe(struct kgsl_device *device,
 	gmu->pdev->dev.dma_mask = &gmu->pdev->dev.coherent_dma_mask;
 	set_dma_ops(&gmu->pdev->dev, NULL);
 
-	res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM,
-						"rscc");
-	if (res) {
+	if (adreno_is_a650_family(adreno_dev)) {
+		res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM,
+			"rscc");
+		if (!res) {
+			dev_err(&gmu->pdev->dev, "Failed to get rscc resource\n");
+			return -ENODEV;
+		}
+
 		gmu->rscc_virt = devm_ioremap(&device->pdev->dev, res->start,
 						resource_size(res));
-		if (gmu->rscc_virt == NULL) {
+		if (!gmu->rscc_virt) {
 			dev_err(&gmu->pdev->dev, "rscc ioremap failed\n");
 			return -ENOMEM;
 		}

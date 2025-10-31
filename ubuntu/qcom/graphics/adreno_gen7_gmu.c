@@ -2533,14 +2533,17 @@ int gen7_gmu_probe(struct kgsl_device *device,
 	set_dma_ops(&gmu->pdev->dev, NULL);
 
 	res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM,
-						"rscc");
-	if (res) {
-		gmu->rscc_virt = devm_ioremap(&device->pdev->dev, res->start,
-						resource_size(res));
-		if (!gmu->rscc_virt) {
-			dev_err(&gmu->pdev->dev, "rscc ioremap failed\n");
-			return -ENOMEM;
-		}
+		"rscc");
+	if (!res) {
+		dev_err(&gmu->pdev->dev, "Failed to get rscc resource\n");
+		return -ENODEV;
+	}
+
+	gmu->rscc_virt = devm_ioremap(&device->pdev->dev, res->start,
+					resource_size(res));
+	if (!gmu->rscc_virt) {
+		dev_err(&gmu->pdev->dev, "rscc ioremap failed\n");
+		return -ENOMEM;
 	}
 
 	/* Setup any rdpm register ranges */
