@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 
@@ -19,7 +19,7 @@
 #else
 #include <linux/qcom_scm.h>
 #endif
-#ifdef CONFIG_QCOM_KGSL_UPSTREAM
+#if IS_ENABLED(CONFIG_QCOM_SCM_ADDON)
 #include <linux/firmware/qcom/qcom_scm_addon.h>
 #endif
 #include <linux/regulator/consumer.h>

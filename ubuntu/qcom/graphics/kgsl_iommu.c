@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2011-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/bitfield.h>
@@ -22,7 +22,7 @@
 #else
 #include <linux/qcom_scm.h>
 #endif
-#ifdef CONFIG_QCOM_KGSL_UPSTREAM
+#if IS_ENABLED(CONFIG_QCOM_SCM_ADDON)
 #include <linux/firmware/qcom/qcom_scm_addon.h>
 #endif
 #include <linux/random.h>
@@ -1334,6 +1334,18 @@ static void _enable_gpuhtw_llc(struct kgsl_mmu *mmu, struct iommu_domain *domain
 		iommu_set_pgtable_quirks(domain, IO_PGTABLE_QUIRK_ARM_OUTER_WBWA);
 }
 
+#if (KERNEL_VERSION(6, 13, 0) <= LINUX_VERSION_CODE)
+int _kgsl_set_smmu_aperture(u32 num_context_bank)
+{
+	return qcom_scm_set_gpu_smmu_aperture(num_context_bank);
+}
+#else
+int _kgsl_set_smmu_aperture(u32 num_context_bank)
+{
+	return qcom_scm_kgsl_set_smmu_aperture(num_context_bank);
+}
+#endif
+
 int kgsl_set_smmu_aperture(struct kgsl_device *device,
 		struct kgsl_iommu_context *context)
 {
@@ -1342,9 +1354,9 @@ int kgsl_set_smmu_aperture(struct kgsl_device *device,
 	if (!test_bit(KGSL_MMU_SMMU_APERTURE, &device->mmu.features))
 		return 0;
 
-	ret = qcom_scm_kgsl_set_smmu_aperture(context->cb_num);
+	ret = _kgsl_set_smmu_aperture(context->cb_num);
 	if (ret == -EBUSY)
-		ret = qcom_scm_kgsl_set_smmu_aperture(context->cb_num);
+		ret = _kgsl_set_smmu_aperture(context->cb_num);
 
 	if (ret)
 		dev_err(&device->pdev->dev, "Unable to set the SMMU aperture: %d. The aperture needs to be set to use per-process pagetables\n",

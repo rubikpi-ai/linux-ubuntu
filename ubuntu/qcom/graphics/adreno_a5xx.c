@@ -15,7 +15,7 @@
 #else
 #include <linux/qcom_scm.h>
 #endif
-#ifdef CONFIG_QCOM_KGSL_UPSTREAM
+#if IS_ENABLED(CONFIG_QCOM_SCM_ADDON)
 #include <linux/firmware/qcom/qcom_scm_addon.h>
 #endif
 #include <linux/slab.h>

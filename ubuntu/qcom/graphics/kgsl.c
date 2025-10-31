@@ -4790,7 +4790,7 @@ kgsl_get_unmapped_area(struct file *file, unsigned long addr,
 	struct kgsl_mem_entry *entry = NULL;
 
 	if (vma_offset == (unsigned long) KGSL_MEMSTORE_TOKEN_ADDRESS)
-		return get_unmapped_area(NULL, addr, len, pgoff, flags);
+		return kgsl_mm_get_unmapped_area(current->mm, NULL, addr, len, pgoff, flags);
 
 	val = get_mmap_entry(private, &entry, pgoff, len);
 	if (val)

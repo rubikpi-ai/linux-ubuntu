@@ -268,6 +268,14 @@ static inline int qcom_scm_kgsl_set_smmu_lpac_aperture(
  * error code cast to u64 on failure.
  */
 u64 kgsl_get_ddrtype(void);
+
+#if !IS_ENABLED(CONFIG_QCOM_SCM_ADDON)
+static inline int qcom_scm_kgsl_init_regs(u32 gpu_req)
+{
+	return -EOPNOTSUPP;
+}
+#endif
+
 #endif
 
 /**
