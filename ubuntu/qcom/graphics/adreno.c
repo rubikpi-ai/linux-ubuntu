@@ -1679,6 +1679,19 @@ int adreno_device_probe(struct platform_device *pdev,
 		goto err_unbind;
 	}
 
+	/* Initialize UBWC mode and mal */
+	if (adreno_dev->gpucore->ubwc_mode)
+		adreno_dev->ubwc_mode = adreno_dev->gpucore->ubwc_mode;
+	else
+		of_property_read_u32(device->pdev->dev.of_node,
+			"qcom,ubwc-mode", &adreno_dev->ubwc_mode);
+
+	if (adreno_dev->gpucore->mal)
+		adreno_dev->mal = adreno_dev->gpucore->mal;
+	else if (of_property_read_u32(device->pdev->dev.of_node,
+			"qcom,min-access-length", &adreno_dev->mal))
+		adreno_dev->mal = 32;
+
 	/* Initialize the snapshot engine */
 	size = adreno_dev->gpucore->snapshot_size;
 
@@ -2573,11 +2586,9 @@ static int adreno_prop_u32(struct kgsl_device *device,
 	if (param->type == KGSL_PROP_HIGHEST_BANK_BIT) {
 		val = adreno_dev->highest_bank_bit;
 	} else if (param->type == KGSL_PROP_MIN_ACCESS_LENGTH)
-		of_property_read_u32(device->pdev->dev.of_node,
-			"qcom,min-access-length", &val);
+		val = adreno_dev->mal;
 	else if (param->type == KGSL_PROP_UBWC_MODE)
-		of_property_read_u32(device->pdev->dev.of_node,
-			"qcom,ubwc-mode", &val);
+		val = adreno_dev->ubwc_mode;
 	else if (param->type == KGSL_PROP_DEVICE_BITNESS)
 		val = adreno_support_64bit(adreno_dev) ? 48 : 32;
 	else if (param->type == KGSL_PROP_SPEED_BIN)

@@ -473,6 +473,10 @@ struct adreno_gpu_core {
 	 * {SHRT_MAX, 0} sentinel.
 	 */
 	struct kgsl_speedbin *speedbins;
+	/** @ubwc_mode: Supported UBWC mode */
+	u32 ubwc_mode;
+	/** @mal: Minimum access length */
+	u32 mal;
 };
 
 /**
@@ -644,6 +648,10 @@ struct adreno_device {
 	uint32_t ifpc_count;
 
 	unsigned int highest_bank_bit;
+	/** @ubwc_mode: Supported UBWC mode */
+	u32 ubwc_mode;
+	/** @mal: Minimum access length */
+	u32 mal;
 	unsigned int quirks;
 
 #ifdef CONFIG_QCOM_KGSL_CORESIGHT
