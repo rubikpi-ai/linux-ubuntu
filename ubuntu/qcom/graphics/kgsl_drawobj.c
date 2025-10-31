@@ -145,7 +145,7 @@ void kgsl_dump_syncpoints(struct kgsl_device *device,
 static void syncobj_timer(struct timer_list *t)
 {
 	struct kgsl_device *device;
-	struct kgsl_drawobj_sync *syncobj = from_timer(syncobj, t, timer);
+	struct kgsl_drawobj_sync *syncobj = timer_container_of(syncobj, t, timer);
 	struct kgsl_drawobj *drawobj;
 	struct kgsl_drawobj_sync_event *event;
 	unsigned int i;

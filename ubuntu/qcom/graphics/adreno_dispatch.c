@@ -2458,7 +2458,7 @@ void adreno_dispatcher_fault(struct adreno_device *adreno_dev,
  */
 static void adreno_dispatcher_timer(struct timer_list *t)
 {
-	struct adreno_dispatcher *dispatcher = from_timer(dispatcher, t, timer);
+	struct adreno_dispatcher *dispatcher = timer_container_of(dispatcher, t, timer);
 	struct adreno_device *adreno_dev = container_of(dispatcher,
 					struct adreno_device, dispatcher);
 

@@ -271,4 +271,8 @@ void isdb_write(void __iomem *base, u32 offset);
 #define kgsl_delete_timer_sync(timer) del_timer_sync(timer)
 #endif
 
+#if (KERNEL_VERSION(6, 16, 0) > LINUX_VERSION_CODE)
+#define timer_container_of from_timer
+#endif
+
 #endif
