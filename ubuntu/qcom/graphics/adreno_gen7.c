@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/debugfs.h>
@@ -1897,7 +1897,7 @@ static void gen7_remove(struct adreno_device *adreno_dev)
 	/* Make sure timer is initialized, otherwise WARN_ON is generated */
 	if (adreno_preemption_feature_set(adreno_dev) &&
 	    (test_bit(GMU_PRIV_FIRST_BOOT_DONE, &gmu->flags)))
-		del_timer(&adreno_dev->preempt.timer);
+		kgsl_delete_timer(&adreno_dev->preempt.timer);
 }
 
 static void gen7_read_bus_stats(struct kgsl_device *device,

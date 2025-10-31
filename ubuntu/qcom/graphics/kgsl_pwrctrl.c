@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/clk/qcom.h>
@@ -2060,7 +2060,7 @@ static int _init(struct kgsl_device *device)
 	switch (device->state) {
 	case KGSL_STATE_ACTIVE:
 		kgsl_pwrctrl_irq(device, false);
-		del_timer_sync(&device->idle_timer);
+		kgsl_delete_timer_sync(&device->idle_timer);
 		device->ftbl->stop(device);
 		fallthrough;
 	case KGSL_STATE_AWARE:
@@ -2162,7 +2162,7 @@ _aware(struct kgsl_device *device)
 		break;
 	case KGSL_STATE_ACTIVE:
 		kgsl_pwrctrl_irq(device, false);
-		del_timer_sync(&device->idle_timer);
+		kgsl_delete_timer_sync(&device->idle_timer);
 		break;
 	case KGSL_STATE_SLUMBER:
 		status = kgsl_pwrctrl_enable(device);
@@ -2188,7 +2188,7 @@ _slumber(struct kgsl_device *device)
 			kgsl_pwrctrl_request_state(device, KGSL_STATE_NONE);
 			return -EBUSY;
 		}
-		del_timer_sync(&device->idle_timer);
+		kgsl_delete_timer_sync(&device->idle_timer);
 		kgsl_pwrctrl_irq(device, false);
 		/* make sure power is on to stop the device*/
 		status = kgsl_pwrctrl_enable(device);
