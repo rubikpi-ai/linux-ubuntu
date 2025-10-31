@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef _CAM_IFE_HW_MGR_H_
@@ -410,7 +410,7 @@ struct cam_ife_virtual_rdi_mapping {
  * @offline_clk             IFE Clock value to be configured for offline processing
  * @offline_sfe_clk         SFE Clock value to be configured for offline processing
  * @mapping_table:          mapping between virtual rdi and acquired rdi
- *
+ * @pri_rdi_out_res:        Primary RDI res for RDI only cases
  */
 
 struct cam_ife_hw_concrete_ctx {
@@ -492,6 +492,7 @@ struct cam_ife_hw_concrete_ctx {
 	uint32_t                             offline_clk;
 	uint32_t                             offline_sfe_clk;
 	struct cam_ife_virtual_rdi_mapping   mapping_table;
+	uint32_t                             pri_rdi_out_res;
 };
 
 /**
@@ -647,7 +648,7 @@ enum cam_isp_irq_inject_common_param_pos {
  * @debug_cfg              debug configuration
  * @ctx_lock               context lock
  * @hw_pid_support         hw pid support for this target
- * @csid_rup_en            Reg update at CSID side
+ * @csid_aup_rup_en        Reg update at CSID side
  * @csid_global_reset_en   CSID global reset enable
  * @csid_camif_irq_support CSID camif IRQ support
  * @cam_ddr_drv_support    DDR DRV support
@@ -692,7 +693,7 @@ struct cam_ife_hw_mgr {
 	struct cam_ife_hw_mgr_debug      debug_cfg;
 	spinlock_t                       ctx_lock;
 	bool                             hw_pid_support;
-	bool                             csid_rup_en;
+	bool                             csid_aup_rup_en;
 	bool                             csid_global_reset_en;
 	bool                             csid_camif_irq_support;
 	bool                             cam_ddr_drv_support;

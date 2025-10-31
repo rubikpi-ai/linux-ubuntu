@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/slab.h>
@@ -4898,7 +4898,8 @@ end:
 
 static int cam_ife_hw_mgr_preprocess_port(
 	struct cam_ife_hw_mgr_ctx   *ife_ctx,
-	struct cam_isp_in_port_generic_info *in_port)
+	struct cam_isp_in_port_generic_info *in_port,
+	uint32_t                    *max_height)
 {
 	uint32_t i;
 	struct cam_isp_out_port_generic_info *out_port;
@@ -4915,6 +4916,10 @@ static int cam_ife_hw_mgr_preprocess_port(
 		if (cam_ife_hw_mgr_is_rdi_res(out_port->res_type)) {
 			in_port->rdi_count++;
 			in_port->lite_path_count++;
+			if (out_port->height >= *max_height) {
+				c_ctx->pri_rdi_out_res = out_port->res_type;
+				*max_height = out_port->height;
+			}
 		}
 		else if (cam_ife_hw_mgr_is_sfe_rdi_res(out_port->res_type))
 			in_port->rdi_count++;
@@ -6255,6 +6260,7 @@ static int cam_ife_mgr_acquire_hw(void *hw_mgr_priv, void *acquire_hw_args)
 	uint32_t                           input_size = 0;
 	uint32_t                           acquired_rdi_res = 0;
 	uint32_t                           input_format_checker = 0;
+	uint32_t                           max_height = 0;
 
 	CAM_DBG(CAM_ISP, "Enter...");
 
@@ -6298,6 +6304,7 @@ static int cam_ife_mgr_acquire_hw(void *hw_mgr_priv, void *acquire_hw_args)
 	c_ctx->res_list_sfe_out = NULL;
 	c_ctx->left_hw_idx = CAM_IFE_CSID_HW_NUM_MAX;
 	c_ctx->right_hw_idx = CAM_IFE_CSID_HW_NUM_MAX;
+	c_ctx->pri_rdi_out_res = g_ife_hw_mgr.isp_caps.max_vfe_out_res_type;
 
 	acquire_hw_info =
 		(struct cam_isp_acquire_hw_info *) acquire_args->acquire_info;
@@ -6377,7 +6384,8 @@ static int cam_ife_mgr_acquire_hw(void *hw_mgr_priv, void *acquire_hw_args)
 			goto free_mem;
 		}
 
-		cam_ife_hw_mgr_preprocess_port(ife_mgr_ctx, &ife_mgr_ctx->in_ports[i]);
+		cam_ife_hw_mgr_preprocess_port(ife_mgr_ctx,
+				&ife_mgr_ctx->in_ports[i], &max_height);
 		total_pix_port += ife_mgr_ctx->in_ports[i].ipp_count +
 			ife_mgr_ctx->in_ports[i].ife_rd_count +
 			ife_mgr_ctx->in_ports[i].lcr_count;
@@ -6704,6 +6712,7 @@ static int cam_ife_mgr_acquire_dev(void *hw_mgr_priv, void *acquire_hw_args)
 	uint32_t                               total_rdi_port = 0;
 	uint32_t                               in_port_length = 0;
 	uint32_t                               acquired_rdi_res = 0;
+	uint32_t                               max_height = 0;
 
 	CAM_DBG(CAM_ISP, "Enter...");
 
@@ -6796,7 +6805,7 @@ static int cam_ife_mgr_acquire_dev(void *hw_mgr_priv, void *acquire_hw_args)
 			cam_ife_mgr_acquire_get_unified_dev_str(in_port,
 				&gen_port_info[i]);
 			cam_ife_hw_mgr_preprocess_port(ife_mgr_ctx,
-				&gen_port_info[i]);
+				&gen_port_info[i], &max_height);
 
 			total_pix_port += gen_port_info[i].ipp_count +
 						gen_port_info[i].ife_rd_count +
@@ -8747,16 +8756,13 @@ static int cam_ife_mgr_start_hw(void *hw_mgr_priv, void *start_hw_args)
 	struct cam_isp_resource_node        *rsrc_node = NULL;
 	uint32_t                             i;
 	uint32_t                             camif_debug;
-	bool                                 res_rdi_context_set = false;
 	uint32_t                             primary_rdi_src_res;
-	uint32_t                             primary_rdi_out_res;
 	uint32_t                             primary_rdi_csid_res;
 	struct cam_ife_csid_top_config_args  csid_top_args = {0};
 	struct cam_hw_intf                  *hw_intf;
 	bool                                 per_port_feature_enable = false;
 
 	primary_rdi_src_res = CAM_ISP_HW_VFE_IN_MAX;
-	primary_rdi_out_res = g_ife_hw_mgr.isp_caps.max_vfe_out_res_type;
 	primary_rdi_csid_res = CAM_IFE_PIX_PATH_RES_MAX;
 
 	if (!hw_mgr_priv || !start_isp) {
@@ -8941,24 +8947,6 @@ start_only:
 		c_ctx->ctx_index);
 	/* start the IFE out devices */
 	for (i = 0; i < c_ctx->num_acq_vfe_out; i++) {
-		hw_mgr_res = &c_ctx->res_list_ife_out[i];
-		switch (hw_mgr_res->res_id) {
-		case CAM_ISP_IFE_OUT_RES_RDI_0:
-		case CAM_ISP_IFE_OUT_RES_RDI_1:
-		case CAM_ISP_IFE_OUT_RES_RDI_2:
-		case CAM_ISP_IFE_OUT_RES_RDI_3:
-		case CAM_ISP_IFE_OUT_RES_RDI_4:
-		case CAM_ISP_IFE_OUT_RES_RDI_5:
-			if (!res_rdi_context_set && cam_isp_is_ctx_primary_rdi(hw_mgr_ctx)) {
-				hw_mgr_res->hw_res[0]->is_rdi_primary_res =
-					cam_isp_is_ctx_primary_rdi(hw_mgr_ctx);
-				res_rdi_context_set = true;
-				primary_rdi_out_res = hw_mgr_res->res_id;
-			}
-			break;
-		default:
-			break;
-		}
 		rc = cam_ife_hw_mgr_start_hw_res(
 			&c_ctx->res_list_ife_out[i], hw_mgr_ctx);
 		if (rc) {
@@ -8968,12 +8956,15 @@ start_only:
 		}
 	}
 
-	if (primary_rdi_out_res < g_ife_hw_mgr.isp_caps.max_vfe_out_res_type) {
+	if (cam_isp_is_ctx_primary_rdi(hw_mgr_ctx) && (c_ctx->pri_rdi_out_res <
+		g_ife_hw_mgr.isp_caps.max_vfe_out_res_type)) {
+		hw_mgr_res =
+			&c_ctx->res_list_ife_out[c_ctx->vfe_out_map[c_ctx->pri_rdi_out_res & 0xff]];
+		hw_mgr_res->hw_res[0]->is_rdi_primary_res =  true;
 		primary_rdi_src_res =
-			cam_convert_rdi_out_res_id_to_src(primary_rdi_out_res);
+			cam_convert_rdi_out_res_id_to_src(c_ctx->pri_rdi_out_res);
 		primary_rdi_csid_res =
-			cam_ife_hw_mgr_get_ife_csid_rdi_res_type(
-			primary_rdi_out_res);
+			cam_ife_hw_mgr_get_ife_csid_rdi_res_type(c_ctx->pri_rdi_out_res);
 	}
 
 	CAM_DBG(CAM_ISP, "START IFE SRC ... in ctx id:%d",
@@ -9243,6 +9234,7 @@ static int cam_ife_mgr_release_hw(void *hw_mgr_priv,
 	}
 
 	kfree(c_ctx->res_list_ife_out);
+	c_ctx->pri_rdi_out_res = g_ife_hw_mgr.isp_caps.max_vfe_out_res_type;
 	memset(c_ctx->vfe_out_map, 0, sizeof(uint8_t) * max_ife_out_res);
 	c_ctx->res_list_ife_out = NULL;
 	if (c_ctx->ctx_type == CAM_IFE_CTX_TYPE_SFE) {
@@ -14577,7 +14569,7 @@ int cam_ife_mgr_prepare_hw_update(void *hw_mgr_priv,
 	}
 
 	/* add reg update commands */
-	if (hw_mgr->csid_rup_en)
+	if (hw_mgr->csid_aup_rup_en)
 		rc = cam_ife_mgr_csid_add_reg_update(ife_mgr_ctx,
 			prepare, &prepare_hw_data->kmd_cmd_buff_info);
 
@@ -14586,8 +14578,8 @@ int cam_ife_mgr_prepare_hw_update(void *hw_mgr_priv,
 			prepare, &prepare_hw_data->kmd_cmd_buff_info);
 
 	if (rc) {
-		CAM_ERR(CAM_ISP, "Add RUP fail csid_rup_en %d, ctx_idx: %u",
-			hw_mgr->csid_rup_en, c_ctx->ctx_index);
+		CAM_ERR(CAM_ISP, "Add RUP fail csid_aup_rup_en %d, ctx_idx: %u",
+			hw_mgr->csid_aup_rup_en, c_ctx->ctx_index);
 		goto end;
 	}
 
@@ -15295,6 +15287,7 @@ static int cam_ife_mgr_int_cmd(void                        *hw_mgr_priv,
 				struct cam_isp_hw_cmd_args *isp_hw_cmd_args)
 {
 	struct cam_ife_hw_concrete_ctx   *c_ctx = hw_mgr_ctx->concr_ctx;
+	struct cam_ife_hw_mgr            *hw_mgr = hw_mgr_priv;
 	struct cam_isp_comp_record_query *query_cmd;
 	struct cam_packet                *packet;
 	int rc = 0;
@@ -15325,16 +15318,16 @@ static int cam_ife_mgr_int_cmd(void                        *hw_mgr_priv,
 		break;
 	case CAM_ISP_HW_MGR_CMD_CTX_TYPE:
 		if (c_ctx->flags.is_fe_enabled && c_ctx->flags.is_offline)
-			isp_hw_cmd_args->u.ctx_type =
-				CAM_ISP_CTX_OFFLINE;
+			isp_hw_cmd_args->u.ctx_info.type = CAM_ISP_CTX_OFFLINE;
 		else if (c_ctx->flags.is_fe_enabled && !c_ctx->flags.is_offline &&
 				c_ctx->ctx_type != CAM_IFE_CTX_TYPE_SFE)
-			isp_hw_cmd_args->u.ctx_type = CAM_ISP_CTX_FS2;
-		else if (c_ctx->flags.is_rdi_only_context ||
-				c_ctx->flags.is_lite_context)
-			isp_hw_cmd_args->u.ctx_type = CAM_ISP_CTX_RDI;
+			isp_hw_cmd_args->u.ctx_info.type = CAM_ISP_CTX_FS2;
 		else
-			isp_hw_cmd_args->u.ctx_type = CAM_ISP_CTX_PIX;
+			isp_hw_cmd_args->u.ctx_info.type = CAM_ISP_CTX_PIX;
+		if (hw_mgr->csid_aup_rup_en)
+			isp_hw_cmd_args->u.ctx_info.bubble_recover_dis  = 1;
+		else
+			isp_hw_cmd_args->u.ctx_info.bubble_recover_dis = 0;
 		break;
 	case CAM_ISP_HW_MGR_GET_PACKET_OPCODE:
 		packet = (struct cam_packet *)
@@ -17297,8 +17290,8 @@ static int cam_ife_hw_mgr_sort_dev_with_caps(
 
 		ife_hw_mgr->csid_global_reset_en =
 			ife_hw_mgr->csid_hw_caps[i].global_reset_en;
-		ife_hw_mgr->csid_rup_en =
-			ife_hw_mgr->csid_hw_caps[i].rup_en;
+		ife_hw_mgr->csid_aup_rup_en =
+			ife_hw_mgr->csid_hw_caps[i].aup_rup_en;
 		ife_hw_mgr->csid_camif_irq_support =
 			ife_hw_mgr->csid_hw_caps[i].camif_irq_support;
 	}
