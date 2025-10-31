@@ -5101,14 +5101,14 @@ int kgsl_of_property_read_ddrtype(struct device_node *node, const char *base,
 		u32 *ptr)
 {
 	char str[32];
-	u64 ddr = kgsl_get_ddrtype();
+	int ddr = kgsl_get_ddrtype();
 
 	/* kgsl_get_ddrtype returns error if the DDR type isn't determined */
-	if (!IS_ERR_VALUE(ddr)) {
+	if (ddr >= 0) {
 		int ret;
 
 		/* Construct expanded string for the DDR type  */
-		ret = snprintf(str, sizeof(str), "%s-ddr%llu", base, ddr);
+		ret = snprintf(str, sizeof(str), "%s-ddr%d", base, ddr);
 
 		/* WARN_ON() if the array size was too small for the string */
 		if (WARN_ON(ret > sizeof(str)))

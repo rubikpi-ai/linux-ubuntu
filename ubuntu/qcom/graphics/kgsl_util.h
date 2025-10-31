@@ -264,10 +264,9 @@ static inline int qcom_scm_kgsl_set_smmu_lpac_aperture(
 /**
  * kgsl_get_ddrtype - Type of ddr on the current device
  *
- * Return: non-zero positive value on success or negative
- * error code cast to u64 on failure.
+ * Return: ddr type on success or negative error on failure.
  */
-u64 kgsl_get_ddrtype(void);
+int kgsl_get_ddrtype(void);
 
 #if !IS_ENABLED(CONFIG_QCOM_SCM_ADDON)
 static inline int qcom_scm_kgsl_init_regs(u32 gpu_req)

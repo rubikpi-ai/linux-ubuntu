@@ -228,49 +228,35 @@ void kgsl_hwunlock(struct cpu_gpu_lock *lock)
 }
 
 #if IS_ENABLED(CONFIG_QCOM_KGSL_UPSTREAM)
-u64 kgsl_get_ddrtype(void)
+#include <linux/soc/qcom/smem.h>
+#include <linux/soc/qcom/socinfo.h>
+
+#if defined(SMEM_DDR_BUILD_ID)
+int kgsl_get_ddrtype(void)
 {
-	int ret = -EINVAL;
-	u64 ddr_type;
-	struct device_node *root_node;
-	struct device_node *mem_node = NULL;
+	struct ddrinfo *ddr;
 
-	root_node = of_find_node_by_path("/");
-
-	if (!root_node) {
-		pr_err("kgsl: Unable to find device tree root node\n");
-		return (u64)ret;
+	ddr = qcom_smem_get(QCOM_SMEM_HOST_ANY, SMEM_DDR_BUILD_ID, NULL);
+	if (IS_ERR(ddr)) {
+		pr_err("kgsl: Unable to get ddr type\n");
+		return PTR_ERR(ddr);
 	}
 
-	do {
-		mem_node = of_get_next_child(root_node, mem_node);
-		if (of_node_name_prefix(mem_node, "memory"))
-			break;
-	} while (mem_node);
-
-	of_node_put(root_node);
-	if (!mem_node) {
-		pr_err("kgsl: Unable to find device tree memory node\n");
-		return (u64)ret;
-	}
-
-	ret = of_property_read_u64(mem_node, "ddr_device_type", &ddr_type);
-
-	of_node_put(mem_node);
-	if (ret) {
-		pr_err("kgsl: ddr_device_type read error %d\n", ret);
-		return (u64)ret;
-	}
-
-	return ddr_type;
+	return ddr->device_type;
 }
-#else
+#else /* !defined(SMEM_DDR_BUILD_ID) */
+int kgsl_get_ddrtype(void)
+{
+	return -ENOENT;
+}
+#endif /* defined(SMEM_DDR_BUILD_ID) */
+#else /* !IS_ENABLED(CONFIG_QCOM_KGSL_UPSTREAM) */
 #include <soc/qcom/of_common.h>
-u64 kgsl_get_ddrtype(void)
+int kgsl_get_ddrtype(void)
 {
-	return (u64)of_fdt_get_ddrtype();
+	return of_fdt_get_ddrtype();
 }
-#endif
+#endif /* IS_ENABLED(CONFIG_QCOM_KGSL_UPSTREAM) */
 
 #if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
 #include <soc/qcom/minidump.h>

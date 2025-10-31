@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023,2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <dt-bindings/interconnect/qcom,icc.h>
@@ -174,12 +174,12 @@ int kgsl_bus_init(struct kgsl_device *device, struct platform_device *pdev)
 {
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 	int count;
-	u64 ddr = kgsl_get_ddrtype();
+	int ddr = kgsl_get_ddrtype();
 
-	if (!IS_ERR_VALUE(ddr)) {
+	if (ddr >= 0) {
 		char str[32];
 
-		snprintf(str, sizeof(str), "qcom,bus-table-ddr%llu", ddr);
+		snprintf(str, sizeof(str), "qcom,bus-table-ddr%d", ddr);
 
 		pwr->ddr_table = kgsl_bus_get_table(pdev, str, &count);
 		if (!IS_ERR(pwr->ddr_table))
