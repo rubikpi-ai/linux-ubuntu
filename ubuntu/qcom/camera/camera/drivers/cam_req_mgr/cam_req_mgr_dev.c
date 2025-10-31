@@ -885,7 +885,7 @@ bool cam_req_mgr_is_shutdown(void)
 int cam_register_subdev(struct cam_subdev *csd)
 {
 	struct v4l2_subdev *sd;
-	int rc;
+	int csd_name_len, rc;
 
 	if (!g_dev.state) {
 		CAM_DBG(CAM_CRM, "camera root device not ready yet");
@@ -902,7 +902,16 @@ int cam_register_subdev(struct cam_subdev *csd)
 	sd = &csd->sd;
 	v4l2_subdev_init(sd, csd->ops);
 	sd->internal_ops = csd->internal_ops;
-	snprintf(sd->name, sizeof(sd->name), "%s", csd->name);
+	csd_name_len = strlen(csd->name);
+	if (csd_name_len < sizeof(sd->name)) {
+		snprintf(sd->name, sizeof(sd->name), "%s", csd->name);
+	} else {
+		CAM_ERR(CAM_CRM, "Subdevice Name %s to big %d <= %d",
+			csd->name, sizeof(sd->name),
+			csd_name_len);
+		rc = -EINVAL;
+		goto invalid_val_fail;
+	}
 	v4l2_set_subdevdata(sd, csd->token);
 
 	sd->flags = csd->sd_flags;
@@ -935,6 +944,7 @@ int cam_register_subdev(struct cam_subdev *csd)
 	g_dev.count++;
 
 reg_fail:
+invalid_val_fail:
 	mutex_unlock(&g_dev.dev_lock);
 	return rc;
 }
