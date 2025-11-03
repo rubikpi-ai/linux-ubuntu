@@ -1326,6 +1326,8 @@ CONFIG_PWM_TIECAP                               policy<{'arm64': '-'}>
 CONFIG_PWM_TIEHRPWM                             policy<{'arm64': '-'}>
 CONFIG_PWM_VISCONTI                             policy<{'arm64': '-'}>
 CONFIG_PXA168_ETH                               policy<{'arm64': '-'}>
+CONFIG_QCA808X_PHY                              policy<{'arm64': 'm'}>
+CONFIG_QCA83XX_PHY                              policy<{'arm64': 'm'}>
 CONFIG_QCM_GCC_2290                             policy<{'arm64': 'y'}>
 CONFIG_QCOM_A53PLL                              policy<{'arm64': 'y'}>
 CONFIG_QCOM_AOSS_QMP                            policy<{'arm64': 'y'}>
@@ -1358,6 +1360,7 @@ CONFIG_QCOM_MEM_BUF                             policy<{'arm64': 'y'}>
 CONFIG_QCOM_MEM_BUF_DEV                         policy<{'arm64': 'y'}>
 CONFIG_QCOM_MINIDUMP                            policy<{'arm64': 'n'}>
 CONFIG_QCOM_MPM                                 policy<{'arm64': 'y'}>
+CONFIG_QCOM_NET_PHYLIB                          policy<{'arm64': 'm'}>
 CONFIG_QCOM_PANEL_EVENT_NOTIFIER                policy<{'arm64': 'm'}>
 CONFIG_QCOM_PDR_HELPERS                         policy<{'arm64': 'y'}>
 CONFIG_QCOM_QMI_COOLING                         policy<{'arm64': 'm'}>
