@@ -21,13 +21,16 @@
 		pinctrl-names = "default", "mi2s_aud_out_active", "mi2s_aud_out_sleep";
 		pinctrl-0 = <&hs0_mi2s_data0_sleep>, <&hs0_mi2s_sclk_sleep>,
 			    <&hs0_mi2s_data1_sleep>, <&hs0_mi2s_ws_sleep>,
-			    <&mi2s1_data0_sleep>, <&mi2s1_sck_sleep>, <&mi2s1_ws_sleep>;
+			    <&mi2s1_data0_sleep>, <&mi2s1_sck_sleep>, <&mi2s1_ws_sleep>,
+			    <&lpi_i2s4_clk_sleep>, <&lpi_i2s4_ws_sleep>, <&lpi_i2s4_data_sleep>;
 		pinctrl-1 = <&hs0_mi2s_data0>, <&hs0_mi2s_sclk>,
 			    <&hs0_mi2s_data1>, <&hs0_mi2s_ws>,
-			    <&mi2s1_data0>, <&mi2s1_sck>, <&mi2s1_ws>;
+			    <&mi2s1_data0>, <&mi2s1_sck>, <&mi2s1_ws>,
+			    <&lpi_i2s4_clk>, <&lpi_i2s4_ws>, <&lpi_i2s4_data>;
 		pinctrl-2 = <&hs0_mi2s_data0_sleep>, <&hs0_mi2s_sclk_sleep>,
 			    <&hs0_mi2s_data1_sleep>, <&hs0_mi2s_ws_sleep>,
-			    <&mi2s1_data0_sleep>, <&mi2s1_sck_sleep>, <&mi2s1_ws_sleep>;
+			    <&mi2s1_data0_sleep>, <&mi2s1_sck_sleep>, <&mi2s1_ws_sleep>,
+			    <&lpi_i2s4_clk_sleep>, <&lpi_i2s4_ws_sleep>, <&lpi_i2s4_data_sleep>;
 
 		hs0-mi2s-playback-dai-link {
 			link-name = "MI2S-LPAIF_SDR-RX-PRIMARY";
@@ -60,7 +63,83 @@
 				sound-dai = <&q6apm>;
 			};
 		};
+
+		lpi-i2s4-playback-dai-link {
+			link-name = "MI2S-LPAIF_WSA2-RX-PRIMARY";
+
+			cpu {
+				sound-dai = <&q6apmbedai PRIMARY_MI2S_RX>;
+			};
+
+			codec {
+				sound-dai = <&bt_sco_codec>;
+			};
+		};
+
+		lpi-i2s4-capture-dai-link {
+			link-name = "MI2S-LPAIF_WSA2-TX-PRIMARY";
+
+			cpu {
+				sound-dai = <&q6apmbedai PRIMARY_MI2S_TX>;
+			};
+
+			codec {
+				sound-dai = <&bt_sco_codec>;
+			};
+		};
 	};
+};
+
+&lpass_tlmm {
+
+	lpi_i2s4_clk: lpi-i2s4-clk-state {
+		pins = "gpio12";
+		function = "i2s4_clk";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	lpi_i2s4_clk_sleep: lpi-i2s4-clk-sleep-state {
+		pins = "gpio12";
+		function = "i2s4_clk";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	lpi_i2s4_ws: lpi-i2s4-ws-state {
+		pins = "gpio13";
+		function = "i2s4_ws";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	lpi_i2s4_ws_sleep: lpi-i2s4-ws-sleep-state {
+		pins = "gpio13";
+		function = "i2s4_ws";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	lpi_i2s4_data: lpi-i2s4-data-state {
+		pins = "gpio17", "gpio18";
+		function = "i2s4_data";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	lpi_i2s4_data_sleep: lpi-i2s4-data-sleep-state {
+		pins = "gpio17", "gpio18";
+		function = "i2s4_data";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
 };
 
 &soc {
@@ -80,6 +159,12 @@
 		#sound-dai-cells = <0>;
 		num-channels = <1>;
 	};
+
+	bt_sco_codec: bt-sco-codec {
+		#sound-dai-cells = <0>;
+		compatible = "linux,bt-sco";
+	};
+
 };
 
 &tlmm {
