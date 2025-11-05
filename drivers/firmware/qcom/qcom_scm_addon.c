@@ -44,6 +44,10 @@
 
 #define QCOM_SCM_IO_RESET           0x03
 
+/* IDs for TZ FFI */
+#define QCOM_SCM_SVC_SAFETY		0x23
+#define QCOM_SCM_TZ_SAFETY_ENABLE_FFI	0x1
+
 /* IDs for sdi and sec wdog control */
 #define QCOM_SCM_BOOT_SEC_WDOG_DIS	0x07
 #define QCOM_SCM_BOOT_SEC_WDOG_TRIGGER	0x08
@@ -487,6 +491,33 @@ int qcom_scm_invoke_callback_response(phys_addr_t out_buf,
 
 }
 EXPORT_SYMBOL_GPL(qcom_scm_invoke_callback_response);
+
+/**
+ * Enable the TZ-FFI safety feature by passing TrustZone a list of memory regions
+ * to mark as RW.
+ * @buf - a buffer which contains the list of memory regions
+ * @size - the size of the buffer
+ * @crc8 - the crc calculation of the buffer
+ */
+int qcom_scm_tz_safety_enable_ffi(phys_addr_t buf, size_t size, uint8_t crc8)
+{
+	int ret;
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_SAFETY,
+		.cmd = QCOM_SCM_TZ_SAFETY_ENABLE_FFI,
+		.owner = ARM_SMCCC_OWNER_SIP,
+		.args[0] = buf,
+		.args[1] = size,
+		.args[2] = crc8,
+		.arginfo = QCOM_SCM_ARGS(3, QCOM_SCM_RO, QCOM_SCM_VAL, QCOM_SCM_VAL),
+	};
+	struct qcom_scm_res res;
+
+	ret = qcom_scm_call(__scm->dev, &desc, &res);
+
+	return ret ? : res.result[0];
+}
+EXPORT_SYMBOL_GPL(qcom_scm_tz_safety_enable_ffi);
 
 /**
  * qcm_scm_sec_wdog_deactivate() - Deactivate secure watchdog
