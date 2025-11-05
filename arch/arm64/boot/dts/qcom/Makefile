@@ -428,6 +428,12 @@ qcs6490-thundercomm-rubikpi3-ovl-dtbs := \
     qcm6490-camera-rubikpi3.dtbo \
     qcm6490-video.dtbo
 
+dtb-$(CONFIG_ARCH_QCOM) += monaco-addons-monza-ovl.dtb
+monaco-addons-monza-ovl-dtbs := \
+    monaco-monza.dtb \
+    monaco-addons-monza.dtbo \
+    monaco-monza-camera.dtbo
+
 dtb-$(CONFIG_ARCH_QCOM)	+= combined-dtb.dtb
 
 dtbs-to-combined := $(filter %-ovl.dtb, $(dtb-y))
