@@ -6479,7 +6479,7 @@
 		};
 
 		gpucc: clock-controller@3d90000 {
-			compatible = "qcom,sa8775p-gpucc";
+			compatible = "qcom,sa8775p-gpucc", "syscon";
 			reg = <0x0 0x03d90000 0x0 0xa000>;
 			clocks = <&rpmhcc RPMH_CXO_CLK>,
 				 <&gcc GCC_GPU_GPLL0_CLK_SRC>,
@@ -6748,7 +6748,7 @@
 		};
 
 		videocc: clock-controller@abf0000 {
-			compatible = "qcom,sa8775p-videocc";
+			compatible = "qcom,sa8775p-videocc", "syscon";
 			reg = <0x0 0x0abf0000 0x0 0x10000>;
 			clocks = <&gcc GCC_VIDEO_AHB_CLK>,
 				 <&rpmhcc RPMH_CXO_CLK>,
@@ -7102,7 +7102,7 @@
 		};
 
 		camcc: clock-controller@ade0000 {
-			compatible = "qcom,sa8775p-camcc";
+			compatible = "qcom,sa8775p-camcc", "syscon";
 			reg = <0x0 0x0ade0000 0x0 0x20000>;
 			clocks = <&gcc GCC_CAMERA_AHB_CLK>,
 				 <&rpmhcc RPMH_CXO_CLK>,
@@ -7601,7 +7601,7 @@
 		};
 
 		dispcc0: clock-controller@af00000 {
-			compatible = "qcom,sa8775p-dispcc0";
+			compatible = "qcom,sa8775p-dispcc0", "syscon";
 			reg = <0x0 0x0af00000 0x0 0x20000>;
 			clocks = <&gcc GCC_DISP_AHB_CLK>,
 				 <&rpmhcc RPMH_CXO_CLK>,
@@ -9172,10 +9172,28 @@
 		debugcc: clock-controller@0 {
 			compatible = "qcom,measure-debugcc-sa8775p";
 			qcom,gcc = <&gcc>;
+			qcom,camcc = <&camcc>;
+			qcom,dispcc0 = <&dispcc0>;
+			qcom,dispcc1 = <&dispcc1>;
+			qcom,gpucc = <&gpucc>;
+			qcom,videocc = <&videocc>;
 			qcom,apsscc = <&apsscc>;
 			qcom,mccc = <&mccc>;
-			clocks = <&rpmhcc RPMH_CXO_CLK>;
-			clock-names = "xo_clk_src";
+			clocks = <&rpmhcc RPMH_CXO_CLK>,
+				 <&camcc 0>,
+				 <&dispcc0 0>,
+				 <&dispcc1 0>,
+				 <&gcc 0>,
+				 <&gpucc 0>,
+				 <&videocc 0>;
+			clock-names = "xo_clk_src",
+				      "camcc",
+				      "dispcc0",
+				      "dispcc1",
+				      "gcc",
+				      "gpucc",
+				      "videocc";
+			#clock-cells = <1>;
 		};
 
 		epss_l3_cl0: interconnect@18590000 {
@@ -9671,7 +9689,7 @@
 		};
 
 		dispcc1: clock-controller@22100000 {
-			compatible = "qcom,sa8775p-dispcc1";
+			compatible = "qcom,sa8775p-dispcc1", "syscon";
 			reg = <0x0 0x22100000 0x0 0x20000>;
 			clocks = <&gcc GCC_DISP_AHB_CLK>,
 				 <&rpmhcc RPMH_CXO_CLK>,
