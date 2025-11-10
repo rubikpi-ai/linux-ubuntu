@@ -5,9 +5,9 @@
 
 /dts-v1/;
 
+#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
 #include <dt-bindings/spmi/spmi.h>
-#include <dt-bindings/gpio/gpio.h>
 #include "qcs8300.dtsi"
 #include "qcs8300-thermal.dtsi"
 #include "qcs8300-pmics.dtsi"
@@ -181,6 +181,13 @@
 	       function = "normal";
 	       output-high;
 	       power-source = <0>;
+	};
+
+	wlan_rfkill_pin: wlan-rfkill-pin {
+		gpio-hog;
+		gpios = <54 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "wlan-rfkill-pin";
 	};
 };
 
