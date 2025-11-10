@@ -113,8 +113,13 @@ int qps615_switch_init(struct i2c_client *client, struct qps615_switch_i2c *qps6
 		return -EINVAL;
 	}
 
-	pos = qps615->fw_data;
-	eof = qps615->fw_data + qps615->size;
+	if (qps615->fw_data && qps615->size) {
+		pos = qps615->fw_data;
+		eof = qps615->fw_data + qps615->size;
+	} else {
+		dev_err(&client->dev, "No FW data found, continue without I2C configs\n");
+		return 0;
+	}
 
 	while (pos < (qps615->fw_data + qps615->size)) {
 		set = (struct pcie_switch_i2c_setting *)pos;
@@ -202,10 +207,17 @@ static int qps615_switch_probe(struct i2c_client *client)
 		return PTR_ERR(qps615->vdda);
 	}
 
+	ret = regulator_enable(qps615->vdda);
+	if (ret) {
+		dev_err(&client->dev, "cannot enable vdda regulator\n");
+		return ret;
+	}
+
 	ret = request_firmware(&fw, "qcom/qps615.bin", &client->dev);
 	if (ret < 0) {
-		dev_err(&client->dev, "firmware loading failed with ret %d\n", ret);
-		return ret;
+		dev_err(&client->dev, "firmware loading failed with ret %d, continue without it\n",
+			ret);
+		goto skip_firmware;
 	}
 
 	qps615->fw_data = devm_kzalloc(&client->dev, fw->size, GFP_KERNEL);
@@ -219,17 +231,12 @@ static int qps615_switch_probe(struct i2c_client *client)
 
 	release_firmware(fw);
 
-	ret = regulator_enable(qps615->vdda);
-	if (ret) {
-		dev_err(&client->dev, "cannot enable vdda regulator\n");
-		return ret;
-	}
-
 	/*
 	 * Do not fail the probe if qps615_switch_init() fails.
 	 * The switch remains functional even without I2C writes.
 	 */
 	qps615_switch_init(client, qps615);
+skip_firmware:
 	return 0;
 }
 
