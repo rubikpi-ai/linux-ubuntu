@@ -308,6 +308,14 @@
 		 */
 	};
 
+	wcn_usb_bt_n: wcn-usb-bt-n-state {
+		pins = "gpio55";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+		output-high;
+	};
+
 	ethernet0_default: ethernet0-default-state {
 		ethernet0_mdc: ethernet0-mdc-pins {
 			pins = "gpio5";
@@ -368,6 +376,9 @@
 	vdda-pll-supply = <&vreg_l7a>;
 	vdda18-supply = <&vreg_l7c>;
 	vdda33-supply = <&vreg_l9a>;
+
+	pinctrl-0 = <&wcn_usb_bt_n>;
+	pinctrl-names = "default";
 
 	status = "okay";
 };
