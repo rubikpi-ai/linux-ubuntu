@@ -13,8 +13,8 @@
 	model = "Qualcomm Technologies, Inc. Monaco Monza addons";
 	qcom,board-id = <0x00010020 4>, <0x00010019 4>;
 	sound {
-		compatible = "qcom,monza-monaco-sndcard";
-		model = "monza-monaco";
+		compatible = "qcom,monaco-monza-sndcard";
+		model = "monaco-monza";
 		pinctrl-names = "default";
 		pinctrl-0 = <&ext_mclk1_d>,<&lpi_i2s3_clk>,<&lpi_i2s3_ws>,<&lpi_i2s3_data>;
 
