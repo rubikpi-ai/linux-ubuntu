@@ -106,6 +106,7 @@ static int qcs9100_snd_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
 	struct qcs9100_snd_data *pdata = snd_soc_card_get_drvdata(rtd->card);
+	struct snd_soc_card *card = rtd->card;
 	int ret = 0;
 	int mclk = 0;
 
@@ -137,30 +138,32 @@ static int qcs9100_snd_hw_params(struct snd_pcm_substream *substream,
 		break;
 	}
 
-	switch (params_rate(params)) {
-	case 8000:
-	case 16000:
-	case 24000:
-	case 32000:
-	case 48000:
-	case 64000:
-	case 96000:
-		mclk = 12288000;
-		break;
-	case 11025:
-	case 22050:
-	case 44100:
-	case 88200:
-		mclk = 11289600;
-		break;
-	default:
-		return -EINVAL;
-	}
+	if (strcmp(card->name, "monaco-monza") == 0) {
+		switch (params_rate(params)) {
+		case 8000:
+		case 16000:
+		case 24000:
+		case 32000:
+		case 48000:
+		case 64000:
+		case 96000:
+			mclk = 12288000;
+			break;
+		case 11025:
+		case 22050:
+		case 44100:
+		case 88200:
+			mclk = 11289600;
+			break;
+		default:
+			return -EINVAL;
+		}
 
-	ret = snd_soc_dai_set_sysclk(codec_dai, 0, mclk, SND_SOC_CLOCK_IN);
-	if (ret) {
-		dev_err(codec_dai->dev, "Can't set codec DAI clock: %d\n", ret);
-		return ret;
+		ret = snd_soc_dai_set_sysclk(codec_dai, 0, mclk, SND_SOC_CLOCK_IN);
+		if (ret) {
+			dev_err(codec_dai->dev, "Can't set codec DAI clock: %d\n", ret);
+			return ret;
+		}
 	}
 
 	return qcom_snd_sdw_hw_params(substream, params, &pdata->sruntime[cpu_dai->id]);
@@ -371,8 +374,10 @@ static void qcs9100_add_be_ops(struct snd_soc_card *card)
 			link->init = qcs9100_snd_init;
 			link->be_hw_params_fixup = qcs9100_be_hw_params_fixup;
 			link->ops = &qcs9100_be_ops;
-			link->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF
-				| SND_SOC_DAIFMT_CBM_CFM;
+			if (strcmp(card->name, "monaco-monza") == 0) {
+				link->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF
+					| SND_SOC_DAIFMT_CBM_CFM;
+			}
 		}
 	}
 }
