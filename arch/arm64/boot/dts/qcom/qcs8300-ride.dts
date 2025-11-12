@@ -825,8 +825,8 @@
 	phys = <&usb_1_hsphy>, <&usb_qmpphy>;
 	phy-names = "usb2-phy", "usb3-phy";
 	maximum-speed = "super-speed-plus";
-
-	dr_mode = "peripheral";
+	dr_mode = "otg";
+	usb-role-switch;
 	wakeup-source;
 
 	status = "okay";
