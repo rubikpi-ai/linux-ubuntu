@@ -822,7 +822,6 @@
 
 	qcom,enable-rt;
 	wakeup-source;
-	maximum-speed = "super-speed";
 	vbus_dwc3-supply = <&vbus_supply_regulator_0>;
 	status = "okay";
 
