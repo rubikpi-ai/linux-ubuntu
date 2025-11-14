@@ -205,6 +205,8 @@ static const struct snd_soc_dapm_widget iq8_8275_evk_dapm_widgets[] = {
 static const struct snd_soc_dapm_route iq8_8275_evk_dapm_routes[] = {
 	{"Speaker", NULL, "MI2S_OUT_PINCTRL"},
 	{"DMic", NULL, "MI2S_OUT_PINCTRL"},
+	{"RX", NULL, "MI2S_OUT_PINCTRL"},
+	{"TX", NULL, "MI2S_OUT_PINCTRL"},
 };
 
 static const struct snd_soc_dapm_widget qcs8300_dapm_widgets[] = {
