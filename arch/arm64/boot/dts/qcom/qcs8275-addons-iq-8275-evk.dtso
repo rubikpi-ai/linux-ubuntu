@@ -48,6 +48,30 @@
 			};
 		};
 
+		lpi-i2s4-playback-dai-link {
+			link-name = "MI2S-LPAIF_WSA2-RX-PRIMARY";
+
+			cpu {
+				sound-dai = <&q6apmbedai PRIMARY_MI2S_RX>;
+			};
+
+			codec {
+				sound-dai = <&bt_sco_codec 1>;
+			};
+		};
+
+		lpi-i2s4-capture-dai-link {
+			link-name = "MI2S-LPAIF_WSA2-TX-PRIMARY";
+
+			cpu {
+				sound-dai = <&q6apmbedai PRIMARY_MI2S_TX>;
+			};
+
+			codec {
+				sound-dai = <&bt_sco_codec 1>;
+			};
+		};
+
 		mi2s1-capture-dai-link {
 			link-name = "MI2S-LPAIF-TX-SECONDARY";
 
@@ -64,29 +88,7 @@
 			};
 		};
 
-		lpi-i2s4-playback-dai-link {
-			link-name = "MI2S-LPAIF_WSA2-RX-PRIMARY";
 
-			cpu {
-				sound-dai = <&q6apmbedai PRIMARY_MI2S_RX>;
-			};
-
-			codec {
-				sound-dai = <&bt_sco_codec>;
-			};
-		};
-
-		lpi-i2s4-capture-dai-link {
-			link-name = "MI2S-LPAIF_WSA2-TX-PRIMARY";
-
-			cpu {
-				sound-dai = <&q6apmbedai PRIMARY_MI2S_TX>;
-			};
-
-			codec {
-				sound-dai = <&bt_sco_codec>;
-			};
-		};
 	};
 };
 
@@ -108,22 +110,6 @@
 		input-enable;
 	};
 
-	lpi_i2s4_ws: lpi-i2s4-ws-state {
-		pins = "gpio13";
-		function = "i2s4_ws";
-		drive-strength = <8>;
-		bias-disable;
-		output-high;
-	};
-
-	lpi_i2s4_ws_sleep: lpi-i2s4-ws-sleep-state {
-		pins = "gpio13";
-		function = "i2s4_ws";
-		drive-strength = <2>;
-		bias-pull-down;
-		input-enable;
-	};
-
 	lpi_i2s4_data: lpi-i2s4-data-state {
 		pins = "gpio17", "gpio18";
 		function = "i2s4_data";
@@ -140,9 +126,30 @@
 		input-enable;
 	};
 
+	lpi_i2s4_ws: lpi-i2s4-ws-state {
+		pins = "gpio13";
+		function = "i2s4_ws";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	lpi_i2s4_ws_sleep: lpi-i2s4-ws-sleep-state {
+		pins = "gpio13";
+		function = "i2s4_ws";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
 };
 
 &soc {
+
+	bt_sco_codec: bt-sco-codec {
+		#sound-dai-cells = <1>;
+		compatible = "linux,bt-sco";
+	};
 
 	msm_stub_codec: msm-stub-codec {
 		compatible = "qcom,msm-stub-codec";
@@ -158,11 +165,6 @@
 		compatible = "dmic-codec";
 		#sound-dai-cells = <0>;
 		num-channels = <1>;
-	};
-
-	bt_sco_codec: bt-sco-codec {
-		#sound-dai-cells = <0>;
-		compatible = "linux,bt-sco";
 	};
 
 };
