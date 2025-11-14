@@ -1068,7 +1068,22 @@
 			reg = <0x0 0x7C8000 0x0 0x10000>;
 			qcom,ice-use-hwkm;
 			clocks = <&gcc GCC_SDCC1_ICE_CORE_CLK>;
+			operating-points-v2 = <&ice_mmc_opp_table>;
 			status = "okay";
+
+			ice_mmc_opp_table: opp-table {
+				compatible = "operating-points-v2";
+
+				opp-100000000 {
+					opp-hz = /bits/ 64 <100000000>;
+					required-opps = <&rpmhpd_opp_low_svs>;
+				};
+
+				opp-300000000 {
+					opp-hz = /bits/ 64 <300000000>;
+					required-opps = <&rpmhpd_opp_nom>;
+				};
+			};
 		};
 
 		gpi_dma0: dma-controller@900000 {
@@ -5237,7 +5252,22 @@
 			reg = <0x0 0x01d88000 0x0 0x10000>;
 			qcom,ice-use-hwkm;
 			clocks = <&gcc GCC_UFS_PHY_ICE_CORE_CLK>;
+			operating-points-v2 = <&ice_opp_table>;
 			status = "okay";
+
+			ice_opp_table: opp-table {
+				compatible = "operating-points-v2";
+
+				opp-75000000 {
+					opp-hz = /bits/ 64 <75000000>;
+					required-opps = <&rpmhpd_opp_low_svs>;
+				};
+
+				opp-300000000 {
+					opp-hz = /bits/ 64 <300000000>;
+					required-opps = <&rpmhpd_opp_nom>;
+				};
+			};
 		};
 
 		usb_1_hsphy: phy@88e3000 {

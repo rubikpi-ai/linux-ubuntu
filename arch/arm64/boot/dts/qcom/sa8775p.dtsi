@@ -3026,7 +3026,22 @@
 			qcom,ice-use-hwkm;
 			clocks = <&gcc GCC_UFS_PHY_ICE_CORE_CLK>;
 
+			operating-points-v2 = <&ice_opp_table>;
 			status = "disabled";
+
+			ice_opp_table: opp-table {
+				compatible = "operating-points-v2";
+
+				opp-150000000 {
+					opp-hz = /bits/ 64 <150000000>;
+					required-opps = <&rpmhpd_opp_svs_l1>;
+				};
+
+				opp-600000000 {
+					opp-hz = /bits/ 64 <600000000>;
+					required-opps = <&rpmhpd_opp_nom>;
+				};
+			};
 		};
 
 		sdhc_1: mmc@0x87c4000 {
