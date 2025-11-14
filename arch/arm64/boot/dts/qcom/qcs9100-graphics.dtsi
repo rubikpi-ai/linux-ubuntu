@@ -180,6 +180,12 @@
 			iommus = <&adreno_smmu 0x0 0xc00>, <&adreno_smmu 0x1 0xc00>;
 			qcom,iommu-dma = "disabled";
 		};
+
+		gfx3d_secure: gfx3d_secure {
+			compatible = "qcom,smmu-kgsl-cb", "qcom,adreno-gmu";
+			iommus = <&adreno_smmu 0x2 0xc00>;
+			qcom,iommu-vmid = <0xA>;
+		};
 	};
 
 	gmu: qcom,gmu@3d6a000 {
