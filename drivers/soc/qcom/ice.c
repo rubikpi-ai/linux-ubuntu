@@ -19,6 +19,7 @@
 
 #include <linux/of_address.h>
 #include <linux/firmware/qcom/qcom_scm.h>
+#include <linux/pm_opp.h>
 
 #include <soc/qcom/ice.h>
 
@@ -82,8 +83,9 @@ struct qcom_ice {
 	u8 hwkm_version;
 	bool use_hwkm;
 	bool hwkm_init_complete;
-	uint32_t max_freq;
-	uint32_t min_freq;
+	unsigned long max_freq;
+	unsigned long min_freq;
+	bool has_opp;
 };
 
 union crypto_cfg {
@@ -94,6 +96,11 @@ union crypto_cfg {
 		u8 reserved;
 		u8 cfge;
 	};
+};
+
+static const char * const legacy_ice_clk_names[] = {
+	"ice_core_clk",
+	"ice",
 };
 
 static bool qcom_ice_check_supported(struct qcom_ice *ice)
@@ -523,9 +530,11 @@ int qcom_ice_scale_clk(struct qcom_ice *ice, bool scale_up)
 	int ret = 0;
 
 	if (scale_up && ice->max_freq)
-		ret = clk_set_rate(ice->core_clk, ice->max_freq);
+		ret = (ice->has_opp) ? dev_pm_opp_set_rate(ice->dev, ice->max_freq)
+				     : clk_set_rate(ice->core_clk, ice->max_freq);
 	else if (!scale_up && ice->min_freq)
-		ret = clk_set_rate(ice->core_clk, ice->min_freq);
+		ret = (ice->has_opp) ? dev_pm_opp_set_rate(ice->dev, ice->min_freq)
+				     : clk_set_rate(ice->core_clk, ice->min_freq);
 
 	return ret;
 }
@@ -535,6 +544,10 @@ static struct qcom_ice *qcom_ice_create(struct device *dev,
 					void __iomem *base)
 {
 	struct qcom_ice *engine;
+	int clk_index;
+	struct dev_pm_opp *opp;
+	int err;
+	unsigned long rate;
 
 	if (!qcom_scm_is_available())
 		return ERR_PTR(-EPROBE_DEFER);
@@ -553,18 +566,74 @@ static struct qcom_ice *qcom_ice_create(struct device *dev,
 
 	/*
 	 * Legacy DT binding uses different clk names for each consumer,
-	 * so lets try those first. If none of those are a match, it means
-	 * the we only have one clock and it is part of the dedicated DT node.
-	 * Also, enable the clock before we check what HW version the driver
-	 * supports.
+	 * so lets try those first. Also get its corresponding clock index.
 	 */
-	engine->core_clk = devm_clk_get_optional_enabled(dev, "ice_core_clk");
-	if (!engine->core_clk)
-		engine->core_clk = devm_clk_get_optional_enabled(dev, "ice");
-	if (!engine->core_clk)
-		engine->core_clk = devm_clk_get_enabled(dev, NULL);
-	if (IS_ERR(engine->core_clk))
-		return ERR_CAST(engine->core_clk);
+	for (int i = 0; i < ARRAY_SIZE(legacy_ice_clk_names); i++) {
+		engine->core_clk = devm_clk_get_optional(dev, legacy_ice_clk_names[i]);
+		if (!engine->core_clk)
+			continue;
+
+		if (IS_ERR(engine->core_clk))
+			return ERR_CAST(engine->core_clk);
+
+		/* Get the ICE clk index */
+		clk_index = of_property_match_string(dev->of_node,
+						     "clock-names",
+						     legacy_ice_clk_names[i]);
+		if (clk_index < 0)
+			return ERR_PTR(clk_index);
+
+		break;
+	}
+
+	/* When it does not match the legacy DT bindings
+	 * it must have only one clock and it is part of
+	 * decicated DT node
+	 */
+	if (!engine->core_clk) {
+		engine->core_clk = devm_clk_get(dev, NULL);
+		if (IS_ERR(engine->core_clk))
+			return ERR_CAST(engine->core_clk);
+
+		/* OPP table is optional */
+		err = devm_pm_opp_of_add_table(dev);
+		if (err && err != -ENODEV) {
+			dev_err(dev, "Invalid OPP table in Device tree\n");
+			return ERR_PTR(err);
+		}
+		engine->has_opp = (err == 0);
+
+		/* Since, there is only one clock
+		 * index can be set as 0
+		 */
+		clk_index = 0;
+	}
+
+	/* Find the ICE core clock min and max frequencies */
+	rate = 0;
+	opp = dev_pm_opp_find_freq_ceil_indexed(dev, &rate, clk_index);
+	if (IS_ERR(opp)) {
+		dev_warn(dev, "Unable to find ICE core clock min freq\n");
+	} else {
+		engine->min_freq = rate;
+		dev_pm_opp_put(opp);
+	}
+
+	rate = ULONG_MAX;
+	opp = dev_pm_opp_find_freq_floor_indexed(dev, &rate, clk_index);
+	if (IS_ERR(opp)) {
+		dev_warn(dev, "Unable to find ICE core clock max freq\n");
+	} else {
+		engine->max_freq = rate;
+		dev_pm_opp_put(opp);
+	}
+
+	/* Enable the clock before we check what HW version the driver supports */
+	err = clk_prepare_enable(engine->core_clk);
+	if (err) {
+		dev_err(dev, "Failed to enable ICE core clock\n");
+		return ERR_PTR(err);
+	}
 	engine->use_hwkm = of_property_read_bool(dev->of_node,
 						 "qcom,ice-use-hwkm");
 
@@ -596,8 +665,6 @@ struct qcom_ice *of_qcom_ice_get(struct device *dev)
 	struct device_node *node;
 	struct resource *res;
 	void __iomem *base;
-	const __be32 *prop;
-	int len;
 	const char *status = NULL;
 
 
@@ -649,14 +716,6 @@ struct qcom_ice *of_qcom_ice_get(struct device *dev)
 		else
 			ice = ERR_PTR(-EPROBE_DEFER);
 		goto out;
-	}
-
-	prop = of_get_property(node, "freq-table-hz", &len);
-	if (!prop || len < 2 * sizeof(uint32_t))
-		pr_err("Property not found or invalid length\n");
-	else {
-		ice->min_freq = be32_to_cpu(prop[0]);
-		ice->max_freq = be32_to_cpu(prop[1]);
 	}
 
 	ice->link = device_link_add(dev, &pdev->dev, DL_FLAG_AUTOREMOVE_SUPPLIER);
