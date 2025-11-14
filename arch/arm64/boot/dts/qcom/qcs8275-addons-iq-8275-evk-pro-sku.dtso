@@ -57,7 +57,7 @@
 			};
 
 			codec {
-				sound-dai = <&bt_sco_codec>;
+				sound-dai = <&bt_sco_codec 1>;
 			};
 		};
 
@@ -69,7 +69,7 @@
 			};
 
 			codec {
-				sound-dai = <&bt_sco_codec>;
+				sound-dai = <&bt_sco_codec 1>;
 			};
 		};
 
@@ -144,7 +144,7 @@
 &soc {
 
 	bt_sco_codec: bt-sco-codec {
-		#sound-dai-cells = <0>;
+		#sound-dai-cells = <1>;
 		compatible = "linux,bt-sco";
 	};
 
