@@ -1291,11 +1291,11 @@ static void tsens_thermal_zone_trip_update(struct thermal_zone_device *tz,
 		trip_delta = TSENS_ELEVATE_DELTA;
 
 	trip.temperature += trip_delta;
-	ret = thermal_zone_set_trip(tz, trip_id, &trip);
-	if (ret) {
-		dev_err(priv->dev, "%s: failed to set trip %ld for %s\n",
-			__func__, trip_id, tz->type);
-	}
+	mutex_lock(&tz->lock);
+	tz->trips[trip_id] = trip;
+	mutex_unlock(&tz->lock);
+
+	thermal_zone_device_update(tz, THERMAL_TRIP_CHANGED);
 }
 
 static int tsens_nvmem_trip_update(struct thermal_zone_device *tz)
