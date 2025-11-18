@@ -13,6 +13,7 @@ clk-qcom-y += clk-regmap-mux.o
 clk-qcom-y += clk-regmap-mux-div.o
 clk-qcom-y += clk-regmap-phy-mux.o
 clk-qcom-$(CONFIG_CLK_QCOM_DEBUG) += clk-debug.o debugcc-measure-sa8775p.o
+clk-qcom-$(CONFIG_CLK_QCOM_DEBUG) += debugcc-measure-qcs8300.o
 clk-qcom-$(CONFIG_KRAIT_CLOCKS) += clk-krait.o
 clk-qcom-y += clk-hfpll.o
 clk-qcom-y += reset.o
