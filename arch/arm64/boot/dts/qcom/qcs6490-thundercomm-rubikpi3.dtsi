@@ -561,7 +561,7 @@
 };
 
 &remoteproc_adsp {
-	firmware-name = "qcom/qcs6490/adsp.mdt";
+	firmware-name = "qcom/qcs6490/Thundercomm/RubikPi3/adsp.mbn";
 	status = "okay";
 };
 
