@@ -543,6 +543,7 @@
 		interrupts-extended = <&tlmm 97 IRQ_TYPE_LEVEL_LOW>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&it6162_2_irq_pin>;
+		status = "disabled";
 
 		ports {
 			#address-cells = <1>;
@@ -617,7 +618,6 @@
 
 &mdss0_dsi1 {
 	vdda-supply = <&vreg_l1c>;
-	status = "okay";
 };
 
 &mdss0_dsi1_out {
@@ -627,7 +627,6 @@
 
 &mdss0_dsi1_phy {
 	vdds-supply = <&vreg_l4a>;
-	status = "okay";
 };
 
 &mdss0_edp_phy {
