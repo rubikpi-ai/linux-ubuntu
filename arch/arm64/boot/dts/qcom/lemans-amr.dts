@@ -26,10 +26,34 @@
 		serial0 = &uart10;
 		spi7 = &spi7;
 		spi14 = &spi14;
+		i2c1  = &i2c1;
+		i2c19 = &i2c19;
 	};
 
 	chosen {
 		stdout-path = "serial0:115200n8";
+	};
+
+	hdmi-connector1 {
+		compatible = "hdmi-connector";
+		type = "a";
+
+		port {
+			hdmi_con1: endpoint {
+				remote-endpoint = <&it6162_1_out>;
+			};
+		};
+	};
+
+	hdmi-connector2 {
+		compatible = "hdmi-connector";
+		type = "a";
+
+		port {
+			hdmi_con2: endpoint {
+				remote-endpoint = <&it6162_2_out>;
+			};
+		};
 	};
 
 	wcn6855-pmu {
@@ -418,11 +442,49 @@
 	status = "okay";
 };
 
+&i2c1 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	it6162_1_codec: hdmi-bridge@58 {
+		compatible = "ite,it6162";
+		reg = <0x58>;
+
+		interrupts-extended = <&tlmm 95 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&it6162_1_irq_pin>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				it6162_1_a: endpoint {
+					data-lanes = <0 1 2 3>;
+					// ite,mipi-dsi-phy-pn-swap;
+					// ite,mipi-dsi-phy-link-swap;
+					remote-endpoint = <&mdss0_dsi0_out>;
+				};
+			};
+
+			port@2 {
+				reg = <2>;
+
+				it6162_1_out: endpoint {
+					remote-endpoint = <&hdmi_con1>;
+				};
+			};
+		};
+	};
+};
+
 &i2c18 {
 	pinctrl-0 = <&qup_i2c18_default>;
 	pinctrl-names = "default";
 
-	status = "okay";
+	status = "disabled";
 
 	expander0: pca953x@38 {
 		compatible = "ti,tca9538";
@@ -469,6 +531,45 @@
 	};
 };
 
+&i2c19 {
+	clock-frequency = <400000>;
+	qcom,load-firmware;
+	qcom,xfer-mode = <1>;
+
+	it6162_2_codec: hdmi-bridge@58 {
+		compatible = "ite,it6162";
+		reg = <0x58>;
+
+		interrupts-extended = <&tlmm 97 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&it6162_2_irq_pin>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				it6162_2_a: endpoint {
+					data-lanes = <0 1 2 3>;
+					// ite,mipi-dsi-phy-pn-swap;
+					// ite,mipi-dsi-phy-link-swap;
+					remote-endpoint = <&mdss0_dsi1_out>;
+				};
+			};
+
+			port@2 {
+				reg = <2>;
+
+				it6162_2_out: endpoint {
+					remote-endpoint = <&hdmi_con2>;
+				};
+			};
+		};
+	};
+};
+
 &ice {
 	status = "okay";
 };
@@ -497,6 +598,36 @@
 &mdss0_dp1_out {
 	data-lanes = <0 1 2 3>;
 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+};
+
+&mdss0_dsi0 {
+	vdda-supply = <&vreg_l1c>;
+	status = "okay";
+};
+
+&mdss0_dsi0_out {
+	remote-endpoint = <&it6162_1_a>;
+	data-lanes = <0 1 2 3>;
+};
+
+&mdss0_dsi0_phy {
+	vdds-supply = <&vreg_l4a>;
+	status = "okay";
+};
+
+&mdss0_dsi1 {
+	vdda-supply = <&vreg_l1c>;
+	status = "okay";
+};
+
+&mdss0_dsi1_out {
+	remote-endpoint = <&it6162_2_a>;
+	data-lanes = <0 1 2 3>;
+};
+
+&mdss0_dsi1_phy {
+	vdds-supply = <&vreg_l4a>;
+	status = "okay";
 };
 
 &mdss0_edp_phy {
@@ -810,6 +941,20 @@
 			drive-strength = <16>;
 			bias-pull-up;
 		};
+	};
+
+	it6162_1_irq_pin: it6162_1_irq_pin {
+		pins = "gpio95";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-high;
+	};
+
+	it6162_2_irq_pin: it6162_2_irq_pin {
+		pins = "gpio97";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-high;
 	};
 
 	pcie0_default_state: pcie0-default-state {
