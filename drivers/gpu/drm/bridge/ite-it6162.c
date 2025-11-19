@@ -33,6 +33,8 @@
 #include <linux/regmap.h>
 #include <sound/hdmi-codec.h>
 #include <video/videomode.h>
+#include <linux/atomic.h>
+#include <linux/kthread.h>
 
 #define SUPPORT_CREAT_CONNECTOR
 #define EBABLE_HDCP
@@ -232,6 +234,10 @@ struct it6162 {
 	struct regmap *it6162_regmap;
 
 	struct work_struct hdcp_work;
+	struct wait_queue_head wq;
+	struct wait_queue_head int_wq;
+	struct task_struct *int_thread;
+	atomic_t int_cnt;
 
 	struct regulator *pwr18;
 	struct regulator *ovdd;
@@ -835,7 +841,7 @@ static void it6162_hdcp_handler(struct it6162 *it6162)
 	}
 }
 
-static void it6162_interrupt_handler(struct it6162 *it6162)
+static int it6162_interrupt_handler(struct it6162 *it6162)
 {
 	unsigned int int_status, tx_status, mipi_status, sink_cap;
 	enum drm_connector_status connector_status;
@@ -849,8 +855,10 @@ static void it6162_interrupt_handler(struct it6162 *it6162)
 		it6162->data_buf_sts = GET_BUFFER_STATUS(int_status);
 	}
 
-	if (!(int_status & EVENT_CHG))
-		return;
+	if (!(int_status & EVENT_CHG)) {
+		pr_info("%s: exit!\n", __func__);
+		return (int_status == 0) ? 0 : -1;
+	}
 
 	dev_info(it6162->dev, "evnet change");
 	tx_status = it6162_infoblock_read(it6162, OFFSET_TX_STATUS);
@@ -878,6 +886,8 @@ static void it6162_interrupt_handler(struct it6162 *it6162)
 
 	if (it6162->en_hdcp && connector_status == connector_status_connected)
 		schedule_work(&it6162->hdcp_work);
+
+	return 0;
 }
 
 static bool it6162_wait_devices(struct it6162 *it6162)
@@ -1162,11 +1172,35 @@ static void it6162_disable_audio(struct it6162 *it6162)
 	it6162_infoblock_host_set(it6162, HOST_SETTING_AUDIO_INFO);
 }
 
+static int it6162_kthread(void *arg)
+{
+	struct it6162 *it6162 = (struct it6162 *)arg;
+
+	pr_info("it6162_kthread: %px\n", it6162);
+
+	while (!kthread_should_stop()) {
+		wait_event_interruptible(it6162->int_wq,
+				(atomic_read(&it6162->int_cnt) != 0) || kthread_should_stop());
+
+		if (kthread_should_stop())
+			break;
+
+		while (it6162_interrupt_handler(it6162) < 0) {
+			usleep_range(500, 600);
+		}
+
+		atomic_dec(&it6162->int_cnt);
+	}
+
+	return 0;
+}
+
 static irqreturn_t it6162_int_threaded_handler(int unused, void *data)
 {
 	struct it6162 *it6162 = data;
 
-	it6162_interrupt_handler(it6162);
+	atomic_inc(&it6162->int_cnt);
+	wake_up(&it6162->int_wq);
 
 	return IRQ_HANDLED;
 }
@@ -1735,13 +1769,15 @@ static int it6162_probe(struct i2c_client *client)
 			client->irq,
 			NULL,
 			it6162_int_threaded_handler,
-			IRQF_TRIGGER_RISING | IRQF_ONESHOT | IRQF_NO_AUTOEN,
+			IRQF_TRIGGER_FALLING | IRQF_ONESHOT | IRQF_NO_AUTOEN,
 			"it6162-intp",
 			it6162);
 	if (ret) {
 		dev_err(dev, "Failed to request INTP threaded IRQ: %d", ret);
 		return ret;
 	}
+
+	init_waitqueue_head(&it6162->int_wq);
 
 	INIT_WORK(&it6162->hdcp_work, it6162_hdcp_work);
 
@@ -1779,12 +1815,22 @@ static int it6162_probe(struct i2c_client *client)
 	dev_info(it6162->dev, "driver build 20251027-001");
 	it6162_poweron(it6162);
 
+	mb();
+
+	it6162->int_thread = kthread_run(it6162_kthread,
+			it6162, "it6162_kthread");
+
 	return 0;
 }
 
 static void it6162_remove(struct i2c_client *client)
 {
 	struct it6162 *it6162 = i2c_get_clientdata(client);
+
+	if (it6162->int_thread != NULL) {
+		kthread_stop(it6162->int_thread);
+		it6162->int_thread = NULL;
+	}
 
 	disable_irq(client->irq);
 	cancel_work_sync(&it6162->hdcp_work);
