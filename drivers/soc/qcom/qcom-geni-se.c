@@ -1357,6 +1357,4 @@ module_platform_driver(geni_se_driver);
 
 MODULE_DESCRIPTION("GENI Serial Engine Driver");
 MODULE_LICENSE("GPL v2");
-MODULE_FIRMWARE("qcom/qcs8300/qupv3fw.elf");
-MODULE_FIRMWARE("qcom/sa8775p/qupv3fw.elf");
-MODULE_FIRMWARE("qcom/qcs6490/qupv3fw.elf");
+MODULE_FIRMWARE("qupv3fw.elf");
