@@ -1371,6 +1371,9 @@ static bool dpu_plane_format_mod_supported(struct drm_plane *plane,
 		return true;
 
 	if (modifier == DRM_FORMAT_MOD_QCOM_COMPRESSED) {
+		if (!pdpu || !pdpu->catalog)
+			return false;
+
 		if (pdpu && pdpu->catalog && pdpu->catalog->mdss_ver &&
 			pdpu->catalog->mdss_ver->core_major_ver == 7 &&
 			pdpu->catalog->mdss_ver->core_minor_ver == 2)
