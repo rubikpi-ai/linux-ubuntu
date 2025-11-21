@@ -254,6 +254,15 @@ static const struct snd_kcontrol_new monaco_monza_max98090_controls[] = {
 	SOC_DAPM_PIN_SWITCH("Speaker"),
 };
 
+static const struct snd_soc_dapm_widget qcs9075_amr_dapm_widgets[] = {
+	SND_SOC_DAPM_PINCTRL("MI2S_OUT_PINCTRL", "mi2s_aud_out_active", "mi2s_aud_out_sleep"),
+};
+
+static const struct snd_soc_dapm_route qcs9075_amr_dapm_routes[] = {
+	{"STUB_AIF0_RX", NULL, "MI2S_OUT_PINCTRL"},
+	{"STUB_AIF0_TX", NULL, "MI2S_OUT_PINCTRL"},
+};
+
 static const struct snd_soc_ops qcs9100_be_ops = {
 	.startup = qcs9100_snd_startup,
 	.hw_params = qcs9100_snd_hw_params,
@@ -285,6 +294,15 @@ static struct snd_soc_card snd_soc_qcs9100_data = {
 
 static struct snd_soc_card snd_soc_qcs9075_rb8_data = {
 	.name = "qcs9075-rb8",
+};
+
+static struct snd_soc_card snd_soc_qcs9075_amr_data = {
+	.name = "qcs9075-amr",
+	.driver_name = "sa8775p",
+	.dapm_widgets = qcs9075_amr_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(qcs9075_amr_dapm_widgets),
+	.dapm_routes = qcs9075_amr_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(qcs9075_amr_dapm_routes),
 };
 
 static void qcs9100_add_be_ops(struct snd_soc_card *card)
@@ -356,6 +374,7 @@ static const struct of_device_id snd_qcs9100_dt_match[] = {
 	{.compatible = "qcom,qcs9100-ridesx-sndcard", .data = &snd_soc_qcs9100_data},
 	{.compatible = "qcom,qcs9075-rb8-sndcard", .data = &snd_soc_qcs9075_rb8_data},
 	{.compatible = "qcom,monaco-monza-sndcard", .data = &snd_soc_monaco_monza_data},
+	{.compatible = "qcom,qcs9075-amr-sndcard", .data = &snd_soc_qcs9075_amr_data},
 	{}
 };
 
