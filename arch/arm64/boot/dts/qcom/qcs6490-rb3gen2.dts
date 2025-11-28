@@ -136,7 +136,7 @@
 	};
 
 	sound: sound {
-		compatible = "qcom,qcm6490-sndcard";
+		compatible = "qcom,qcs6490-rb3gen2-sndcard";
 		model = "QCS6490-RB3Gen2";
 
 		audio-routing =
@@ -199,21 +199,6 @@
 
 			codec {
 				sound-dai = <&lpass_va_macro 0>;
-			};
-			platform {
-				sound-dai = <&q6apm>;
-			};
-		};
-
-		vi-feedback-dai-link {
-			link-name = "CODEC_DMA-LPAIF_WSA-TX-0";
-
-			cpu {
-				sound-dai = <&q6apmbedai WSA_CODEC_DMA_TX_0>;
-			};
-
-			codec {
-				sound-dai = <&swr2 6>, <&lpass_wsa_macro 2>;
 			};
 			platform {
 				sound-dai = <&q6apm>;
