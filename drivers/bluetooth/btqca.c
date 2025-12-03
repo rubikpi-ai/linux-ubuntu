@@ -852,7 +852,7 @@ int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
 			break;
 		case QCA_QCC2072:
 			snprintf(config.fwname, sizeof(config.fwname),
-				"qca/clnbtfw%02x.tlv", rom_ver);
+				"qca/ornbtfw%02x.tlv", rom_ver);
 			break;
 		default:
 			snprintf(config.fwname, sizeof(config.fwname),
@@ -931,7 +931,7 @@ int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
 			break;
 		case QCA_QCC2072:
 			snprintf(config.fwname, sizeof(config.fwname),
-				"qca/clnbtnv%02x.bin", rom_ver);
+				"qca/ornnv%02x.bin", rom_ver);
 			break;
 		default:
 			snprintf(config.fwname, sizeof(config.fwname),
