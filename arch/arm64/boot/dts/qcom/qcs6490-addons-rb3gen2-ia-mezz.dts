@@ -616,6 +616,9 @@
 			sound-dai = <&wcd9375 1>, <&swr1 0>, <&lpass_tx_macro 0>;
 		};
 	};
+
+	/delete-node/ hdmi-dai-link;
+
 };
 
 &spi11 {
