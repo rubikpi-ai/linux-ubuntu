@@ -17,32 +17,15 @@
 	};
 
 	sound {
-		compatible = "qcom,qcs9075-rb8-sndcard";
+		compatible = "qcom,qcs9100-sndcard";
 		model = "LEMANS-EVK";
 
-		clocks = <&q6prmcc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
-			    <&q6prmcc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
-		clock-names = "macro", "dcodec";
-
-		pinctrl-names = "default", "mi2s_aud_out_active", "mi2s_aud_out_sleep";
-		pinctrl-0 = <&hs1_mi2s_data0_sleep>, <&mi2s_mclk_sleep>, <&hs0_mi2s_data0_sleep>,
-			    <&hs0_mi2s_sclk_sleep>, <&hs0_mi2s_data1_sleep>, <&hs0_mi2s_ws_sleep>,
-			    <&hs1_mi2s_sclk_sleep>, <&hs1_mi2s_data1_sleep>, <&hs1_mi2s_ws_sleep>,
-			    <&hs2_mi2s_data0_sleep>, <&hs2_mi2s_data1_sleep>, <&hs2_mi2s_sck_sleep>,
-			    <&hs2_mi2s_ws_sleep>, <&lpass_quad_clk_sleep>, <&lpass_quad_data_sleep>,
-			    <&lpass_quad_ws_sleep>;
-		pinctrl-1 = <&hs1_mi2s_data0>, <&mi2s_mclk>, <&hs0_mi2s_data0>,
+		pinctrl-0 = <&hs1_mi2s_data0>, <&mi2s_mclk>, <&hs0_mi2s_data0>,
 			    <&hs0_mi2s_sclk>, <&hs0_mi2s_data1>, <&hs0_mi2s_ws>,
 			    <&hs1_mi2s_sclk>, <&hs1_mi2s_data1>, <&hs1_mi2s_ws>,
 			    <&hs2_mi2s_data0>, <&hs2_mi2s_data1>, <&hs2_mi2s_sck>,
-			    <&hs2_mi2s_ws>, <&lpass_quad_clk>, <&lpass_quad_data>,
-			    <&lpass_quad_ws>;
-		pinctrl-2 = <&hs1_mi2s_data0_sleep>, <&mi2s_mclk_sleep>, <&hs0_mi2s_data0_sleep>,
-			    <&hs0_mi2s_sclk_sleep>, <&hs0_mi2s_data1_sleep>, <&hs0_mi2s_ws_sleep>,
-			    <&hs1_mi2s_sclk_sleep>, <&hs1_mi2s_data1_sleep>, <&hs1_mi2s_ws_sleep>,
-			    <&hs2_mi2s_data0_sleep>, <&hs2_mi2s_data1_sleep>, <&hs2_mi2s_sck_sleep>,
-			    <&hs2_mi2s_ws_sleep>, <&lpass_quad_clk_sleep>, <&lpass_quad_data_sleep>,
-			    <&lpass_quad_ws_sleep>;
+			    <&hs2_mi2s_ws>;
+		pinctrl-names = "default";
 
 		hs0-mi2s-playback-dai-link {
 			link-name = "MI2S-LPAIF_SDR-RX-PRIMARY";
@@ -180,6 +163,14 @@
 &soc {
 	msm_stub_codec: msm-stub-codec {
 		compatible = "qcom,msm-stub-codec";
+
+		pinctrl-0 = <&lpass_quad_clk_sleep>, <&lpass_quad_data_sleep>,
+			    <&lpass_quad_ws_sleep>;
+		pinctrl-1 = <&lpass_quad_clk>, <&lpass_quad_data>, <&lpass_quad_ws>;
+		pinctrl-2 = <&lpass_quad_clk_sleep>, <&lpass_quad_data_sleep>,
+			    <&lpass_quad_ws_sleep>;
+		pinctrl-names = "default", "mi2s_aud_active", "mi2s_aud_sleep";
+
 		#sound-dai-cells = <1>;
 		status = "disabled";
 	};
