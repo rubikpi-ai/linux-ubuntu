@@ -212,92 +212,6 @@ static int qcm6490_snd_startup(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static const struct snd_soc_dapm_widget qcm6490_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcm6490_dapm_routes[] = {
-	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
-};
-
-static const struct snd_soc_dapm_widget qcs6490_rubikpi3_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs6490_rubikpi3_dapm_routes[] = {
-	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
-};
-
-static const struct snd_soc_dapm_widget qcs6490_rb3gen2_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs6490_rb3gen2_dapm_routes[] = {
-	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
-};
-
-static const struct snd_soc_dapm_widget qcs6490_rb3gen2_ia_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-};
-
-static const struct snd_soc_dapm_widget qcs6490_rb3gen2_ptz_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs6490_rb3gen2_ptz_dapm_routes[] = {
-	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
-};
-
-static const struct snd_soc_dapm_widget qcs6490_rb3gen2_video_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs6490_rb3gen2_video_dapm_routes[] = {
-	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
-};
-
-static const struct snd_soc_dapm_widget qcs6490_rb3gen2_vision_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs6490_rb3gen2_vision_dapm_routes[] = {
-	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
-};
-
 static const struct snd_soc_ops qcm6490_be_ops = {
 	.hw_params = qcm6490_snd_hw_params,
 	.hw_free = qcm6490_snd_hw_free,
@@ -307,56 +221,26 @@ static const struct snd_soc_ops qcm6490_be_ops = {
 
 static struct snd_soc_card qcm6490_data = {
 	.name = "qcm6490",
-	.dapm_widgets = qcm6490_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcm6490_dapm_widgets),
-	.dapm_routes = qcm6490_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcm6490_dapm_routes),
 };
 
 static struct snd_soc_card qcs6490_rubikpi3_data = {
 	.name = "qcs6490-rubikpi3",
-	.dapm_widgets = qcs6490_rubikpi3_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs6490_rubikpi3_dapm_widgets),
-	.dapm_routes = qcs6490_rubikpi3_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs6490_rubikpi3_dapm_routes),
-};
-
-static struct snd_soc_card qcs6490_rb3gen2_data = {
-	.name = "qcs6490-rb3gen2",
-	.dapm_widgets = qcs6490_rb3gen2_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs6490_rb3gen2_dapm_widgets),
-	.dapm_routes = qcs6490_rb3gen2_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs6490_rb3gen2_dapm_routes),
 };
 
 static struct snd_soc_card qcs6490_rb3gen2_ia_data = {
 	.name = "qcs6490-rb3gen2-ia-mezz",
-	.dapm_widgets = qcs6490_rb3gen2_ia_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs6490_rb3gen2_ia_dapm_widgets),
 };
 
 static struct snd_soc_card qcs6490_rb3gen2_ptz_data = {
 	.name = "qcs6490-rb3gen2-ptz-mezz",
-	.dapm_widgets = qcs6490_rb3gen2_ptz_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs6490_rb3gen2_ptz_dapm_widgets),
-	.dapm_routes = qcs6490_rb3gen2_ptz_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs6490_rb3gen2_ptz_dapm_routes),
 };
 
 static struct snd_soc_card qcs6490_rb3gen2_video_data = {
 	.name = "qcs6490-rb3gen2-video-mezz",
-	.dapm_widgets = qcs6490_rb3gen2_video_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs6490_rb3gen2_video_dapm_widgets),
-	.dapm_routes = qcs6490_rb3gen2_video_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs6490_rb3gen2_video_dapm_routes),
 };
 
 static struct snd_soc_card qcs6490_rb3gen2_vision_data = {
 	.name = "qcs6490-rb3gen2-vision-mezz",
-	.dapm_widgets = qcs6490_rb3gen2_vision_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs6490_rb3gen2_vision_dapm_widgets),
-	.dapm_routes = qcs6490_rb3gen2_vision_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs6490_rb3gen2_vision_dapm_routes),
 };
 
 static void qcm6490_add_be_ops(struct snd_soc_card *card)
@@ -408,7 +292,6 @@ static int qcm6490_platform_probe(struct platform_device *pdev)
 static const struct of_device_id snd_qcm6490_dt_match[] = {
 	{.compatible = "qcom,qcm6490-sndcard", .data = &qcm6490_data},
 	{.compatible = "qcom,qcs6490-rubikpi3-sndcard", .data = &qcs6490_rubikpi3_data},
-	{.compatible = "qcom,qcs6490-rb3gen2-sndcard", .data = &qcs6490_rb3gen2_data},
 	{.compatible = "qcom,qcs6490-rb3gen2-ia-sndcard", .data = &qcs6490_rb3gen2_ia_data},
 	{.compatible = "qcom,qcs6490-rb3gen2-ptz-sndcard", .data = &qcs6490_rb3gen2_ptz_data},
 	{.compatible = "qcom,qcs6490-rb3gen2-video-sndcard", .data = &qcs6490_rb3gen2_video_data},
