@@ -229,17 +229,6 @@ static int qcs9100_snd_startup(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static const struct snd_soc_dapm_widget iq8_8275_evk_dapm_widgets[] = {
-	SND_SOC_DAPM_PINCTRL("MI2S_OUT_PINCTRL", "mi2s_aud_out_active", "mi2s_aud_out_sleep"),
-};
-
-static const struct snd_soc_dapm_route iq8_8275_evk_dapm_routes[] = {
-	{"Speaker", NULL, "MI2S_OUT_PINCTRL"},
-	{"DMic", NULL, "MI2S_OUT_PINCTRL"},
-	{"RX", NULL, "MI2S_OUT_PINCTRL"},
-	{"TX", NULL, "MI2S_OUT_PINCTRL"},
-};
-
 static const struct snd_soc_dapm_widget monaco_monza_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone", NULL),
 	SND_SOC_DAPM_MIC("Headset Mic", NULL),
@@ -265,51 +254,6 @@ static const struct snd_kcontrol_new monaco_monza_max98090_controls[] = {
 	SOC_DAPM_PIN_SWITCH("Speaker"),
 };
 
-static const struct snd_soc_dapm_widget qcs8300_dapm_widgets[] = {
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF2_PINCTRL", "stub_aif2_active", "stub_aif2_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF3_PINCTRL", "stub_aif3_active", "stub_aif3_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF4_PINCTRL", "stub_aif4_active", "stub_aif4_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs8300_dapm_routes[] = {
-	{"STUB_AIF0_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF0_TX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_RX", NULL, "STUB_AIF2_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF2_PINCTRL"},
-	{"STUB_AIF2_RX", NULL, "STUB_AIF3_PINCTRL"},
-	{"STUB_AIF2_TX", NULL, "STUB_AIF3_PINCTRL"},
-	{"STUB_AIF3_RX", NULL, "STUB_AIF4_PINCTRL"},
-	{"STUB_AIF3_TX", NULL, "STUB_AIF4_PINCTRL"},
-};
-
-static const struct snd_soc_dapm_widget qcs9100_dapm_widgets[] = {
-	SND_SOC_DAPM_PINCTRL("STUB_AIF0_PINCTRL", "stub_aif0_active", "stub_aif0_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF2_PINCTRL", "stub_aif2_active", "stub_aif2_sleep"),
-	SND_SOC_DAPM_PINCTRL("STUB_AIF3_PINCTRL", "stub_aif3_active", "stub_aif3_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs9100_dapm_routes[] = {
-	{"STUB_AIF0_RX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF0_TX", NULL, "STUB_AIF0_PINCTRL"},
-	{"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
-	{"STUB_AIF2_RX", NULL, "STUB_AIF2_PINCTRL"},
-	{"STUB_AIF2_TX", NULL, "STUB_AIF2_PINCTRL"},
-	{"STUB_AIF3_RX", NULL, "STUB_AIF3_PINCTRL"},
-	{"STUB_AIF3_TX", NULL, "STUB_AIF3_PINCTRL"},
-};
-
-static const struct snd_soc_dapm_widget qcs9075_dapm_widgets[] = {
-	SND_SOC_DAPM_PINCTRL("MI2S_OUT_PINCTRL", "mi2s_aud_out_active", "mi2s_aud_out_sleep"),
-};
-
-static const struct snd_soc_dapm_route qcs9075_dapm_routes[] = {
-	{"Speaker", NULL, "MI2S_OUT_PINCTRL"},
-	{"DMic", NULL, "MI2S_OUT_PINCTRL"},
-};
-
 static const struct snd_soc_ops qcs9100_be_ops = {
 	.startup = qcs9100_snd_startup,
 	.hw_params = qcs9100_snd_hw_params,
@@ -319,11 +263,6 @@ static const struct snd_soc_ops qcs9100_be_ops = {
 
 static struct snd_soc_card snd_soc_iq8_8275_evk_data = {
 	.name = "iq8-8275-evk",
-	.driver_name = "qcs8275",
-	.dapm_widgets = iq8_8275_evk_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(iq8_8275_evk_dapm_widgets),
-	.dapm_routes = iq8_8275_evk_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(iq8_8275_evk_dapm_routes),
 };
 
 static struct snd_soc_card snd_soc_monaco_monza_data = {
@@ -337,30 +276,15 @@ static struct snd_soc_card snd_soc_monaco_monza_data = {
 };
 
 static struct snd_soc_card snd_soc_qcs8300_data = {
-	.name = "qcs8300-ride",
-	.driver_name = "qcs8300",
-	.dapm_widgets = qcs8300_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs8300_dapm_widgets),
-	.dapm_routes = qcs8300_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs8300_dapm_routes),
+	.name = "qcs8300",
 };
 
 static struct snd_soc_card snd_soc_qcs9100_data = {
-	.name = "qcs9100-ride",
-	.driver_name = "qcs9100",
-	.dapm_widgets = qcs9100_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs9100_dapm_widgets),
-	.dapm_routes = qcs9100_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs9100_dapm_routes),
+	.name = "qcs9100",
 };
 
 static struct snd_soc_card snd_soc_qcs9075_rb8_data = {
 	.name = "qcs9075-rb8",
-	.driver_name = "sa8775p",
-	.dapm_widgets = qcs9075_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(qcs9075_dapm_widgets),
-	.dapm_routes = qcs9075_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(qcs9075_dapm_routes),
 };
 
 static void qcs9100_add_be_ops(struct snd_soc_card *card)
@@ -428,8 +352,8 @@ static int qcs9100_platform_probe(struct platform_device *pdev)
 
 static const struct of_device_id snd_qcs9100_dt_match[] = {
 	{.compatible = "qcom,iq8-8275-evk-sndcard", .data = &snd_soc_iq8_8275_evk_data},
-	{.compatible = "qcom,qcs8300-sndcard", .data = &snd_soc_qcs8300_data},
-	{.compatible = "qcom,qcs9100-sndcard", .data = &snd_soc_qcs9100_data},
+	{.compatible = "qcom,qcs8300-ridesx-sndcard", .data = &snd_soc_qcs8300_data},
+	{.compatible = "qcom,qcs9100-ridesx-sndcard", .data = &snd_soc_qcs9100_data},
 	{.compatible = "qcom,qcs9075-rb8-sndcard", .data = &snd_soc_qcs9075_rb8_data},
 	{.compatible = "qcom,monaco-monza-sndcard", .data = &snd_soc_monaco_monza_data},
 	{}
