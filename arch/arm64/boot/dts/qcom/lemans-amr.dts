@@ -19,6 +19,8 @@
 / {
 	model = "Qualcomm Technologies, Inc. Lemans Advanced Mobile Robotics";
 	compatible = "qcom,lemans-amr", "qcom,qcs9075", "qcom,sa8775p";
+	qcom,msm-id = <676 0x20000>;
+	qcom,board-id = <0x10020 2>, <0x10019 2>;
 
 	aliases {
 		serial0 = &uart10;
