@@ -406,6 +406,18 @@
 	status = "okay";
 };
 
+&gpi_dma0 {
+	status = "okay";
+};
+
+&gpi_dma1 {
+	status = "okay";
+};
+
+&gpi_dma2 {
+	status = "okay";
+};
+
 &i2c0 {
 	qcom,load-firmware;
 	qcom,xfer-mode = <1>;
