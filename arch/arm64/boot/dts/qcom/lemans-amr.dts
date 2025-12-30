@@ -985,6 +985,13 @@
 	status = "okay";
 };
 
+&uart16 {
+	linux,rs485-enabled-at-boot-time;
+	rs485-rts-active-low;
+
+	status = "okay";
+};
+
 &uart17 {
 	status = "okay";
 
