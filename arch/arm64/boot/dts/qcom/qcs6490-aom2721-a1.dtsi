@@ -1,0 +1,816 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025 Advantech Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "qcs6490-rb3gen2.dts"
+#include "qcs6490-addons-rb3gen2.dtsi"
+
+/ {
+	model = "Advantech Technologies, Inc. AOM2721-A1 Platform";
+	compatible = "qcom,qcs6490-addons-rb3gen2-vision-mezz", "qcom,qcm6490";
+
+	qcom,msm-id = <497 0x10000>, <498 0x10000>, <475 0x10000>, <515 0x10000>;
+	qcom,board-id = <32 0x2>, <32 0x602>;
+	qcom,oem-id = <0x01>;
+
+	board {
+		board-type = "AOM-2721 A1\n";
+	};
+};
+
+&q6apmbedai {
+	qcom,prmcc_clk = <&q6prmcc>;
+};
+
+//Remove the Type-C Begin
+&i2c1 {
+	typec-mux@42 {
+		status = "disabled";
+	};
+
+	typec-retimer@1c {
+		status = "disabled";
+	};
+};
+//Remove the Type-C End
+
+//Remove the PM7250B Begin
+&spmi_bus {
+	/delete-node/ pmic@PM7250B_SID;
+	/delete-node/ pmic@PM7250B_SID1;
+};
+
+&thermal_zones {
+	/delete-node/ pm7250b-ibat-lvl0;
+	/delete-node/ pm7250b-ibat-lvl1;
+	/delete-node/ pm7250b-bcl-lvl0;
+	/delete-node/ pm7250b-bcl-lvl1;
+	/delete-node/ pm7250b-bcl-lvl2;
+	/delete-node/ pm7250b-thermal;
+};
+
+&upd_3p3_vreg {
+    /delete-property/ gpio;
+};
+
+&aqr_vreg {
+    /delete-property/ gpio;
+};
+
+&lt9611_codec {
+    /delete-property/ reset-gpios;
+    pinctrl-0 = <&lt9611_irq_pin>;
+};
+//Remove the PM7250B End
+
+//Audio Begin
+/ {
+	dummy_reg_3v3: regulator-dummy-3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "dummy-supply-3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	dummy_reg_1v8: regulator-dummy-1v8 {
+		compatible = "regulator-fixed";
+		regulator-name = "dummy-supply-1v8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
+
+&sound {
+	/delete-property/ audio-routing;
+	/delete-node/ wsa-dai-link;
+	/delete-node/ va-dai-link;
+	/delete-node/ vi-feedback-dai-link;
+};
+
+&lpass_rx_macro {
+	/delete-property/ pinctrl-names;
+	/delete-property/ pinctrl-0;
+};
+
+&lpass_tx_macro {
+	/delete-property/ pinctrl-names;
+	/delete-property/ pinctrl-0;
+};
+
+&swr0 {
+	status = "disabled";
+};
+
+&swr1 {
+	status = "disabled";
+};
+
+&swr2 {
+	status = "disabled";
+};
+
+&lpass_tlmm {
+	mi2s3_sclk: mi2s3-sclk-state {
+		pins = "gpio0";
+		function = "qua_mi2s_sclk";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	mi2s3_sclk_sleep: mi2s3-sclk-sleep {
+		pins = "gpio0";
+		function = "qua_mi2s_sclk";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s3_ws: mi2s3-ws-state {
+		pins = "gpio1";
+		function = "qua_mi2s_ws";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	mi2s3_ws_sleep: mi2s3-ws-sleep {
+		pins = "gpio1";
+		function = "qua_mi2s_ws";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s3_data0: mi2s3-data0-state {
+		pins = "gpio2";
+		function = "qua_mi2s_data";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	mi2s3_data0_sleep: mi2s3-data0-sleep {
+		pins = "gpio2";
+		function = "qua_mi2s_data";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s3_data1: mi2s3-data1-state {
+		pins = "gpio3";
+		function = "qua_mi2s_data";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	mi2s3_data1_sleep: mi2s3-data1-sleep {
+		pins = "gpio3";
+		function = "qua_mi2s_data";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+};
+
+&tlmm {
+	mi2s1_data0_sleep: mi2s1-data0-sleep {
+		pins = "gpio107";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s1_sclk_sleep: mi2s1-sclk-sleep {
+		pins = "gpio106";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+
+	mi2s1_ws_sleep: mi2s1-ws-sleep {
+		pins = "gpio108";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		input-enable;
+	};
+};
+
+&mi2s1_mclk {
+	drive-strength = <8>;
+	bias-disable;
+	output-high;
+};
+
+&mi2s1_data0 {
+	drive-strength = <8>;
+	bias-disable;
+};
+
+&mi2s1_sclk {
+	drive-strength = <8>;
+	bias-disable;
+	output-high;
+};
+
+&mi2s1_ws {
+	drive-strength = <8>;
+	bias-disable;
+	output-high;
+};
+
+&sound {
+	compatible = "qcom,qcm6490-sndcard";
+	model = "QCS6490-AOM2721-HDMI-SGTL5000";
+
+	pinctrl-names = "default", "stub_aif1_active", "stub_aif1_sleep";
+	pinctrl-0 = <&mi2s3_data0_sleep>, <&mi2s3_data1_sleep>, <&mi2s3_sclk_sleep>, <&mi2s3_ws_sleep>,
+		    <&mi2s1_data0_sleep> , <&mi2s1_sclk_sleep>, <&mi2s1_ws_sleep>;
+	pinctrl-1 = <&mi2s3_data0>, <&mi2s3_data1>, <&mi2s3_sclk>, <&mi2s3_ws>,
+		    <&mi2s1_data0> , <&mi2s1_sclk>, <&mi2s1_ws>;
+	pinctrl-2 = <&mi2s3_data0_sleep>, <&mi2s3_data1_sleep>, <&mi2s3_sclk_sleep>, <&mi2s3_ws_sleep>,
+		    <&mi2s1_data0_sleep> , <&mi2s1_sclk_sleep>, <&mi2s1_ws_sleep>;
+
+	mi2s1_playback_dai_link: mi2s1-playback-dai-link {
+		link-name = "MI2S-LPAIF-RX-SECONDARY";
+
+		cpu {
+			sound-dai = <&q6apmbedai SECONDARY_MI2S_RX>;
+		};
+
+		codec {
+			sound-dai = <&msm_stub_codec 2>;
+		};
+
+		platform {
+			sound-dai = <&q6apm>;
+		};
+	};
+
+	mi2s3_capture_dai_link: mi2s3-capture-dai-link {
+		link-name = "MI2S-LPAIF_RXTX-TX-PRIMARY";
+		mclk-fs = <256>;
+		mclk-id = <0>;
+		dai-format = "i2s";
+		bitclock-master = <&i2s_cpu_tx>;
+		frame-master = <&i2s_cpu_tx>;
+
+		i2s_cpu_tx: cpu {
+			sound-dai = <&q6apmbedai QUATERNARY_MI2S_TX>;
+		};
+
+		codec {
+			sound-dai = <&sgtl5000>;
+		};
+
+		platform {
+			sound-dai = <&q6apm>;
+		};
+	};
+
+	mi2s3_playback_dai_link: mi2s3-playback-dai-link {
+		link-name = "MI2S-LPAIF_RXTX-RX-PRIMARY";
+		mclk-fs = <256>;
+		mclk-id = <0>;
+		dai-format = "i2s";
+		bitclock-master = <&i2s_cpu_rx>;
+		frame-master = <&i2s_cpu_rx>;
+
+		i2s_cpu_rx: cpu {
+			sound-dai = <&q6apmbedai QUATERNARY_MI2S_RX>;
+		};
+
+		codec {
+			sound-dai = <&sgtl5000>;
+		};
+
+		platform {
+			sound-dai = <&q6apm>;
+		};
+	};
+};
+
+&i2c3 {
+	status = "ok";
+	qcom,clk-freq-out = <100000>;
+	sgtl5000: codec@a {
+		compatible = "fsl,sgtl5000";
+		reg = <0x0a>;
+		clocks = <&q6prmcc LPASS_CLK_ID_MCLK_2 LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+
+		assigned-clocks = <&q6prmcc LPASS_CLK_ID_MCLK_2 LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+		assigned-clock-rates = <12288000>;
+
+		#sound-dai-cells = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&mi2s1_mclk>;
+		VDDA-supply = <&dummy_reg_3v3>;
+		VDDIO-supply = <&dummy_reg_3v3>;
+	};
+};
+//Audio End
+
+//DP Begin
+/ {
+	dp1-connector {
+		compatible = "dp-connector";
+		label = "DP";
+		type = "full-size";
+		hpd-gpios = <&tlmm 39 GPIO_ACTIVE_HIGH>;
+
+		port {
+			dp1_connector_in: endpoint {
+				remote-endpoint = <&mdss_dp_out>;
+			};
+		};
+	};
+};
+
+&mdss_dp_out {
+	data-lanes = <0 1>;
+	remote-endpoint = <&dp1_connector_in>;
+};
+
+&usb_1_qmpphy_out {
+	/delete-property/ remote-endpoint;
+};
+
+&usb_1_qmpphy_dp_in {
+	/delete-property/ remote-endpoint;
+};
+
+&usb_1_qmpphy {
+	default-typec-orientation-reverse;
+};
+//DP End
+
+//Ethernet Begin
+&qep_vreg {
+	status = "disabled";
+};
+
+&aqr_vreg {
+	status = "disabled";
+};
+
+&pcie1_bus2_dev3_fn0 {
+	qps615_eth0,qps615_eth0@pcie1_rp {
+		nvmem-cells = <&mac_addr1>;
+		nvmem-cell-names = "mac-address";
+		interrupts-extended = <&tlmm 130 IRQ_TYPE_EDGE_FALLING>;
+		phy-supply = <>;
+		qcom,phy-port-interface = <4>;
+		qcom,mdc-clk = <0x8>;
+		qcom,c45-state = <0>;
+		qcom,link-down-macrst = <0>;
+	};
+};
+
+&pcie1_bus2_dev3_fn0 {
+	qps615_eth1,qps615_eth1@pcie1_rp {
+		nvmem-cells = <&mac_addr2>;
+		nvmem-cell-names = "mac-address";
+		interrupts-extended = <&tlmm 131 IRQ_TYPE_EDGE_FALLING>;
+		phy-supply = <>;
+		qcom,phy-port-interface = <3>;
+		qcom,mdc-clk = <0x8>;
+		qcom,c45-state = <0>;
+		qcom,link-down-macrst = <0>;
+	};
+};
+
+&aqr_intn_wol_sig {
+	mux {
+		pins = "gpio130";
+	};
+
+	config {
+		pins = "gpio130";
+	};
+};
+
+&napa_intn_wol_sig {
+	mux {
+		pins = "gpio131";
+	};
+
+	config {
+		pins = "gpio131";
+	};
+};
+//Ethernet End
+
+//EMMC Begin
+&sdhc_1 {
+	status = "okay";
+};
+//EMMC End
+
+//UART Begin
+/ {
+	aliases {
+		/delete-property/ bluetooth0;
+		serial1 = &uart6;
+		serial2 = &uart10;
+		serial3 = &uart11;
+		serial4 = &uart13;
+	};
+};
+
+&qup_uart6_cts {
+	bias-bus-hold;
+};
+
+&qup_uart6_rts {
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&qup_uart6_rx {
+	bias-pull-up;
+};
+
+&qup_uart6_tx {
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&tlmm {
+	qup_uart6_sleep_cts: qup-uart6-sleep-cts-state {
+		pins = "gpio24";
+		function = "gpio";
+		bias-bus-hold;
+	};
+
+	qup_uart6_sleep_rts: qup-uart6-sleep-rts-state {
+		pins = "gpio25";
+		function = "gpio";
+		bias-pull-down;
+	};
+
+	qup_uart6_sleep_rx: qup-uart6-sleep-rx-state {
+		pins = "gpio26";
+		function = "gpio";
+		bias-pull-up;
+	};
+
+	qup_uart6_sleep_tx: qup-uart6-sleep-tx-state {
+		pins = "gpio27";
+		function = "gpio";
+		bias-pull-up;
+	};
+
+	uartb_slew_default: uartb-slew-default-state {
+		pins = "gpio35";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+
+	uartb_term_default: uartb-term-default-state {
+		pins = "gpio44";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+
+	uartb_mode0_default: uartb-mode0-default-state {
+		pins = "gpio53";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+
+	uartb_mode1_default: uartb-mode1-default-state {
+		pins = "gpio52";
+		function = "gpio";
+		drive-strength = <2>;
+		output-low;
+		bias-pull-down;
+	};
+};
+
+&uart6 {
+	status = "okay";
+	/delete-property/interrupts;
+	interrupts-extended = <&intc GIC_SPI 607 IRQ_TYPE_LEVEL_HIGH>,
+				<&tlmm 27 IRQ_TYPE_EDGE_FALLING>;
+	pinctrl-names = "default", "sleep";
+	pinctrl-1 = <&qup_uart6_sleep_cts>, <&qup_uart6_sleep_rts>,
+			<&qup_uart6_sleep_tx>, <&qup_uart6_sleep_rx>;
+};
+
+&uart10 {
+	status = "okay";
+	/delete-property/pinctrl-0;
+	pinctrl-0 = <&qup_uart10_cts>, <&qup_uart10_rts>, <&qup_uart10_tx>, <&qup_uart10_rx>,
+			<&uartb_slew_default>, <&uartb_term_default>,
+			<&uartb_mode0_default>, <&uartb_mode1_default>;
+	linux,rs485-enabled-at-boot-time;
+	rs485-rts-active-low;
+};
+
+&uart11 {
+	status = "okay";
+	/delete-property/pinctrl-0;
+	pinctrl-0 = <&qup_uart11_tx>, <&qup_uart11_rx>;
+};
+
+&uart13 {
+	status = "okay";
+	/delete-property/pinctrl-0;
+	pinctrl-0 = <&qup_uart13_tx>, <&qup_uart13_rx>;
+};
+//UART End
+
+//SPI Begin
+&tlmm {
+	gpio-reserved-ranges = <32 2>;
+
+	qup_spi7_cs_gpio: qup-spi7-cs-gpio-state {
+		pins = "gpio31";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+
+	qup_spi12_cs_gpio: qup-spi12-cs-gpio-state {
+		pins = "gpio51";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+
+	qup_spi14_cs_gpio: qup-spi14-cs-gpio-state {
+		pins = "gpio59";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+
+	qup_spi14_cs1_gpio: qup-spi14-cs1-gpio-state {
+		pins = "gpio62";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+};
+
+&uart7 {
+	status = "disabled";
+};
+
+&spi7 {
+	status = "okay";
+	pinctrl-0 = <&qup_spi7_data_clk>, <&qup_spi7_cs_gpio>;
+	cs-gpios = <&tlmm 31 GPIO_ACTIVE_LOW>;
+
+	spi@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+		status = "okay";
+	};
+};
+
+&spi12 {
+	status = "okay";
+	pinctrl-0 = <&qup_spi12_data_clk>, <&qup_spi12_cs_gpio>;
+	cs-gpios = <&tlmm 51 GPIO_ACTIVE_LOW>;
+
+	spi@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+		status = "okay";
+	};
+};
+
+&spi14 {
+	status = "okay";
+	pinctrl-0 = <&qup_spi14_data_clk>, <&qup_spi14_cs_gpio>, <&qup_spi14_cs1_gpio>;
+	cs-gpios = <&tlmm 59 GPIO_ACTIVE_LOW>, <&tlmm 62 GPIO_ACTIVE_LOW>;
+
+	spi@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+		status = "okay";
+	};
+
+	spi@1 {
+		compatible = "jedec,spi-nor";
+		reg = <1>;
+		spi-max-frequency = <10000000>;
+		status = "okay";
+	};
+};
+
+//SPI End
+
+//USB Begin
+&usb_1 {
+	role-switch-default-mode = "host";
+	status = "okay";
+};
+
+&usb_2 {
+	dr_mode = "host";
+	status = "okay";
+};
+//USB End
+
+//M2B Begin
+/ {
+	vlte_power_en_vreg: vlte_power_en_vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "vlte_power_en_vreg";
+		gpio = <&tlmm 115 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&qps615_rsex_vreg>;
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+		enable-active-high;
+		regulator-enable-ramp-delay = <10000>;
+		regulator-always-on;
+	};
+
+	upd_3p3_vreg: upd_3p3_vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "upd_3p3_vreg";
+		gpio = <&tlmm 114 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&vlte_power_en_vreg>;
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+		enable-active-high;
+		regulator-enable-ramp-delay = <10000>;
+		regulator-always-on;
+	};
+
+	upd_rest_vreg: upd_rest_vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "upd_rest_vreg";
+		gpio = <&tlmm 113 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&upd_3p3_vreg>;
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+		enable-active-high;
+		regulator-always-on;
+	};
+
+	usbhub_rest_vreg: usbhub_rest_vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "usbhub_rest_vreg";
+		gpio = <&tlmm 112 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&upd_rest_vreg>;
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+		enable-active-high;
+		regulator-always-on;
+	};
+};
+//M2B End
+
+//EEPROM Begin
+&i2c1 {
+	eeprom1: 24c64@50 {
+		compatible = "atmel,24c64";
+		reg = <0x50>;
+
+		nvmem-layout {
+			compatible = "fixed-layout";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			mac_addr1: mac-addr@0 {
+				reg = <0x200 0x6>;
+			};
+
+			mac_addr2: mac-addr@6 {
+				reg = <0x206 0x6>;
+			};
+		};
+	};
+};
+
+&i2c9 {
+	status = "okay";
+
+	eeprom2: 24c64@57 {
+		compatible = "atmel,24c64";
+		reg = <0x57>;
+	};
+};
+//EEPROM End
+
+//RTC Begin
+/ {
+        aliases {
+		rtc0 = &rtc0;
+		rtc1 = &pmk8350_rtc;
+        };
+};
+
+&tlmm {
+    rx8900_irq_pin: rx8900_irq_pin {
+        pins = "gpio34";
+        function = "gpio";
+        drive-strength = <2>;
+        bias-pull-up;
+	input-enable;
+    };
+};
+
+&i2c1 {
+    rtc0: rx8900@32 {
+        compatible = "epson,rx8900";
+        reg = <0x32>;
+        epson,vdet-disable;
+        trickle-diode-disable;
+        pinctrl-names = "default";
+        pinctrl-0 = <&rx8900_irq_pin>;
+        interrupts-extended = <&tlmm 34 IRQ_TYPE_EDGE_FALLING>;
+        interrupt-names = "rtc0_irq";
+        status = "okay";
+    };
+};
+//RTC End
+
+//PCIE0 and M2E Begin
+&tlmm {
+	m2e_wlan_power_en: m2e-wlan-power-en-state {
+		pins = "gpio64";
+		function = "gpio";
+		drive-strength = <16>;
+		output-high;
+		bias-pull-up;
+	};
+
+	m2e_wlan_en: m2e-wlan-en-state {
+		pins = "gpio84";
+		function = "gpio";
+		drive-strength = <16>;
+		output-high;
+		bias-pull-up;
+	};
+
+	m2e_bt_en: m2e-bt-en-state {
+		pins = "gpio85";
+		function = "gpio";
+		drive-strength = <16>;
+		output-high;
+		bias-pull-up;
+	};
+};
+
+&pcie0 {
+	max-link-speed = <2>;
+	perst-gpios = <&tlmm 87 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&pcie0_reset_n>, <&pcie0_wake_n>, <&pcie0_clkreq_n>,
+		<&m2e_wlan_power_en>, <&m2e_wlan_en>, <&m2e_bt_en>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	pcie0_port0: pcie@0 {
+		reg = <0x0 0x0 0x0 0x0 0x0>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges;
+
+		bus-range = <0x01 0xff>;
+		device_type = "pci";
+
+		wake-gpios = <&tlmm 89 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&pcie0_phy {
+	status = "okay";
+	vdda-phy-supply = <&vreg_l10c_0p88>;
+	vdda-pll-supply = <&vreg_l6b_1p2>;
+};
+
+&remoteproc_mpss {
+	status = "disabled";
+};
+
+&remoteproc_wpss {
+	status = "disabled";
+};
+
+&wifi {
+	status = "disabled";
+};
+//PCIE0 and M2E End

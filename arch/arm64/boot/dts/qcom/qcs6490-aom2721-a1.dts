@@ -1,0 +1,100 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025 Advantech Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "qcs6490-aom2721-a1.dtsi"
+
+/ {
+	model = "Advantech Technologies, Inc. AOM2721-A1 HDMI+SGTL5000 Platform";
+	qcom,board-id = <32 0x5>, <32 0x605>;
+};
+
+//DSI-HDMI Begin
+&tlmm {
+	lt9611_irq_pin: lt9611-irq-state {
+		pins = "gpio102";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	lt9611_rst_pin_2: lt9611-rst-state {
+		pins = "gpio103";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-down;
+	};
+};
+
+&spi3 {
+	status = "disabled";
+};
+
+&lt9611_codec {
+	status = "disabled";
+};
+
+&i2c3 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	lt9611_codec_2: hdmi-bridge@2b {
+		compatible = "lontium,lt9611uxc";
+		reg = <0x2b>;
+
+		interrupts-extended = <&tlmm 102 IRQ_TYPE_EDGE_FALLING>;
+		reset-gpios = <&tlmm 103 GPIO_ACTIVE_HIGH>;
+
+		vdd-supply = <&lt9611_1v2>;
+		vcc-supply = <&vreg_l11c_2p8>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&lt9611_irq_pin &lt9611_rst_pin_2>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				lt9611_a_2: endpoint {
+					remote-endpoint = <&mdss_dsi0_out>;
+				};
+			};
+
+			port@2 {
+				reg = <2>;
+
+				lt9611_out_2: endpoint {
+					remote-endpoint = <&hdmi_con>;
+				};
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	remote-endpoint = <&lt9611_a_2>;
+};
+
+&hdmi_con {
+	remote-endpoint = <&lt9611_out_2>;
+};
+
+&mdss_edp {
+	status = "disabled";
+};
+
+&mdss_edp_phy {
+	status = "disabled";
+};
+
+&{/dp-connector} {
+	status = "disabled";
+};
+//DSI-HDMI End
