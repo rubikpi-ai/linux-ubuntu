@@ -1,0 +1,118 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2025 Advantech Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "qcs6490-aom2721-a1.dtsi"
+
+/ {
+	model = "Advantech Technologies, Inc. AOM2721-A1 LVDS+SGTL5000 Platform";
+	qcom,board-id = <32 0x1>, <32 0x601>;
+};
+
+//eDP Begin
+/ {
+	panel-backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pm8350c_pwm 3 5000000>;
+
+		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
+				     10 11 12 13 14 15 16 17 18 19
+				     20 21 22 23 24 25 26 27 28 29
+				     30 31 32 33 34 35 36 37 38 39
+				     40 41 42 43 44 45 46 47 48 49
+				     50 51 52 53 54 55 56 57 58 59
+				     60 61 62 63 64 65 66 67 68 69
+				     70 71 72 73 74 75 76 77 78 79
+				     80 81 82 83 84 85 86 87 88 89
+				     90 91 92 93 94 95 96 97 98 99
+				    100>;
+		default-brightness-level = <100>;
+		status = "okay";
+        };
+};
+
+&{/hdmi-connector} {
+	status = "disabled";
+};
+
+&mdss_dsi {
+	status = "disabled";
+};
+
+&mdss_dsi_phy {
+	status = "disabled";
+};
+
+&tlmm {
+	edp_vcc_default: edp_edp_vcc_default {
+		pins = "gpio80";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-up;
+	};
+
+	edp_pwrdn_pin: edp-pwrdn-pin-state {
+		pins = "gpio104";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-pull-down;
+	};
+
+	lvds_i2c_sw_pin: lvds-i2c-sw-state {
+		pins = "gpio38";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-disable;
+	};
+};
+
+&mdss_edp {
+	pinctrl-names = "default";
+	pinctrl-0 = <&edp_vcc_default &edp_pwrdn_pin &pmic_edp_bl_en &lvds_i2c_sw_pin>;
+};
+
+&mdss_edp_out {
+	remote-endpoint = <&dp_connector_in>;
+};
+
+&pm8350c_pwm {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pmic_edp_bl_pwm>;
+	status = "okay";
+};
+
+&pm8350c_gpios {
+	pmic_edp_bl_en: pmic-edp-bl-en-state {
+		pins = "gpio7";
+		function = "normal";
+		bias-disable;
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
+		/* Force backlight to be disabled to match state at boot. */
+		output-high;
+		power-source = <1>;
+	};
+
+	pmic_edp_bl_pwm: pmic-edp-bl-pwm-state {
+		pins = "gpio8";
+		function = "func1";
+		bias-disable;
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
+		output-low;
+		power-source = <1>;
+	};
+};
+//eDP End
+
+//Audio Begin
+/delete-node/ &mi2s1_playback_dai_link;
+
+&sound {
+        model = "QCS6490-AOM2721-SGTL5000";
+};
+//Audio End
