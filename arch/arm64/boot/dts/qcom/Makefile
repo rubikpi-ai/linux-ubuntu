@@ -341,6 +341,9 @@ dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-crd.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-addons-qcp.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-qcp.dtb
 dtb-$(CONFIG_ARCH_QCOM) += qcs6490-thundercomm-rubikpi3.dtb
+dtb-$(CONFIG_ARCH_QCOM) += qcs6490-aom2721-a1.dtb
+dtb-$(CONFIG_ARCH_QCOM) += qcs6490-aom2721-a1-hdmi.dtb
+dtb-$(CONFIG_ARCH_QCOM) += qcs6490-aom2721-a1-lvds.dtb
 
 # External overlays
 dtb-$(CONFIG_ARCH_QCOM) += qcs6490-addons-rb3gen2-video-mezz-ovl.dtb
@@ -439,6 +442,27 @@ monaco-addons-monza-ovl-dtbs := \
     monaco-monza-camera.dtbo \
     qcs8300-video.dtbo \
     qcs8300-graphics.dtbo
+
+dtb-$(CONFIG_ARCH_QCOM) += qcs6490-aom2721-a1-ovl.dtb
+qcs6490-aom2721-a1-ovl-dtbs := \
+    qcs6490-aom2721-a1.dtb \
+    qcm6490-graphics.dtbo \
+    qcm6490-camera-aom2721-a1.dtbo \
+    qcm6490-video.dtbo
+
+dtb-$(CONFIG_ARCH_QCOM) += qcs6490-aom2721-a1-hdmi-ovl.dtb
+qcs6490-aom2721-a1-hdmi-ovl-dtbs := \
+    qcs6490-aom2721-a1-hdmi.dtb \
+    qcm6490-graphics.dtbo \
+    qcm6490-camera-aom2721-a1.dtbo \
+    qcm6490-video.dtbo
+
+dtb-$(CONFIG_ARCH_QCOM) += qcs6490-aom2721-a1-lvds-ovl.dtb
+qcs6490-aom2721-a1-lvds-ovl-dtbs := \
+    qcs6490-aom2721-a1-lvds.dtb \
+    qcm6490-graphics.dtbo \
+    qcm6490-camera-aom2721-a1.dtbo \
+    qcm6490-video.dtbo
 
 dtb-$(CONFIG_ARCH_QCOM)	+= combined-dtb.dtb
 
