@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/ctype.h>
 #include <linux/debugfs.h>
 #include <linux/sched/signal.h>
+#include <linux/vmalloc.h>
 
 #include "adreno.h"
 #include "adreno_hwsched.h"
@@ -297,7 +298,7 @@ static bool _add_to_assignments_list(struct adreno_profile *profile,
 	entry->offset = offset;
 	entry->offset_hi = offset_hi;
 
-	strlcpy(entry->name, str, sizeof(entry->name));
+	strscpy(entry->name, str, sizeof(entry->name));
 
 	profile->assignment_count++;
 

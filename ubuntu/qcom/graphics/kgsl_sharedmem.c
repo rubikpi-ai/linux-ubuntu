@@ -12,6 +12,7 @@
 #include <linux/shmem_fs.h>
 #include <linux/sched/signal.h>
 #include <linux/version.h>
+#include <linux/vmalloc.h>
 
 #include "kgsl_device.h"
 #include "kgsl_pool.h"
@@ -964,7 +965,7 @@ void kgsl_get_memory_usage(char *name, size_t name_size, uint64_t memflags)
 	for (i = 0; memtype_attrs[i]; i++) {
 		memtype = container_of(memtype_attrs[i], struct kgsl_memtype, attr);
 		if (memtype->type == type) {
-			strlcpy(name, memtype->attr.name, name_size);
+			strscpy(name, memtype->attr.name, name_size);
 			return;
 		}
 	}
