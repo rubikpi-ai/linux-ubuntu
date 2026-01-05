@@ -316,7 +316,7 @@
 
 &ethernet0 {
 	phy-handle = <&sgmii_phy0>;
-	phy-mode = "sgmii";
+	phy-mode = "2500base-x";
 
 	pinctrl-0 = <&ethernet0_default>;
 	pinctrl-names = "default";
@@ -324,8 +324,6 @@
 	snps,mtl-rx-config = <&mtl_rx_setup>;
 	snps,mtl-tx-config = <&mtl_tx_setup>;
 	snps,ps-speed = <1000>;
-	nvmem-cells = <&mac_addr0>;
-	nvmem-cell-names = "mac-address";
 
 	status = "okay";
 
@@ -334,9 +332,9 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		sgmii_phy0: phy@1c {
-			compatible = "ethernet-phy-id004d.d101";
-			reg = <0x1c>;
+		sgmii_phy0: phy@1 {
+			compatible = "ethernet-phy-ieee802.3-c45";
+			reg = <0x1>;
 			device_type = "ethernet-phy";
 			reset-gpios = <&pmm8654au_2_gpios 8 GPIO_ACTIVE_LOW>;
 			reset-assert-us = <11000>;
