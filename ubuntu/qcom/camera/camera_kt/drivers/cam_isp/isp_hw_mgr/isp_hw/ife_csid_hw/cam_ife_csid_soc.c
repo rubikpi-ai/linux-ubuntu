@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #include <linux/slab.h>
 #include "cam_ife_csid_soc.h"
@@ -84,10 +85,10 @@ int cam_ife_csid_init_soc_resources(struct cam_hw_soc_info *soc_info,
 
 	memset(&cpas_register_param, 0, sizeof(cpas_register_param));
 	if (is_custom)
-		strlcpy(cpas_register_param.identifier, "csid-custom",
+		strscpy(cpas_register_param.identifier, "csid-custom",
 			CAM_HW_IDENTIFIER_LENGTH);
 	else
-		strlcpy(cpas_register_param.identifier, "csid",
+		strscpy(cpas_register_param.identifier, "csid",
 			CAM_HW_IDENTIFIER_LENGTH);
 
 	cpas_register_param.cell_index = soc_info->index;

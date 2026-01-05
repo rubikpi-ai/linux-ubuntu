@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include "cam_ois_dev.h"
@@ -169,7 +169,7 @@ static int cam_ois_init_subdev_param(struct cam_ois_ctrl_t *o_ctrl)
 
 	o_ctrl->v4l2_dev_str.internal_ops = &cam_ois_internal_ops;
 	o_ctrl->v4l2_dev_str.ops = &cam_ois_subdev_ops;
-	strlcpy(o_ctrl->device_name, CAM_OIS_NAME,
+	strscpy(o_ctrl->device_name, CAM_OIS_NAME,
 		sizeof(o_ctrl->device_name));
 	o_ctrl->v4l2_dev_str.name = o_ctrl->device_name;
 	o_ctrl->v4l2_dev_str.sd_flags =
