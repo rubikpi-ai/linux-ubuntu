@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2021, The Linux Foundation. All rights reserved.
-// Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -96,8 +96,11 @@ static int tc956x_platform_of_parse(struct device *dev,
 
 	if(!qpriv->has_always_on_supplies) {
 		if (of_property_read_u32(dev->of_node,"qcom,phy-rst-gpio", &qpriv->phy_rst_gpio)) {
-			dev_err(dev, "Failed to get PHY reset GPIO\n");
-			return -EINVAL;
+			if (of_property_read_u32(dev->of_node, "qcom,phy-rst-gpio-id",
+				&qpriv->phy_rst_gpio)) {
+				dev_err(dev, "Failed to get PHY reset GPIO\n");
+				return -EINVAL;
+			}
 		}
 	} else {
 		qpriv->phy_rst_gpio_som = devm_gpiod_get(dev, "phy-rst-som", GPIOD_OUT_LOW);
@@ -226,7 +229,8 @@ int tc956x_platform_remove(struct tc956xmac_priv *priv)
 	if (ret)
 		dev_err(priv->device, "Failed to power off PHY with error %d\n", ret);
 
-	devm_regulator_put(qpriv->phy_supply);
+	if (!qpriv->has_always_on_supplies)
+		devm_regulator_put(qpriv->phy_supply);
 
 	devm_pinctrl_put(qpriv->pinctrl);
 	kfree(priv->plat_priv);
