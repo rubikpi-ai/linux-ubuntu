@@ -420,41 +420,6 @@
 	status = "okay";
 };
 
-&i2c11 {
-	pinctrl-0 = <&qup_i2c11_default>, <&usb0_intr_state>;
-	pinctrl-names = "default";
-
-	status = "okay";
-
-	hd3ss3220@67 {
-		compatible = "ti,hd3ss3220";
-		reg = <0x67>;
-		interrupt-parent = <&pmm8654au_2_gpios>;
-		interrupt-extended = < 5 IRQ_TYPE_EDGE_FALLING>;
-		wakeup-source;
-
-		connector@0 {
-			compatible = "usb-c-connector";
-			label = "USB-C";
-			data-role = "dual";
-			power-role = "dual";
-
-			ports {
-				#address-cells = <1>;
-				#size-cells = <0>;
-
-				port@0 {
-					reg = <0>;
-
-					hd3ss3220_ep: endpoint {
-						remote-endpoint = <&usb_role_switch>;
-					};
-				};
-			};
-		};
-	};
-};
-
 &i2c18 {
 	pinctrl-0 = <&qup_i2c18_default>;
 	pinctrl-names = "default";
@@ -473,20 +438,6 @@
 		#gpio-cells = <2>;
 		gpio-controller;
 		reg = <0x39>;
-
-		io-exp-hog2 {
-			gpio-hog;
-			gpios = <2 GPIO_ACTIVE_HIGH>;
-			output-low;
-			line-name = "io_exp_gpio2";
-		};
-
-		io-exp-hog3 {
-			gpio-hog;
-			gpios = <3 GPIO_ACTIVE_HIGH>;
-			output-low;
-			line-name = "io_exp_gpio3";
-		};
 	};
 
 	expander2: pca953x@3a {
@@ -626,13 +577,6 @@
 			  "USB2_PWR_EN",
 			  "USB2_FAULT";
 
-	usb2_en_state: usb2-en-state {
-		pins = "gpio9";
-		function = "normal";
-		output-high;
-		power-source = <0>;
-	};
-
 	wlan_en_state: wlan-en-state {
 		pins = "gpio7";
 		function = "normal";
@@ -649,11 +593,17 @@
 };
 
 &pmm8654au_2_gpios {
-	usb0_intr_state: usb0-intr-state {
-		pins = "gpio5";
+	usb0_en_state: usb0-en-state {
+		pins = "gpio3";
 		function = "normal";
-		input-enable;
-		bias-pull-up;
+		output-high;
+		power-source = <0>;
+	};
+
+	usb1_en_state: usb1-en-state {
+		pins = "gpio10";
+		function = "normal";
+		output-high;
 		power-source = <0>;
 	};
 };
@@ -752,33 +702,6 @@
 
 		states = <1800000 0x1
 			  2950000 0x0>;
-	};
-
-	vbus_supply_regulator_0: vbus_supply_regulator_0 {
-		compatible = "regulator-fixed";
-
-		regulator-name = "vbus_supply_0";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		regulator-boot-on;
-
-		gpio = <&expander1 2 GPIO_ACTIVE_HIGH>;
-
-		enable-active-high;
-	};
-
-	vbus_supply_regulator_1: vbus_supply_regulator_1 {
-		compatible = "regulator-fixed";
-
-		regulator-name = "vbus_supply_1";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		regulator-boot-on;
-		regulator-always-on;
-
-		gpio = <&expander1 3 GPIO_ACTIVE_HIGH>;
-
-		enable-active-high;
 	};
 };
 
@@ -1042,31 +965,15 @@
 	phys = <&usb_0_hsphy>, <&usb_0_qmpphy>;
 	phy-names = "usb2-phy", "usb3-phy";
 
-	dr_mode = "otg";
-	usb-role-switch;
+	dr_mode = "host";
 	snps,dis_u2_susphy_quirk;
 	snps,dis_enblslpm_quirk;
 	maximum-speed = "super-speed-plus";
 	qcom,enable-rt;
 	wakeup-source;
-	vbus_dwc3;
-	vbus_dwc3-supply = <&vbus_supply_regulator_0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&usb0_en_state>;
 	status = "okay";
-
-	ports {
-
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		port@0 {
-			reg = <0>;
-
-			usb_role_switch: endpoint {
-				remote-endpoint = <&hd3ss3220_ep>;
-			};
-		};
-
-	};
 };
 
 &usb_0_hsphy {
@@ -1107,10 +1014,9 @@
 	qcom,enable-rt;
 	wakeup-source;
 	maximum-speed = "super-speed-plus";
-	dr_mode = "otg";
-	usb-role-switch;
-	role-switch-default-mode = "host";
-	vbus_dwc3-supply = <&vbus_supply_regulator_1>;
+	dr_mode = "host";
+	pinctrl-names = "default";
+	pinctrl-0 = <&usb1_en_state>;
 	status = "okay";
 };
 
@@ -1143,16 +1049,6 @@
 	iommus = <&apps_smmu 0x020 0x0>;
 	phys = <&usb_2_hsphy>;
 	phy-names = "usb2-phy";
-
-	pinctrl-names = "default";
-	pinctrl-0 = <&usb2_en_state>;
-
-	dr_mode = "otg";
-	usb-role-switch;
-	role-switch-default-mode = "host";
-	qcom,enable-rt;
-	wakeup-source;
-
 	status = "okay";
 };
 
