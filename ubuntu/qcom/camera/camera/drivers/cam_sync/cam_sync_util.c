@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2018, 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include "cam_sync_util.h"
@@ -330,7 +330,7 @@ int cam_sync_init_row(struct sync_table_row *table,
 	if (!table || idx <= 0 || idx >= CAM_SYNC_MAX_OBJS)
 		return -EINVAL;
 
-	strlcpy(row->name, name, SYNC_DEBUG_NAME_LEN);
+	strscpy(row->name, name, SYNC_DEBUG_NAME_LEN);
 	INIT_LIST_HEAD(&row->parents_list);
 	INIT_LIST_HEAD(&row->children_list);
 	row->type = type;
