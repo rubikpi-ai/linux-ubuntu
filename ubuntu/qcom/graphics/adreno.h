@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2008-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #ifndef __ADRENO_H
 #define __ADRENO_H
@@ -461,6 +461,22 @@ struct adreno_gpu_core {
 	u32 bus_width;
 	/** @snapshot_size: Size of the static snapshot region in bytes */
 	u32 snapshot_size;
+	/**
+	 * @chipid: Optional GPU chip ID for publically released chipsets; required when
+	 * using standard devicetree bindings.
+	 */
+	u32 chipid;
+	/**
+	 * @speedbins: Optional table of fuse to speedbin mappings
+	 *
+	 * Consists of pairs of fuse, index mappings, terminated with
+	 * {SHRT_MAX, 0} sentinel.
+	 */
+	struct kgsl_speedbin *speedbins;
+	/** @ubwc_mode: Supported UBWC mode */
+	u32 ubwc_mode;
+	/** @mal: Minimum access length */
+	u32 mal;
 };
 
 /**
@@ -632,6 +648,10 @@ struct adreno_device {
 	uint32_t ifpc_count;
 
 	unsigned int highest_bank_bit;
+	/** @ubwc_mode: Supported UBWC mode */
+	u32 ubwc_mode;
+	/** @mal: Minimum access length */
+	u32 mal;
 	unsigned int quirks;
 
 #ifdef CONFIG_QCOM_KGSL_CORESIGHT

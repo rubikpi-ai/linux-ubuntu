@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2002,2007-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #define ANY_ID (~0)
@@ -1506,11 +1506,12 @@ static const struct adreno_a6xx_core adreno_gpu_core_a612 = {
 		.gmem_size = (SZ_128K + SZ_4K),
 		.bus_width = 32,
 		.snapshot_size = SZ_1M,
+		.chipid = 0x06010200,
 	},
 	.prim_fifo_threshold = 0x00080000,
 	.sqefw_name = "a630_sqe.fw",
 	.gmufw_name = "a612_rgmu.bin",
-	.zap_name = "a612_zap.mdt",
+	.zap_name = "a612_zap.mbn",
 	.hwcg = a612_hwcg_regs,
 	.hwcg_count = ARRAY_SIZE(a612_hwcg_regs),
 	.vbif = a640_vbif_regs,
@@ -1814,6 +1815,9 @@ static const struct adreno_a6xx_core adreno_gpu_core_a643 = {
 		.gmem_size = SZ_512K,
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
+		.chipid = 0x06030500,
+		.ubwc_mode = 3,
+		.mal = 32,
 	},
 	.prim_fifo_threshold = 0x00200000,
 	.gmu_major = 2,
@@ -2517,6 +2521,14 @@ static const struct adreno_a6xx_core adreno_gpu_core_a663 = {
 		.gmem_size = SZ_1M + SZ_512K,
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
+		.chipid = 0x06060300,
+		.speedbins = KGSL_SPEEDBINS(
+			{ 0,   0 },
+			{ 169, 0 },
+			{ 113, 1 },
+		),
+		.ubwc_mode = 4,
+		.mal = 32,
 	},
 	.prim_fifo_threshold = 0x00300000,
 	.gmu_major = 2,
@@ -2549,12 +2561,20 @@ static const struct adreno_a6xx_core adreno_gpu_core_a623 = {
 		.gmem_size = SZ_512K,
 		.bus_width = 32,
 		.snapshot_size = SZ_2M,
+		.chipid = 0x06020300,
+		.speedbins = KGSL_SPEEDBINS(
+			{ 0,   0 },
+			{ 185, 0 },
+			{ 127, 1 },
+		),
+		.ubwc_mode = 4,
+		.mal = 32,
 	},
 	.prim_fifo_threshold = 0x0010000,
 	.gmu_major = 2,
 	.gmu_minor = 0,
 	.sqefw_name = "a650_sqe.fw",
-	.gmufw_name = "a663_gmu.bin",
+	.gmufw_name = "a623_gmu.bin",
 	.zap_name = "a623_zap.mdt",
 	.hwcg = a620_hwcg_regs,
 	.hwcg_count = ARRAY_SIZE(a620_hwcg_regs),

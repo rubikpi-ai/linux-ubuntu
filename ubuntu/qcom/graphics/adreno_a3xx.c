@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/clk/qcom.h>
@@ -16,6 +16,7 @@
 #include "adreno_pm4types.h"
 #include "adreno_snapshot.h"
 #include "adreno_trace.h"
+#include "kgsl_util.h"
 
 /*
  * Define registers for a3xx that contain addresses used by the
@@ -764,7 +765,7 @@ static int a3xx_soft_fault_detect_read_compare(struct adreno_device *adreno_dev)
  */
 static void a3xx_soft_fault_timer(struct timer_list *t)
 {
-	struct adreno_dispatcher *dispatcher = from_timer(dispatcher,
+	struct adreno_dispatcher *dispatcher = timer_container_of(dispatcher,
 							t, fault_timer);
 	struct adreno_device *adreno_dev = container_of(dispatcher,
 					struct adreno_device, dispatcher);

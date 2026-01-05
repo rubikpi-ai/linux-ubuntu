@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <dt-bindings/power/qcom-rpmpd.h>
@@ -20,6 +20,7 @@
 #include <linux/soc/qcom/llcc-qcom.h>
 #include <linux/sysfs.h>
 #include <linux/mailbox/qmp.h>
+#include <linux/vmalloc.h>
 #include <soc/qcom/cmd-db.h>
 
 #include "adreno.h"
@@ -27,6 +28,7 @@
 #include "adreno_trace.h"
 #include "kgsl_bus.h"
 #include "kgsl_device.h"
+#include "kgsl_gmu_core.h"
 #include "kgsl_trace.h"
 #include "kgsl_util.h"
 
@@ -2480,7 +2482,8 @@ static int gen7_gmu_iommu_init(struct gen7_gmu_device *gmu)
 {
 	int ret;
 
-	gmu->domain = iommu_domain_alloc(&platform_bus_type);
+	gmu->domain = gmu_core_iommu_domain_alloc(&gmu->pdev->dev);
+
 	if (gmu->domain == NULL) {
 		dev_err(&gmu->pdev->dev, "Unable to allocate GMU IOMMU domain\n");
 		return -ENODEV;
@@ -2529,15 +2532,22 @@ int gen7_gmu_probe(struct kgsl_device *device,
 	gmu->pdev->dev.dma_mask = &gmu->pdev->dev.coherent_dma_mask;
 	set_dma_ops(&gmu->pdev->dev, NULL);
 
-	res = platform_get_resource_byname(device->pdev, IORESOURCE_MEM,
-						"rscc");
-	if (res) {
-		gmu->rscc_virt = devm_ioremap(&device->pdev->dev, res->start,
-						resource_size(res));
-		if (!gmu->rscc_virt) {
-			dev_err(&gmu->pdev->dev, "rscc ioremap failed\n");
-			return -ENOMEM;
-		}
+	/* In standard device tree bindings, rscc range is part of GMU pdev */
+	res = platform_get_resource_byname(gmu->pdev, IORESOURCE_MEM, "rscc");
+	if (!res)
+		res = platform_get_resource_byname(device->pdev,
+			IORESOURCE_MEM, "rscc");
+
+	if (!res) {
+		dev_err(&gmu->pdev->dev, "Failed to get rscc resource\n");
+		return -ENODEV;
+	}
+
+	gmu->rscc_virt = devm_ioremap(&device->pdev->dev, res->start,
+					resource_size(res));
+	if (!gmu->rscc_virt) {
+		dev_err(&gmu->pdev->dev, "rscc ioremap failed\n");
+		return -ENOMEM;
 	}
 
 	/* Setup any rdpm register ranges */
@@ -2615,7 +2625,7 @@ int gen7_gmu_probe(struct kgsl_device *device,
 
 	spin_lock_init(&gmu->hfi.cmdq_lock);
 
-	gmu->irq = kgsl_request_irq(gmu->pdev, "gmu",
+	gmu->irq = kgsl_request_irq(gmu->pdev, "gmu", NULL, -EINVAL,
 		gen7_gmu_irq_handler, device);
 
 	if (gmu->irq >= 0)
@@ -3011,7 +3021,7 @@ no_gx_power:
 
 	clear_bit(GMU_PRIV_GPU_STARTED, &gmu->flags);
 
-	del_timer_sync(&device->idle_timer);
+	kgsl_delete_timer_sync(&device->idle_timer);
 
 	kgsl_pwrscale_sleep(device);
 
@@ -3314,7 +3324,7 @@ int gen7_gmu_hfi_probe(struct adreno_device *adreno_dev)
 	struct gen7_gmu_device *gmu = to_gen7_gmu(adreno_dev);
 	struct gen7_hfi *hfi = &gmu->hfi;
 
-	hfi->irq = kgsl_request_irq(gmu->pdev, "hfi",
+	hfi->irq = kgsl_request_irq(gmu->pdev, "hfi", NULL, -EINVAL,
 		gen7_hfi_irq_handler, KGSL_DEVICE(adreno_dev));
 
 	return hfi->irq < 0 ? hfi->irq : 0;
@@ -3390,11 +3400,18 @@ static int gen7_gmu_probe_dev(struct platform_device *pdev)
 	return component_add(&pdev->dev, &gen7_gmu_component_ops);
 }
 
+#if (KERNEL_VERSION(6, 10, 0) <= LINUX_VERSION_CODE)
+static void gen7_gmu_remove_dev(struct platform_device *pdev)
+{
+	component_del(&pdev->dev, &gen7_gmu_component_ops);
+}
+#else
 static int gen7_gmu_remove_dev(struct platform_device *pdev)
 {
 	component_del(&pdev->dev, &gen7_gmu_component_ops);
 	return 0;
 }
+#endif
 
 static const struct of_device_id gen7_gmu_match_table[] = {
 	{ .compatible = "qcom,gen7-gmu" },
