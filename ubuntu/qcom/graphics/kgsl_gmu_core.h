@@ -9,6 +9,7 @@
 #include <linux/iommu.h>
 #include <linux/mailbox_client.h>
 #include <linux/of_platform.h>
+#include <linux/platform_device.h>
 #include <linux/rbtree.h>
 
 /* GMU_DEVICE - Given an KGSL device return the GMU specific struct */
