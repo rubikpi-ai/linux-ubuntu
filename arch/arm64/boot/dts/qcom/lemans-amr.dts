@@ -449,6 +449,8 @@
 	it6162_1_codec: hdmi-bridge@58 {
 		compatible = "ite,it6162";
 		reg = <0x58>;
+		#sound-dai-cells = <1>;
+		ite,i2s-audio;
 
 		interrupts-extended = <&tlmm 95 IRQ_TYPE_LEVEL_LOW>;
 		pinctrl-names = "default";

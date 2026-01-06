@@ -46,6 +46,18 @@
 				sound-dai = <&msm_stub_codec 1>;
 			};
 		};
+
+		hdmi-dai-link {
+			link-name = "HDMI_PORT-RX";
+
+			cpu {
+				sound-dai = <&q6apmbedai DISPLAY_PORT_RX_1>;
+			};
+
+			codec {
+				sound-dai = <&it6162_1_codec 0>;
+			};
+		};
 	};
 };
 
