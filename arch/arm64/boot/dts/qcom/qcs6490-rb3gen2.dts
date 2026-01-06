@@ -160,6 +160,10 @@
 			codec {
 				sound-dai = <&mdss_dp>;
 			};
+
+			platform {
+				sound-dai = <&q6apm>;
+			};
 		};
 
 		hdmi-dai-link {
