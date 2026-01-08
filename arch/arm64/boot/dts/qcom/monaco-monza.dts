@@ -251,6 +251,14 @@
 	status = "okay";
 };
 
+&ice {
+	status = "okay";
+};
+
+&ice_mmc {
+	status = "okay";
+};
+
 &pmm8650au_1_gpios {
 	usb2_en_state: usb2-en-state {
 	       pins = "gpio7";
