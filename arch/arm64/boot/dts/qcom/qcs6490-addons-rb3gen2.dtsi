@@ -241,6 +241,10 @@
 			};
 
 		};
+
+		platform {
+			sound-dai = <&q6apm>;
+		};
 	};
 };
 
@@ -318,6 +322,10 @@
 
 		codec {
 			sound-dai = <&msm_stub_codec 2>;
+		};
+
+		platform {
+			sound-dai = <&q6apm>;
 		};
 	};
 
