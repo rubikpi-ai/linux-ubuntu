@@ -176,6 +176,10 @@
 			codec {
 				sound-dai = <&lt9611_codec 0>;
 			};
+
+			platform {
+				sound-dai = <&q6apm>;
+			};
 		};
 
 		wsa-dai-link {
