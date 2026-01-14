@@ -1365,15 +1365,15 @@ void dpu_plane_danger_signal_ctrl(struct drm_plane *plane, bool enable)
 static bool dpu_plane_format_mod_supported(struct drm_plane *plane,
 		uint32_t format, uint64_t modifier)
 {
-	struct dpu_plane *pdpu = to_dpu_plane(plane);
+	struct dpu_kms *kms = _dpu_plane_get_kms(plane);
 
 	if (modifier == DRM_FORMAT_MOD_LINEAR)
 		return true;
 
 	if (modifier == DRM_FORMAT_MOD_QCOM_COMPRESSED) {
-		if (pdpu && pdpu->catalog && pdpu->catalog->mdss_ver &&
-			pdpu->catalog->mdss_ver->core_major_ver == 7 &&
-			pdpu->catalog->mdss_ver->core_minor_ver == 2)
+		if (kms && kms->catalog && kms->catalog->mdss_ver &&
+			kms->catalog->mdss_ver->core_major_ver == 7 &&
+			kms->catalog->mdss_ver->core_minor_ver == 2)
 			return dpu_find_format(format, qcom_compressed_supported_formats_sc7280,
 					ARRAY_SIZE(qcom_compressed_supported_formats_sc7280));
 		else
