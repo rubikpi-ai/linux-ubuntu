@@ -214,11 +214,13 @@ static int cam_req_mgr_close(struct file *filep)
 
 	cam_req_mgr_rwsem_write_op(CAM_SUBDEV_LOCK);
 
+	mutex_lock(&g_dev.subdev_lock);
 	mutex_lock(&g_dev.cam_lock);
 
 	if (g_dev.open_cnt <= 0) {
 		CAM_WARN(CAM_CRM, "open_cnt <= 0 in close!");
 		mutex_unlock(&g_dev.cam_lock);
+		mutex_unlock(&g_dev.subdev_lock);
 		cam_req_mgr_rwsem_write_op(CAM_SUBDEV_UNLOCK);
 		return -EINVAL;
 	}
@@ -255,6 +257,7 @@ static int cam_req_mgr_close(struct file *filep)
 	cam_req_mgr_util_free_hdls();
 	cam_mem_mgr_deinit();
 	mutex_unlock(&g_dev.cam_lock);
+	mutex_unlock(&g_dev.subdev_lock);
 
 	cam_req_mgr_rwsem_write_op(CAM_SUBDEV_UNLOCK);
 
@@ -502,6 +505,45 @@ static long cam_private_ioctl(struct file *file, void *fh,
 		}
 		break;
 
+	case CAM_REQ_MGR_SCHED_REQ_V3: {
+		struct cam_req_mgr_sched_request_v3 *sched_req;
+		struct cam_req_mgr_sched_request_v3 crm_sched_req;
+		int sched_req_size;
+
+		if (k_ioctl->size < 0)
+			return -EINVAL;
+
+		if (copy_from_user(&crm_sched_req,
+			u64_to_user_ptr(k_ioctl->handle),
+			sizeof(struct cam_req_mgr_sched_request_v3))) {
+			return -EFAULT;
+		}
+
+		if (crm_sched_req.num_links > MAXIMUM_LINKS_PER_SESSION)
+			return -EINVAL;
+
+		sched_req_size = sizeof(struct cam_req_mgr_sched_request_v3) +
+			((crm_sched_req.num_links) * sizeof(__signed__ int));
+
+		if (k_ioctl->size != sched_req_size)
+			return -EINVAL;
+
+		sched_req = kzalloc(sched_req_size, GFP_KERNEL);
+		if (!sched_req) {
+			return -ENOMEM;
+		}
+
+		if (copy_from_user(sched_req, u64_to_user_ptr(k_ioctl->handle), sched_req_size)) {
+			kfree(sched_req);
+			sched_req = NULL;
+			return -EFAULT;
+		}
+
+		rc = cam_req_mgr_schedule_request_v3(sched_req);
+		kfree(sched_req);
+		}
+		break;
+
 	case CAM_REQ_MGR_FLUSH_REQ: {
 		struct cam_req_mgr_flush_info flush_info;
 
@@ -716,6 +758,11 @@ static long cam_private_ioctl(struct file *file, void *fh,
 	case CAM_REQ_MGR_REQUEST_DUMP: {
 		struct cam_dump_req_cmd cmd;
 
+		if (!cam_debugfs_available()) {
+			CAM_DBG(CAM_CORE, "Dump request disabled");
+			return 0;
+		}
+
 		if (k_ioctl->size != sizeof(cmd))
 			return -EINVAL;
 
@@ -915,6 +962,7 @@ int cam_register_subdev(struct cam_subdev *csd)
 		return -EINVAL;
 	}
 
+	mutex_lock(&g_dev.subdev_lock);
 	mutex_lock(&g_dev.dev_lock);
 
 	sd = &csd->sd;
@@ -964,6 +1012,7 @@ int cam_register_subdev(struct cam_subdev *csd)
 reg_fail:
 invalid_val_fail:
 	mutex_unlock(&g_dev.dev_lock);
+	mutex_unlock(&g_dev.subdev_lock);
 	return rc;
 }
 
@@ -974,10 +1023,12 @@ int cam_unregister_subdev(struct cam_subdev *csd)
 		return -ENODEV;
 	}
 
+	mutex_lock(&g_dev.subdev_lock);
 	mutex_lock(&g_dev.dev_lock);
 	v4l2_device_unregister_subdev(&csd->sd);
 	g_dev.count--;
 	mutex_unlock(&g_dev.dev_lock);
+	mutex_unlock(&g_dev.subdev_lock);
 
 	return 0;
 }
@@ -1007,6 +1058,7 @@ static int cam_req_mgr_component_master_bind(struct device *dev)
 
 	g_dev.open_cnt = 0;
 	g_dev.shutdown_state = false;
+	mutex_init(&g_dev.subdev_lock);
 	mutex_init(&g_dev.cam_lock);
 	spin_lock_init(&g_dev.cam_eventq_lock);
 	mutex_init(&g_dev.dev_lock);
@@ -1065,6 +1117,7 @@ req_mgr_core_fail:
 req_mgr_util_fail:
 	mutex_destroy(&g_dev.dev_lock);
 	mutex_destroy(&g_dev.cam_lock);
+	mutex_destroy(&g_dev.subdev_lock);
 	cam_video_device_cleanup();
 video_setup_fail:
 	cam_media_device_cleanup();
@@ -1088,6 +1141,7 @@ static void cam_req_mgr_component_master_unbind(struct device *dev)
 	cam_v4l2_device_cleanup();
 	cam_req_mgr_destroy_timer_slab();
 	mutex_destroy(&g_dev.dev_lock);
+	mutex_destroy(&g_dev.subdev_lock);
 	g_dev.state = false;
 }
 

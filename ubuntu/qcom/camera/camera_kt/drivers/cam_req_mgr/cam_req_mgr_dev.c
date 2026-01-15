@@ -202,11 +202,13 @@ static int cam_req_mgr_close(struct file *filep)
 
 	cam_req_mgr_rwsem_write_op(CAM_SUBDEV_LOCK);
 
+	mutex_lock(&g_dev.subdev_lock);
 	mutex_lock(&g_dev.cam_lock);
 
 	if (g_dev.open_cnt <= 0) {
 		CAM_WARN(CAM_CRM, "open_cnt <= 0 in close!");
 		mutex_unlock(&g_dev.cam_lock);
+		mutex_unlock(&g_dev.subdev_lock);
 		cam_req_mgr_rwsem_write_op(CAM_SUBDEV_UNLOCK);
 		return -EINVAL;
 	}
@@ -243,6 +245,7 @@ static int cam_req_mgr_close(struct file *filep)
 	cam_req_mgr_util_free_hdls();
 	cam_mem_mgr_deinit();
 	mutex_unlock(&g_dev.cam_lock);
+	mutex_unlock(&g_dev.subdev_lock);
 
 	cam_req_mgr_rwsem_write_op(CAM_SUBDEV_UNLOCK);
 
@@ -650,6 +653,11 @@ static long cam_private_ioctl(struct file *file, void *fh,
 	case CAM_REQ_MGR_REQUEST_DUMP: {
 		struct cam_dump_req_cmd cmd;
 
+		if (!cam_debugfs_available()) {
+			CAM_DBG(CAM_CORE, "Dump request disabled");
+			return 0;
+		}
+
 		if (k_ioctl->size != sizeof(cmd))
 			return -EINVAL;
 
@@ -805,6 +813,7 @@ int cam_register_subdev(struct cam_subdev *csd)
 		return -EINVAL;
 	}
 
+	mutex_lock(&g_dev.subdev_lock);
 	mutex_lock(&g_dev.dev_lock);
 
 	sd = &csd->sd;
@@ -855,6 +864,7 @@ int cam_register_subdev(struct cam_subdev *csd)
 reg_fail:
 invalid_val_fail:
 	mutex_unlock(&g_dev.dev_lock);
+	mutex_unlock(&g_dev.subdev_lock);
 	return rc;
 }
 
@@ -865,10 +875,12 @@ int cam_unregister_subdev(struct cam_subdev *csd)
 		return -ENODEV;
 	}
 
+	mutex_lock(&g_dev.subdev_lock);
 	mutex_lock(&g_dev.dev_lock);
 	v4l2_device_unregister_subdev(&csd->sd);
 	g_dev.count--;
 	mutex_unlock(&g_dev.dev_lock);
+	mutex_unlock(&g_dev.subdev_lock);
 
 	return 0;
 }
@@ -887,6 +899,7 @@ static int cam_req_mgr_component_master_bind(struct device *dev)
 	mutex_init(&g_dev.cam_lock);
 	spin_lock_init(&g_dev.cam_eventq_lock);
 	mutex_init(&g_dev.dev_lock);
+	mutex_init(&g_dev.subdev_lock);
 
 	rc = cam_req_mgr_util_init();
 	if (rc) {
@@ -955,6 +968,7 @@ req_mgr_util_fail:
 	cam_v4l2_device_cleanup();
 	mutex_destroy(&g_dev.dev_lock);
 	mutex_destroy(&g_dev.cam_lock);
+	mutex_destroy(&g_dev.subdev_lock);
 	g_dev.state = false;
 	return rc;
 }
@@ -972,6 +986,7 @@ static void cam_req_mgr_component_master_unbind(struct device *dev)
 	cam_video_device_cleanup();
 	cam_v4l2_device_cleanup();
 	mutex_destroy(&g_dev.dev_lock);
+	mutex_destroy(&g_dev.subdev_lock);
 	g_dev.state = false;
 }
 

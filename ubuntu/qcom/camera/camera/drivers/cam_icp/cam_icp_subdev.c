@@ -28,6 +28,7 @@
 #include "cam_icp_context.h"
 #include "cam_hw_mgr_intf.h"
 #include "cam_icp_hw_mgr_intf.h"
+#include "cam_icp_hw_intf.h"
 #include "cam_debug_util.h"
 #include "cam_smmu_api.h"
 #include "camera_main.h"
@@ -50,6 +51,7 @@ struct cam_icp_subdev {
 	int32_t reserved;
 };
 
+struct camera_firmware cam_fw;
 static DEFINE_MUTEX(g_dev_lock);
 static struct cam_icp_subdev *g_icp_dev[CAM_ICP_SUBDEV_MAX];
 
@@ -257,6 +259,89 @@ static inline int cam_icp_subdev_clean_up(uint32_t device_idx)
 	return 0;
 }
 
+void cam_put_domain_for_fw(struct camera_firmware *fw)
+{
+	if (!fw)
+		return;
+
+	if (fw->iommu_domain) {
+		/*
+		 * No explicit release function for iommu_get_domain_for_dev,
+		 * but if you attached a domain, detach it here.
+		 */
+		iommu_detach_device(fw->iommu_domain, fw->dev);
+		fw->iommu_domain = NULL;
+	}
+
+	if (fw->dev) {
+		of_node_put(fw->dev->of_node);
+		platform_device_unregister(to_platform_device(fw->dev));
+		fw->dev = NULL;
+	}
+
+	fw->has_el2_iommu = false;
+}
+
+static int cam_get_domain_for_fw(struct device *dev, struct camera_firmware *fw)
+{
+	struct platform_device *pdev_fw = NULL;
+	struct platform_device_info info;
+	struct device_node *np = NULL;
+	int rc = 0;
+
+	np = of_get_child_by_name(dev->of_node, "camera-firmware");
+	if (!np) {
+		CAM_INFO(CAM_ICP, "camera-firmware, not overlayed. no KVM");
+		fw->has_el2_iommu = false;
+		return 0;
+	}
+
+	fw->has_el2_iommu = true;
+	memset(&info, 0, sizeof(info));
+	info.fwnode   = &np->fwnode;
+	info.parent   = dev;
+	info.name     = np->name;
+	info.dma_mask = DMA_BIT_MASK(32);
+
+	pdev_fw = platform_device_register_full(&info);
+	if (IS_ERR(pdev_fw)) {
+		rc = PTR_ERR(pdev_fw);
+		CAM_ERR(CAM_ICP, "platform_device_register_full failed: %d", rc);
+		goto cleanup_np;
+	}
+
+	pdev_fw->dev.of_node = np;
+
+	rc = of_dma_configure(&pdev_fw->dev, np, true);
+	if (rc) {
+		CAM_ERR(CAM_ICP, "DMA configuration failed: %d", rc);
+		pdev_fw->dev.of_node = NULL;
+		goto unregister_pdev;
+	}
+
+	fw->dev = &pdev_fw->dev;
+
+	fw->iommu_domain = iommu_get_domain_for_dev(fw->dev);
+	if (!fw->iommu_domain) {
+		CAM_ERR(CAM_ICP, "Failed to get IOMMU domain");
+		rc = -ENOMEM;
+		goto unregister_pdev;
+	}
+
+	CAM_INFO(CAM_ICP, "KVM Enabled - fw.dev: %p, fw.iommu_domain: %p", fw->dev,
+			fw->iommu_domain);
+	return 0;
+
+unregister_pdev:
+	platform_device_unregister(pdev_fw);
+	fw->dev = NULL;
+
+cleanup_np:
+	of_node_put(np);
+	fw->has_el2_iommu = false;
+	return rc;
+}
+
 static int cam_icp_component_bind(struct device *dev,
 	struct device *master_dev, void *data)
 {
@@ -356,6 +441,12 @@ static int cam_icp_component_bind(struct device *dev,
 		goto ctx_fail;
 	}
 
+	rc = cam_get_domain_for_fw(dev, &cam_fw);
+	if (rc) {
+		CAM_ERR(CAM_ICP, "device[%s] get domain for fw failed: %d", subdev_name, rc);
+		goto ctx_fail;
+	}
+
 	cam_common_register_evt_inject_cb(cam_icp_dev_evt_inject_cb,
 		CAM_COMMON_EVT_INJECT_HW_ICP);
 
@@ -364,12 +455,18 @@ static int cam_icp_component_bind(struct device *dev,
 
 	icp_dev->open_cnt = 0;
 	rc = cam_subdev_register(&icp_dev->sd, pdev);
+	if (rc) {
+		CAM_ERR(CAM_ICP, "device[%s] subdev register failed: %d", subdev_name, rc);
+		goto fw_cleanup;
+	}
 
 	CAM_DBG(CAM_ICP, "device[%s] id: %u component bound successfully",
 		subdev_name, device_idx);
 
 	return rc;
 
+fw_cleanup:
+	cam_put_domain_for_fw(&cam_fw);
 ctx_fail:
 	for (--i; i >= 0; i--)
 		cam_icp_context_deinit(&icp_dev->ctx_icp[i]);

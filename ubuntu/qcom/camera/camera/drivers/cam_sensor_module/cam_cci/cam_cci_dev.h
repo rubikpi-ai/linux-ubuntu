@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef _CAM_CCI_DEV_H_
@@ -181,6 +181,15 @@ enum cam_cci_state_t {
 	CCI_STATE_DISABLED,
 };
 
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+struct cci_sysfs {
+	int32_t master;
+	int32_t cci_dev;
+	struct kobject sysfs_kobj;
+	struct mutex cci_mutex;
+};
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
+
 /**
  * struct cci_device
  * @pdev:                       Platform device
@@ -253,6 +262,10 @@ struct cci_device {
 	struct mutex init_mutex;
 	uint64_t  dump_en;
 	bool is_probing;
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	struct cci_sysfs cci_master_sysfs[MASTER_MAX];
+	int32_t num_masters;
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 };
 
 enum cam_cci_i2c_cmd_type {
@@ -331,6 +344,17 @@ irqreturn_t cam_cci_threaded_irq(int irq_num, void *data);
 struct v4l2_subdev *cam_cci_get_subdev(int cci_dev_index);
 void cam_cci_dump_registers(struct cci_device *cci_dev,
 		enum cci_i2c_master_t master, enum cci_i2c_queue_t queue);
+
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+/**
+ * @brief       : API to update client bus information.
+ * @bus_id      : cci bus id, this is basically cci cel index
+ * @cci_dev     : cci device handle
+ * @master_id   : master id of the client
+ */
+int32_t cam_cci_get_bus_info(int32_t bus_id, int32_t cci_idx,
+	int32_t *cci_dev, int32_t *master_id);
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 
 /**
  * @brief : API to register CCI hw to platform framework.

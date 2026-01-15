@@ -304,7 +304,7 @@ struct cam_cpas_private_soc {
 	uint32_t num_caches;
 	uint32_t part_info;
 	struct cam_sys_cache_info *llcc_info;
-	bool enable_secure_qos_update;
+	uint32_t enable_secure_qos_update;
 	bool enable_smart_qos;
 	bool enable_cam_ddr_drv;
 	bool enable_cam_clk_drv;

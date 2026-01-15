@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef __MSM_CAMERA_H
@@ -152,5 +152,8 @@
 #define CAM_BYPASS_CLKS       0x4
 #define CAM_BYPASS_CESTA      0x8
 #define CAM_BYPASS_ICC        0x10
+#define CAM_FLASH_TYPE_PMIC   0
+#define CAM_FLASH_TYPE_I2C    1
+#define CAM_FLASH_TYPE_GPIO   2
 
 #endif

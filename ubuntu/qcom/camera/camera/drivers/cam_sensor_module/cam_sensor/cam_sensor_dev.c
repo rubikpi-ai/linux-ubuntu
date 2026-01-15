@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include "cam_sensor_dev.h"
@@ -240,6 +240,9 @@ static int cam_sensor_i2c_component_bind(struct device *dev,
 	s_ctrl->io_master_info.master_type = I2C_MASTER;
 	s_ctrl->is_probe_succeed = 0;
 	s_ctrl->last_flush_req = 0;
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	s_ctrl->pwr_ref_cnt    = 0;
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 
 	rc = cam_sensor_parse_dt(s_ctrl);
 	if (rc < 0) {
@@ -322,6 +325,7 @@ static void cam_sensor_i2c_component_unbind(struct device *dev,
 	struct i2c_client         *client = NULL;
 	struct cam_sensor_ctrl_t  *s_ctrl = NULL;
 
+	CAM_DBG(CAM_SENSOR, "Component unbind called for: ");
 	client = container_of(dev, struct i2c_client, dev);
 	if (!client) {
 		CAM_ERR(CAM_SENSOR,
@@ -334,6 +338,10 @@ static void cam_sensor_i2c_component_unbind(struct device *dev,
 		CAM_ERR(CAM_SENSOR, "sensor device is NULL");
 		return;
 	}
+
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	cam_sensor_remove_device(s_ctrl);
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 
 	CAM_DBG(CAM_SENSOR, "i2c remove invoked");
 	mutex_lock(&(s_ctrl->cam_sensor_mutex));
@@ -433,29 +441,46 @@ static int cam_sensor_component_bind(struct device *dev,
 	/* Fill platform device id*/
 	pdev->id = soc_info->index;
 
-	endpoint = of_graph_get_next_endpoint(s_ctrl->of_node, NULL);
-	if (!endpoint) {
-		CAM_DBG(CAM_SENSOR, "No local endpoint found");
-	} else {
-		remote = of_graph_get_remote_port(endpoint);
-		if (!remote) {
-			CAM_ERR(CAM_SENSOR, "No remote endpoint found");
-			of_node_put(endpoint);
-		}
+	if (of_graph_is_present(s_ctrl->of_node)) {
+		endpoint = of_graph_get_next_endpoint(s_ctrl->of_node, NULL);
+		if (!endpoint) {
+			CAM_DBG(CAM_SENSOR, "No local endpoint found");
+		} else {
+			remote = of_graph_get_remote_port(endpoint);
+			if (!remote) {
+				CAM_ERR(CAM_SENSOR, "No remote endpoint found");
+				of_node_put(endpoint);
+				rc = -EINVAL;
+				goto free_s_ctrl;
+			}
 
-		deser_node = of_get_parent(remote);
-		if (!deser_node) {
-			CAM_ERR(CAM_SENSOR, "No deserializer node found");
+			deser_node = of_get_parent(remote);
+			if (!deser_node) {
+				CAM_ERR(CAM_SENSOR, "No deserializer node found");
+				of_node_put(remote);
+				of_node_put(endpoint);
+				rc = -EINVAL;
+				goto free_s_ctrl;
+			}
+
+			rc = of_property_read_u32(deser_node,
+					"csiphy-sd-index", &csiphy_sd_index);
+
+			CAM_DBG(CAM_SENSOR,
+					"Deserializer csiphy-sd-index: %u", csiphy_sd_index);
+			of_node_put(deser_node);
 			of_node_put(remote);
 			of_node_put(endpoint);
-		}
 
-		rc = of_property_read_u32(deser_node, "csiphy-sd-index", &csiphy_sd_index);
-		if (rc) {
-			CAM_ERR(CAM_SENSOR, "Failed to read csiphy-sd-index");
-		} else {
-			CAM_DBG(CAM_SENSOR, "Deserializer csiphy-sd-index: %u", csiphy_sd_index);
+			if (rc) {
+				CAM_ERR(CAM_SENSOR,
+					"Failed to read csiphy-sd-index");
+				rc = -EINVAL;
+				goto free_s_ctrl;
+			}
 		}
+	} else {
+		CAM_DBG(CAM_SENSOR, "No graph connections present");
 	}
 
 	rc = cam_sensor_init_subdev_params(s_ctrl);
@@ -553,6 +578,9 @@ static void cam_sensor_component_unbind(struct device *dev,
 	}
 
 	CAM_DBG(CAM_SENSOR, "Component unbind called for: %s", pdev->name);
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	cam_sensor_remove_device(s_ctrl);
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 	mutex_lock(&(s_ctrl->cam_sensor_mutex));
 	cam_sensor_shutdown(s_ctrl);
 	mutex_unlock(&(s_ctrl->cam_sensor_mutex));

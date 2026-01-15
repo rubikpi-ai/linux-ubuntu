@@ -4356,6 +4356,9 @@ end:
 	__cam_isp_ctx_notify_error_util(CAM_TRIGGER_POINT_SOF, error,
 		error_request_id, ctx_isp);
 
+	if (ctx_isp->isp_external_recovery)
+		req_mgr_err_code = CAM_REQ_MGR_ISP_FATAL_ERROR;
+
 	/*
 	 * Need to send error occurred in KMD
 	 * This will help UMD to take necessary action
@@ -7160,6 +7163,7 @@ static int __cam_isp_ctx_release_dev_in_top_state(struct cam_context *ctx,
 	ctx_isp->req_info.last_bufdone_req_id = 0;
 	ctx_isp->v4l2_event_sub_ids = 0;
 	ctx_isp->resume_hw_in_flushed = false;
+	ctx_isp->isp_external_recovery = false;
 
 	atomic64_set(&ctx_isp->dbg_monitors.state_monitor_head, -1);
 	atomic64_set(&ctx_isp->dbg_monitors.frame_monitor_head, -1);
@@ -9067,7 +9071,7 @@ static int __cam_isp_ctx_process_evt(struct cam_context *ctx,
 	struct cam_isp_context *ctx_isp =
 		(struct cam_isp_context *) ctx->ctx_priv;
 
-	if ((ctx->state == CAM_CTX_ACQUIRED) &&
+	if ((ctx->state == CAM_CTX_ACQUIRED || ctx->state == CAM_CTX_READY) &&
 		(link_evt_data->evt_type != CAM_REQ_MGR_LINK_EVT_UPDATE_PROPERTIES)) {
 		CAM_WARN(CAM_ISP,
 			"Get unexpect evt:%d in acquired state, ctx: %u on link: 0x%x",
@@ -9107,12 +9111,17 @@ static int __cam_isp_ctx_process_evt(struct cam_context *ctx,
 		break;
 	case CAM_REQ_MGR_LINK_EVT_UPDATE_PROPERTIES:
 		if (link_evt_data->u.properties_mask &
+			CAM_LINK_PROPERTY_SENSOR_EXTERNAL_RECOVERY)
+			ctx_isp->isp_external_recovery = true;
+		else if (link_evt_data->u.properties_mask &
 			CAM_LINK_PROPERTY_SENSOR_STANDBY_AFTER_EOF)
 			ctx_isp->vfps_aux_context = true;
 		else
 			ctx_isp->vfps_aux_context = false;
-		CAM_DBG(CAM_ISP, "vfps_aux_context:%s on ctx: %u link: 0x%x",
-			CAM_BOOL_TO_YESNO(ctx_isp->vfps_aux_context), ctx->ctx_id, ctx->link_hdl);
+		CAM_DBG(CAM_ISP, "vfps_aux_context:%s external recovery:%s on ctx: %u link: 0x%x",
+			CAM_BOOL_TO_YESNO(ctx_isp->vfps_aux_context),
+			CAM_BOOL_TO_YESNO(ctx_isp->isp_external_recovery),
+			ctx->ctx_id, ctx->link_hdl);
 		break;
 	default:
 		CAM_WARN(CAM_ISP,
@@ -9507,6 +9516,7 @@ static struct cam_ctx_ops
 			.unlink = __cam_isp_ctx_unlink_in_ready,
 			.get_dev_info = __cam_isp_ctx_get_dev_info,
 			.flush_req = __cam_isp_ctx_flush_req_in_ready,
+			.process_evt = __cam_isp_ctx_process_evt,
 			.dump_req = __cam_isp_ctx_dump_in_top_state,
 		},
 		.irq_ops = NULL,

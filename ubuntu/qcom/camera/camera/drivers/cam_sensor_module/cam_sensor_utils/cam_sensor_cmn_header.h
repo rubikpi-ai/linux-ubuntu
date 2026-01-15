@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef _CAM_SENSOR_CMN_HEADER_
@@ -407,4 +407,48 @@ int cam_sensor_module_debug_register(void);
  */
 void cam_sensor_module_debug_deregister(void);
 
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+/**
+ * cam_sysfs_add_cci()
+ * @brief Creates sysfs entries for cam_cci
+ */
+int32_t cam_sysfs_add_cci(void *dev);
+
+/**
+ * cam_sysfs_remove_cci()
+ * @brief Removes sysfs entries for cam_cci
+ */
+
+int32_t cam_sysfs_remove_cci(void *dev);
+/**
+ * cam_sysfs_exit()
+ * @brief Cleanup sysfs entries for cam_cci
+ */
+void cam_sysfs_exit(void);
+
+/**
+ * cam_sensor_add_device()
+ * @brief Creates sysfs entries for called sensor slot
+ */
+int32_t cam_sensor_add_device(void *ctrl_struct);
+
+/**
+ * sysfs_cam_sensor_power_up()
+ * @brief Helper function to powerup sensor
+ */
+int32_t sysfs_cam_sensor_power_up(void *val);
+
+/**
+ * sysfs_cam_sensor_power_down()
+ * @brief Helper function to powerdown sensor
+ */
+int32_t sysfs_cam_sensor_power_down(void *val);
+
+/**
+ * cam_sensor_remove_device()
+ * @brief Removes sysfs entries for all probed sensor slot
+ */
+int32_t cam_sensor_remove_device(void *val);
+
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 #endif /* _CAM_SENSOR_CMN_HEADER_ */

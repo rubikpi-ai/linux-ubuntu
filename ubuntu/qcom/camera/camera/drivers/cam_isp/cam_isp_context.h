@@ -431,6 +431,7 @@ struct cam_isp_fcg_prediction_tracker {
  * @flush_in_progress          indicates whether flush is in progress
  * @bubble_recover_dis:        Bubble recovery disabled
  * @sfe_en:                    Indicates if SFE is being used
+ * @isp_external_recovery:     Indicates if external recovery enabled
  */
 struct cam_isp_context {
 	struct cam_context              *base;
@@ -500,6 +501,7 @@ struct cam_isp_context {
 	struct mutex                          isp_mutex;
 	bool                                  bubble_recover_dis;
 	bool                                  sfe_en;
+	bool                                  isp_external_recovery;
 };
 
 /**

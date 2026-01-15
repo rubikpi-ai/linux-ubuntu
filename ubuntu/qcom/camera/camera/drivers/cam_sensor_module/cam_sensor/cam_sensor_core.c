@@ -1293,7 +1293,12 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 				s_ctrl->soc_info.index,
 				s_ctrl->sensordata->slave_info.sensor_slave_addr,
 				s_ctrl->sensordata->slave_info.sensor_id);
-
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+		if (cam_sensor_add_device(s_ctrl) < 0) {
+			CAM_DBG(CAM_SENSOR, "Failed to create sysfs entry for Slot=%d",
+					s_ctrl->soc_info.index);
+		}
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 	}
 		break;
 	case CAM_ACQUIRE_DEV: {
@@ -1754,6 +1759,15 @@ int cam_sensor_power_up(struct cam_sensor_ctrl_t *s_ctrl)
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	if (s_ctrl->pwr_ref_cnt) {
+
+		CAM_ERR(CAM_SENSOR, "Sensor already powered up: refcount %d",
+			s_ctrl->pwr_ref_cnt);
+		s_ctrl->pwr_ref_cnt++;
+		return rc;
+	}
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 	soc_info = &s_ctrl->soc_info;
 
 	if (s_ctrl->bob_pwm_switch) {
@@ -1790,7 +1804,9 @@ int cam_sensor_power_up(struct cam_sensor_ctrl_t *s_ctrl)
 		CAM_ERR(CAM_SENSOR, "cci_init failed: rc: %d", rc);
 		goto cci_failure;
 	}
-
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	s_ctrl->pwr_ref_cnt++;
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 	return rc;
 
 cci_failure:
@@ -1823,6 +1839,20 @@ int cam_sensor_power_down(struct cam_sensor_ctrl_t *s_ctrl)
 			s_ctrl->sensor_name, power_info);
 		return -EINVAL;
 	}
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	if (!s_ctrl->pwr_ref_cnt) {
+		CAM_ERR(CAM_SENSOR, "Sensor stop not expected: refcount %d",
+			s_ctrl->pwr_ref_cnt);
+		return -EINVAL;
+	}
+
+	if (s_ctrl->pwr_ref_cnt > 1) {
+		CAM_ERR(CAM_SENSOR, "Sensor skip stop: refcount %d",
+			s_ctrl->pwr_ref_cnt);
+		s_ctrl->pwr_ref_cnt--;
+		return rc;
+	}
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 
 	rc = cam_sensor_util_power_down(power_info, soc_info);
 	if (rc < 0) {
@@ -1859,6 +1889,9 @@ int cam_sensor_power_down(struct cam_sensor_ctrl_t *s_ctrl)
 	}
 
 	camera_io_release(&(s_ctrl->io_master_info));
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	s_ctrl->pwr_ref_cnt--;
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 
 	return rc;
 }

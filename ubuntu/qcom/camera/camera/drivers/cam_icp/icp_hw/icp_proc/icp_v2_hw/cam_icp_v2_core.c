@@ -595,7 +595,7 @@ err:
 
 #if IS_REACHABLE(CONFIG_QCOM_MDT_LOADER)
 static int __load_firmware(struct platform_device *pdev,
-	uint32_t fw_pas_id)
+	uint32_t fw_pas_id, struct camera_firmware *fw)
 {
 	const char *fw_name;
 	const struct firmware *firmware = NULL;
@@ -670,13 +670,26 @@ static int __load_firmware(struct platform_device *pdev,
 		goto out;
 	}
 
-	rc = qcom_mdt_load(&pdev->dev, firmware, firmware_name, fw_pas_id,
-			vaddr, res_start, res_size, NULL);
+	fw->ctx = qcom_scm_pas_context_init(&pdev->dev, fw_pas_id, res_start,
+			res_size);
+	if (IS_ERR_OR_NULL(fw->ctx)) {
+		rc = fw->ctx ? PTR_ERR(fw->ctx) : -ENOMEM;
+		fw->ctx = NULL;
+		goto out;
+	}
+	fw->ctx->has_iommu = fw->has_el2_iommu;
+
+	rc = qcom_mdt_pas_load(fw->ctx, firmware, firmware_name, vaddr, NULL);
 	if (rc) {
 		CAM_ERR(CAM_ICP, "failed to load firmware rc=%d", rc);
+		fw->ctx = NULL;
 		goto out;
 	}
 
+	fw->mem_phys = res_start;
+	fw->mem_size = res_size;
+
+	CAM_DBG(CAM_ICP, "res_start=0x%x, res_size=%zu", res_start, res_size);
 out:
 	if (vaddr)
 		iounmap(vaddr);
@@ -714,14 +727,28 @@ static int cam_icp_v2_boot(struct cam_hw_info *icp_v2_info,
 	prepare_boot(icp_v2_info, args);
 
 #if IS_REACHABLE(CONFIG_QCOM_MDT_LOADER)
-	rc = __load_firmware(icp_v2_info->soc_info.pdev, soc_priv->fw_pas_id);
+	rc = __load_firmware(icp_v2_info->soc_info.pdev,
+			soc_priv->fw_pas_id, core_info->fw);
 	if (rc) {
 		CAM_ERR(CAM_ICP, "firmware loading failed rc=%d", rc);
 		goto err;
 	}
 #endif
 
-	rc = qcom_scm_pas_auth_and_reset(soc_priv->fw_pas_id);
+	if (core_info->fw->has_el2_iommu) {
+		rc = iommu_map(core_info->fw->iommu_domain, 0, core_info->fw->mem_phys,
+				core_info->fw->mem_size, IOMMU_READ | IOMMU_WRITE | IOMMU_PRIV,
+				GFP_KERNEL);
+		if (rc) {
+			CAM_ERR(CAM_ICP, "FW Region mapping failed for KVM rc=%d", rc);
+			goto err;
+		}
+	} else {
+		core_info->fw->mem_phys = 0;
+		core_info->fw->mem_size = 0;
+	}
+
+	rc = qcom_scm_pas_prepare_and_auth_reset(core_info->fw->ctx);
 	if (rc) {
 		CAM_ERR(CAM_ICP, "auth and reset failed rc=%d", rc);
 		goto err;
@@ -746,8 +773,10 @@ static int cam_icp_v2_shutdown(struct cam_hw_info *icp_v2_info)
 
 	if (core_info->use_sec_pil) {
 		rc = qcom_scm_pas_shutdown(soc_priv->fw_pas_id);
-	}
-	else {
+		if (core_info->fw->has_el2_iommu)
+			iommu_unmap(core_info->fw->iommu_domain, 0,
+				core_info->fw->mem_size);
+	} else {
 		int32_t sys_base_idx = core_info->reg_base_idx[ICP_V2_SYS_BASE];
 		void __iomem *base;
 
