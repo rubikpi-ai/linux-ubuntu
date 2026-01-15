@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #include <dt-bindings/msm-camera.h>
 
@@ -481,16 +481,15 @@
 		interrupts = <GIC_SPI 477 IRQ_TYPE_EDGE_RISING>;
 		interrupt-names = "csiphy0";
 		operating-points-v2 = <&csiphy0_opp_table>;
-		refgen-supply = <&refgen>;
 		csi-vdd-1p2-supply = <&vreg_l6b_1p2>;
 		csi-vdd-0p9-supply = <&vreg_l10c_0p88>;
-		regulator-names = "refgen", "csi-vdd-1p2",
+		regulator-names = "csi-vdd-1p2",
 			"csi-vdd-0p9";
 		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
 		rgltr-cntrl-support;
-		rgltr-min-voltage = <0 1200000 880000>;
-		rgltr-max-voltage = <0 1260000 1050000>;
-		rgltr-load-current = <0 54000 96400>;
+		rgltr-min-voltage = <1200000 880000>;
+		rgltr-max-voltage = <1260000 1050000>;
+		rgltr-load-current = <54000 96400>;
 		clocks = <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
 			<&camcc CAM_CC_CSIPHY0_CLK>,
 			<&camcc CAM_CC_CSI0PHYTIMER_CLK_SRC>,
@@ -528,16 +527,15 @@
 		interrupts = <GIC_SPI 478 IRQ_TYPE_EDGE_RISING>;
 		interrupt-names = "csiphy1";
 		operating-points-v2 = <&csiphy1_opp_table>;
-		refgen-supply = <&refgen>;
 		csi-vdd-1p2-supply = <&vreg_l6b_1p2>;
 		csi-vdd-0p9-supply = <&vreg_l10c_0p88>;
-		regulator-names = "refgen", "csi-vdd-1p2",
+		regulator-names = "csi-vdd-1p2",
 			"csi-vdd-0p9";
 		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
 		rgltr-cntrl-support;
-		rgltr-min-voltage = <0 1200000 880000>;
-		rgltr-max-voltage = <0 1260000 1050000>;
-		rgltr-load-current = <0 54000 96400>;
+		rgltr-min-voltage = <1200000 880000>;
+		rgltr-max-voltage = <1260000 1050000>;
+		rgltr-load-current = <54000 96400>;
 		clocks = <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
 			<&camcc CAM_CC_CSIPHY1_CLK>,
 			<&camcc CAM_CC_CSI1PHYTIMER_CLK_SRC>,
@@ -574,17 +572,16 @@
 		reg-cam-base = <0xe4000>;
 		interrupts = <GIC_SPI 479 IRQ_TYPE_EDGE_RISING>;
 		interrupt-names = "csiphy2";
-		refgen-supply = <&refgen>;
 		operating-points-v2 = <&csiphy2_opp_table>;
 		csi-vdd-1p2-supply = <&vreg_l6b_1p2>;
 		csi-vdd-0p9-supply = <&vreg_l10c_0p88>;
-		regulator-names = "refgen", "csi-vdd-1p2",
+		regulator-names = "csi-vdd-1p2",
 			"csi-vdd-0p9";
 		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
 		rgltr-cntrl-support;
-		rgltr-min-voltage = <0 1200000 880000>;
-		rgltr-max-voltage = <0 1260000 1050000>;
-		rgltr-load-current = <0 54000 96400>;
+		rgltr-min-voltage = <1200000 880000>;
+		rgltr-max-voltage = <1260000 1050000>;
+		rgltr-load-current = <54000 96400>;
 		clocks = <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
 			<&camcc CAM_CC_CSIPHY2_CLK>,
 			<&camcc CAM_CC_CSI2PHYTIMER_CLK_SRC>,
@@ -621,17 +618,16 @@
 		reg-cam-base = <0xe6000>;
 		interrupts = <GIC_SPI 448 IRQ_TYPE_EDGE_RISING>;
 		interrupt-names = "csiphy3";
-		refgen-supply = <&refgen>;
 		operating-points-v2 = <&csiphy3_opp_table>;
 		csi-vdd-1p2-supply = <&vreg_l6b_1p2>;
 		csi-vdd-0p9-supply = <&vreg_l10c_0p88>;
-		regulator-names = "refgen", "csi-vdd-1p2",
+		regulator-names = "csi-vdd-1p2",
 			"csi-vdd-0p9";
 		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
 		rgltr-cntrl-support;
-		rgltr-min-voltage = <0 1200000 880000>;
-		rgltr-max-voltage = <0 1260000 1050000>;
-		rgltr-load-current = <0 54000 96400>;
+		rgltr-min-voltage = <1200000 880000>;
+		rgltr-max-voltage = <1260000 1050000>;
+		rgltr-load-current = <54000 96400>;
 		clocks = <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
 			<&camcc CAM_CC_CSIPHY3_CLK>,
 			<&camcc CAM_CC_CSI3PHYTIMER_CLK_SRC>,
@@ -668,17 +664,16 @@
 		reg-cam-base = <0xe8000>;
 		interrupts = <GIC_SPI 122 IRQ_TYPE_EDGE_RISING>;
 		interrupt-names = "csiphy4";
-		refgen-supply = <&refgen>;
 		operating-points-v2 = <&csiphy4_opp_table>;
 		csi-vdd-1p2-supply = <&vreg_l6b_1p2>;
 		csi-vdd-0p9-supply = <&vreg_l10c_0p88>;
-		regulator-names = "refgen", "csi-vdd-1p2",
+		regulator-names = "csi-vdd-1p2",
 			"csi-vdd-0p9";
 		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
 		rgltr-cntrl-support;
-		rgltr-min-voltage = <0 1200000 880000>;
-		rgltr-max-voltage = <0 1260000 1050000>;
-		rgltr-load-current = <0 54000 96400>;
+		rgltr-min-voltage = <1200000 880000>;
+		rgltr-max-voltage = <1260000 1050000>;
+		rgltr-load-current = <54000 96400>;
 		clocks = <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
 			<&camcc CAM_CC_CSIPHY4_CLK>,
 			<&camcc CAM_CC_CSI4PHYTIMER_CLK_SRC>,

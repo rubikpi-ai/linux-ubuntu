@@ -2030,7 +2030,7 @@
 		};
 	};
 
-	qcom,cam-icp {
+	cam_icp_firmware: qcom,cam-icp {
 		compatible = "qcom,cam-icp";
 		compat-hw-name = "qcom,icp",
 			"qcom,ipe0";
@@ -2140,7 +2140,7 @@
 
 	};
 
-	qcom,cam-cpas {
+	cam_cpas: qcom,cam-cpas {
 		cell-index = <0>;
 		compatible = "qcom,cam-cpas";
 		label = "cpas";
@@ -2231,7 +2231,7 @@
 			"rt-cdm3", "icp0", "tpg13", "tpg14", "tpg15";
 
 		status = "ok";
-		enable-secure-qos-update;
+		enable-secure-qos-update = <1>;
 		cpas_opp_table: opp-table {
 			compatible = "operating-points-v2";
 
