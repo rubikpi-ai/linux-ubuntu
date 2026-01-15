@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #include <dt-bindings/msm-camera.h>
 
@@ -127,7 +127,7 @@
 	};
 
 	/*cam0a-ov9282*/
-	qcom,cam-sensor1 {
+	rb8_slot0: qcom,cam-sensor1 {
 		cell-index = <20>;
 		compatible = "qcom,cam-sensor";
 		csiphy-sd-index = <0>;
@@ -435,7 +435,7 @@
 	};
 
 	/*cam1-ov9282*/
-	qcom,cam-sensor21 {
+	rb8_slot1: qcom,cam-sensor21 {
 		cell-index = <21>;
 		compatible = "qcom,cam-sensor";
 		csiphy-sd-index = <1>;
@@ -745,7 +745,7 @@
 	};
 
 	/*cam2-ov9282*/
-	qcom,cam-sensor22 {
+	rb8_slot2: qcom,cam-sensor22 {
 		cell-index = <22>;
 		compatible = "qcom,cam-sensor";
 		csiphy-sd-index = <2>;
@@ -977,7 +977,7 @@
 	};
 
 	/*cam3-ov9282*/
-	qcom,cam-sensor23 {
+	rb8_slot3: qcom,cam-sensor23 {
 		cell-index = <23>;
 		compatible = "qcom,cam-sensor";
 		csiphy-sd-index = <3>;
