@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef __UAPI_LINUX_CAM_REQ_MGR_H
@@ -48,7 +48,7 @@
  */
 #define CAM_REQ_MGR_MAX_HANDLES           64
 #define CAM_REQ_MGR_MAX_HANDLES_V2        256
-#define MAX_LINKS_PER_SESSION             4
+#define MAX_LINKS_PER_SESSION             2
 
 /* Interval for cam_info_rate_limit_custom() */
 #define CAM_RATE_LIMIT_INTERVAL_5SEC 5
@@ -250,6 +250,39 @@ struct cam_req_mgr_sched_request_v2 {
 	__s32 params[5];
 };
 
+/** struct cam_req_mgr_sched_request_v3
+ * @version: Version number
+ * @session_hdl: Input param - Identifier for CSL session
+ * @link_hdl: Input Param -Identifier for link including itself.
+ * @bubble_enable: Input Param - Cam req mgr will do bubble recovery if this
+ * flag is set.
+ * @sync_mode: Type of Sync mode for this request
+ * @additional_timeout: Additional timeout value (in ms) associated with
+ * this request. This value needs to be 0 in cases where long exposure is
+ * not configured for the sensor.The max timeout that will be supported
+ * is 50000 ms
+ * @num_links: Input Param - Num of links for sync
+ * @num_valid_params: Number of valid params
+ * @req_id: Input Param - Request Id from which all requests will be flushed
+ * @param_mask: mask to indicate what the parameters are
+ * @params: parameters passed from user space
+ * @link_hdls: Input Param - Array of link handles to be for sync
+ */
+struct cam_req_mgr_sched_request_v3 {
+	__s32 version;
+	__s32 session_hdl;
+	__s32 link_hdl;
+	__s32 bubble_enable;
+	__s32 sync_mode;
+	__s32 additional_timeout;
+	__s32 num_links;
+	__s32 num_valid_params;
+	__s64 req_id;
+	__s32 param_mask;
+	__s32 params[5];
+	__s32 link_hdls[];
+};
+
 /**
  * struct cam_req_mgr_sync_mode
  * @session_hdl:         Input param - Identifier for CSL session
@@ -325,6 +358,7 @@ struct cam_req_mgr_link_properties {
  */
 #define CAM_LINK_PROPERTY_NONE                      0
 #define CAM_LINK_PROPERTY_SENSOR_STANDBY_AFTER_EOF  BIT(0)
+#define CAM_LINK_PROPERTY_SENSOR_EXTERNAL_RECOVERY  BIT(1)
 
 /**
  * cam_req_mgr specific opcode ids
@@ -350,6 +384,7 @@ struct cam_req_mgr_link_properties {
 #define CAM_REQ_MGR_MAP_BUF_V2                  (CAM_COMMON_OPCODE_MAX + 19)
 #define CAM_REQ_MGR_MEM_CPU_ACCESS_OP           (CAM_COMMON_OPCODE_MAX + 20)
 #define CAM_REQ_MGR_QUERY_CAP                   (CAM_COMMON_OPCODE_MAX + 21)
+#define CAM_REQ_MGR_SCHED_REQ_V3                (CAM_COMMON_OPCODE_MAX + 22)
 
 /* end of cam_req_mgr opcodes */
 
@@ -689,6 +724,9 @@ struct cam_mem_cpu_access_op {
 #define CAM_REQ_MGR_SENSOR_STREAM_OFF_FAILED             BIT(14)
 #define CAM_REQ_MGR_VALID_SHUTTER_DROPPED                BIT(15)
 #define CAM_REQ_MGR_ISP_ERR_HWPD_VIOLATION               BIT(16)
+#define CAM_REQ_MGR_SOF_FREEZE                           BIT(17)
+#define CAM_REQ_MGR_SOF_FREEZE_ERROR_FATAL               BIT(18)
+#define CAM_REQ_MGR_ISP_FATAL_ERROR                      BIT(19)
 
 /**
  * struct cam_req_mgr_error_msg

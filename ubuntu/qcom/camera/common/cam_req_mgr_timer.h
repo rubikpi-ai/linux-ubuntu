@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef _CAM_REQ_MGR_TIMER_H_
@@ -12,12 +13,24 @@
 #include "cam_req_mgr_core_defs.h"
 
 /**
+ * struct cam_req_mgr_extend_timer
+ * @is_extended   : flag to extend SOF timer
+ * @expiry        : time to extend SOF timer
+ */
+struct cam_req_mgr_extend_timer {
+	bool     is_extended;
+	uint32_t expiry;
+};
+
+/**
  * struct cam_req_mgr_timer
- * @expires      : timeout value for timer
- * @sys_timer    : system timer variable
- * @parent       : priv data - link pointer
- * @timer_cb     : callback func which will be called when timeout expires
- * @pause_timer  : flag to pause SOF timer
+ * @expires        : timeout value for timer
+ * @sys_timer      : system timer variable
+ * @parent         : priv data - link pointer
+ * @timer_cb       : callback func which will be called when timeout expires
+ * @pause_timer    : flag to pause SOF timer
+ * @extend_timer   : flag to extend SOF timer
+ * @extend_expires : time to extend SOF timer
  */
 struct cam_req_mgr_timer {
 	int32_t            expires;
@@ -25,6 +38,7 @@ struct cam_req_mgr_timer {
 	void               *parent;
 	void               (*timer_cb)(struct timer_list *timer_data);
 	bool                pause_timer;
+	struct cam_req_mgr_extend_timer extend_timer;
 };
 
 /**

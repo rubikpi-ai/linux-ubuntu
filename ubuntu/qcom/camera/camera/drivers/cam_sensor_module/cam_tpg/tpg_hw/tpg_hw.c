@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
  * Copyright (c) 2021-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include "tpg_hw.h"
@@ -1452,5 +1453,21 @@ int tpg_hw_add_stream_v3(
 	rc = assign_vc_slot_v3(hw, stream->stream.vc, req, stream);
 	mutex_unlock(&hw->mutex);
 	return rc;
+}
+
+int tpg_hw_debugfs_cleanup(struct tpg_hw *hw)
+{
+	if (!hw) {
+		CAM_ERR(CAM_TPG, "Invalid hw pointer");
+		return -EINVAL;
+	}
+
+	if (hw->debugfs_root) {
+		CAM_INFO(CAM_TPG, "Removing debugfs directory for tpg%d", hw->hw_idx);
+		debugfs_remove_recursive(hw->debugfs_root);
+		hw->debugfs_root = NULL;
+	}
+
+	return 0;
 }
 

@@ -42,10 +42,7 @@ extern struct i2c_driver cam_flash_i2c_driver;
 extern struct i2c_driver cam_ois_i2c_driver;
 extern struct i2c_driver cam_eeprom_i2c_driver;
 extern struct i2c_driver cam_sensor_i2c_driver;
-#if IS_REACHABLE(CONFIG_LEDS_QPNP_FLASH_V2) || \
-	IS_REACHABLE(CONFIG_LEDS_QTI_FLASH)
 extern struct platform_driver cam_flash_platform_driver;
-#endif
 #endif
 #ifdef CONFIG_SPECTRA_ICP
 extern struct platform_driver cam_icp_v1_driver;
@@ -114,10 +111,7 @@ static struct platform_driver *const cam_component_platform_drivers[] = {
 	&cam_eeprom_platform_driver,
 	&cam_ois_platform_driver,
 	&cam_tpg_driver,
-#if IS_REACHABLE(CONFIG_LEDS_QPNP_FLASH_V2) || \
-	IS_REACHABLE(CONFIG_LEDS_QTI_FLASH)
 	&cam_flash_platform_driver,
-#endif
 #endif
 #ifdef CONFIG_SPECTRA_ICP
 	&cam_icp_v1_driver,

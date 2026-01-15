@@ -5560,7 +5560,7 @@ int cam_ife_csid_ver2_deinit_hw(void *hw_priv,
 		return -EINVAL;
 	}
 
-	if (res->res_state == CAM_ISP_RESOURCE_STATE_RESERVED) {
+	if (res->res_state <= CAM_ISP_RESOURCE_STATE_RESERVED) {
 		CAM_DBG(CAM_ISP, "CSID:%u Res:%d already in De-init state",
 			csid_hw->hw_intf->hw_idx,
 			res->res_id);

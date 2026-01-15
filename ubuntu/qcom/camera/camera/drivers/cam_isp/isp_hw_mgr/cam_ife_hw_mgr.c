@@ -8109,7 +8109,7 @@ skip_bw_clk_update:
 					c_ctx->curr_num_exp = hw_update_data->num_exp;
 				}
 				hw_update_data->mup_en = false;
-
+				c_ctx->flags.init_cfg_done = true;
 				/* Try for INIT packet reg dump by default - no debugfs set */
 				if (cfg->init_packet && !g_ife_hw_mgr.debug_cfg.per_req_reg_dump)
 					cam_ife_mgr_handle_reg_dump(hw_mgr_ctx,
@@ -8490,6 +8490,7 @@ reset_scratch_buffers:
 end:
 	c_ctx->flags.dump_on_error = false;
 	c_ctx->flags.dump_on_flush = false;
+	c_ctx->flags.init_cfg_done = false;
 	return rc;
 }
 

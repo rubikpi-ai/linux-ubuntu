@@ -770,6 +770,13 @@ static int cam_cci_component_bind(struct device *dev,
 		CAM_WARN(CAM_CCI, "debugfs creation failed");
 		rc = 0;
 	}
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	if (cam_sysfs_add_cci(new_cci_dev)) {
+		CAM_DBG(CAM_CCI, "CCI%d sysfs creation success", soc_info->index);
+	} else {
+		CAM_DBG(CAM_CCI, "CCI%d sysfs creation failed", soc_info->index);
+	}
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 	head = 0;
 	tail = 0;
 	CAM_DBG(CAM_CCI, "Component bound successfully");
@@ -809,11 +816,13 @@ static void cam_cci_component_unbind(struct device *dev,
 
 	cam_cpas_unregister_client(cci_dev->cpas_handle);
 	debugfs_root = NULL;
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	cam_sysfs_remove_cci(cci_dev);
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 	cam_cci_soc_remove(pdev, cci_dev);
 	rc = cam_unregister_subdev(&(cci_dev->v4l2_dev_str));
 	if (rc < 0)
 		CAM_ERR(CAM_CCI, "Fail with cam_unregister_subdev. rc:%d", rc);
-
 	devm_kfree(&pdev->dev, cci_dev);
 }
 
@@ -865,6 +874,9 @@ int cam_cci_init_module(void)
 
 void cam_cci_exit_module(void)
 {
+#ifdef CONFIG_SPECTRA_SENSOR_SYSFS_UTIL
+	cam_sysfs_exit();
+#endif /*CONFIG_SPECTRA_SENSOR_SYSFS_UTIL*/
 	platform_driver_unregister(&cci_driver);
 }
 

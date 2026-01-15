@@ -208,6 +208,7 @@ struct cam_ife_hw_mgr_ctx_scratch_buf_info {
  * @rdi_pd_context:      Flag to specify the context has
  *                       only rdi and PD resource without PIX port.
  * @per_port_en:         Indicates if per port feature is enabled or not
+ * @init_cfg_done:       indicate whether init configuration for hw is done or not.
 
  */
 struct cam_ife_hw_mgr_ctx_flags {
@@ -231,6 +232,7 @@ struct cam_ife_hw_mgr_ctx_flags {
 	bool   sys_cache_usage[CAM_LLCC_MAX];
 	bool   rdi_pd_context;
 	bool   per_port_en;
+	bool   init_cfg_done;
 };
 
 /**

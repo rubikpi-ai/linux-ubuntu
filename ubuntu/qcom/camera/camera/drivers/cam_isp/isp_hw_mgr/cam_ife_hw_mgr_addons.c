@@ -183,8 +183,15 @@ int cam_ife_mgr_check_start_processing(void *hw_mgr_priv,
 		list_for_each_entry_safe(c_elem, c_elem_temp,
 				&ife_hw_mgr->input_queue.list, list) {
 			is_init_pkt =
-				((c_elem->prepare.packet->header.op_code + 1) &
-					0xF) == CAM_ISP_PACKET_INIT_DEV;
+				(((c_elem->prepare.packet->header.op_code + 1) & 0xF) ==
+					CAM_ISP_PACKET_INIT_DEV);
+			if ((c_ctx->flags.init_cfg_done && is_init_pkt) ||
+				(!(c_ctx->flags.init_cfg_done) && !(is_init_pkt))) {
+				CAM_DBG(CAM_ISP, "#REJECT#: %s ctx id %d hw_id %d",
+				c_ctx->flags.init_cfg_done ? "Init already done" : "Init not done",
+				c_ctx->ctx_index, c_ctx->acquired_hw_id);
+				continue;
+			}
 			if (c_ctx->waiting_start &&
 				c_elem->ctx_idx != c_ctx->start_ctx_idx) {
 				CAM_DBG(CAM_ISP,

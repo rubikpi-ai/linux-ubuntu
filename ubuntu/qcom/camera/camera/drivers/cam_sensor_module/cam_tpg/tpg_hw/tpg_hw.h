@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
  * Copyright (c) 2021-2024, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef __TPG_HW_H__
@@ -204,6 +205,8 @@ struct tpg_hw {
 	uint32_t                     active_request_q_depth;
 	uint32_t                     waiting_request_q_depth;
 	uint32_t                     settings_update;
+	/* debugfs root directory */
+	struct dentry                *debugfs_root;
 };
 
 /**
@@ -532,5 +535,14 @@ int tpg_hw_request_set_opcode(
  * @return : 0 on success
  */
 int tpg_hw_copy_settings_config(struct tpg_hw *hw, struct tpg_settings_config_t *settings);
+
+/**
+ * @brief : cleanup debugfs entries for tpg hw
+ *
+ * @param hw: tpg hw instance
+ *
+ * @return : 0 on success
+ */
+int tpg_hw_debugfs_cleanup(struct tpg_hw *hw);
 
 #endif

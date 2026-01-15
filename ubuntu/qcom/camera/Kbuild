@@ -496,6 +496,9 @@ camera_$(CAMERA_ARCH)-$(CONFIG_SPECTRA_TFE) += \
 	camera/drivers/cam_isp/isp_hw_mgr/isp_hw/tfe_csid_hw/cam_tfe_csid.o \
 	camera/drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.o
 
+camera_$(CAMERA_ARCH)-$(CONFIG_SPECTRA_SENSOR_SYSFS_UTIL) += \
+	camera/drivers/cam_sensor_module/cam_cci/cam_cci_sysfs_util.o
+
 camera_$(CAMERA_ARCH)-y += camera/drivers/camera_main.o
 
 obj-m += camera_$(CAMERA_ARCH).o

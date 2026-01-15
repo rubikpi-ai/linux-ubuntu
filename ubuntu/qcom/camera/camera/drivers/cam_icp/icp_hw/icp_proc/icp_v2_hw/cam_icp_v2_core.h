@@ -39,6 +39,7 @@ struct cam_icp_v2_core_info {
 		uintptr_t fw_kva_addr;
 		uint64_t fw_buf_len;
 	} fw_params;
+	struct camera_firmware *fw;
 	bool cpas_start;
 	bool use_sec_pil;
 	bool is_irq_test;
