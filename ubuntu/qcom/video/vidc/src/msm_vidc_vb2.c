@@ -786,6 +786,22 @@ exit:
 	return rc;
 }
 
+static void msm_vidc_helper_buffers_done(struct msm_vidc_inst *inst, enum msm_vidc_buffer_type buf_type)
+{
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+
+	buffers = msm_vidc_get_buffers(inst, buf_type, __func__);
+	if (!buffers)
+		return;
+
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (!(buf->attr & MSM_VIDC_ATTR_DEFERRED))
+			continue;
+		msm_vidc_vb2_buffer_done(inst, buf);
+	}
+}
+
 int msm_vidc_start_streaming(struct msm_vidc_inst *inst, struct vb2_queue *q)
 {
 	enum msm_vidc_buffer_type buf_type;
@@ -810,26 +826,26 @@ int msm_vidc_start_streaming(struct msm_vidc_inst *inst, struct vb2_queue *q)
 		inst->once_per_session_set = true;
 		rc = msm_vidc_session_set_codec(inst);
 		if (rc)
-			return rc;
+			goto error;
 
 		rc = msm_vidc_session_set_secure_mode(inst);
 		if (rc)
-			return rc;
+			goto error;
 
 		if (is_encode_session(inst)) {
 			rc = msm_vidc_alloc_and_queue_session_internal_buffers(inst,
 				MSM_VIDC_BUF_ARP);
 			if (rc)
-				return rc;
+				goto error;
 		} else if (is_decode_session(inst)) {
 			rc = msm_vidc_session_set_default_header(inst);
 			if (rc)
-				return rc;
+				goto error;
 
 			rc = msm_vidc_alloc_and_queue_session_internal_buffers(inst,
 				MSM_VIDC_BUF_PERSIST);
 			if (rc)
-				return rc;
+				goto error;
 		}
 	}
 
@@ -851,7 +867,7 @@ int msm_vidc_start_streaming(struct msm_vidc_inst *inst, struct vb2_queue *q)
 			rc = msm_venc_streamon_output(inst);
 	}
 	if (rc)
-		return rc;
+		goto error;
 
 	/* print final buffer counts & size details */
 	msm_vidc_print_buffer_info(inst);
@@ -861,12 +877,12 @@ int msm_vidc_start_streaming(struct msm_vidc_inst *inst, struct vb2_queue *q)
 
 	buf_type = v4l2_type_to_driver(q->type, __func__);
 	if (!buf_type)
-		return -EINVAL;
+		goto error;
 
 	/* queue pending buffers */
 	rc = msm_vidc_queue_deferred_buffers(inst, buf_type);
 	if (rc)
-		return rc;
+		goto error;
 
 	/* initialize statistics timer(one time) */
 	if (!inst->stats.time_ms)
@@ -875,16 +891,21 @@ int msm_vidc_start_streaming(struct msm_vidc_inst *inst, struct vb2_queue *q)
 	/* schedule to print buffer statistics */
 	rc = schedule_stats_work(inst);
 	if (rc)
-		return rc;
+		goto error;
 
 	if ((q->type == INPUT_MPLANE && inst->bufq[OUTPUT_PORT].vb2q->streaming) ||
 		(q->type == OUTPUT_MPLANE && inst->bufq[INPUT_PORT].vb2q->streaming)) {
 		rc = msm_vidc_get_properties(inst);
 		if (rc)
-			return rc;
+			goto error;
 	}
 
 	i_vpr_h(inst, "Streamon: %s successful\n", v4l2_type_name(q->type));
+	return rc;
+
+error:
+	buf_type = v4l2_type_to_driver(q->type, __func__);
+	msm_vidc_helper_buffers_done(inst, buf_type);
 	return rc;
 }
 
