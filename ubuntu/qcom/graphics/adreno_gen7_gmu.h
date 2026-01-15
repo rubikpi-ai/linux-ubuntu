@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #ifndef __ADRENO_GEN7_GMU_H
 #define __ADRENO_GEN7_GMU_H
@@ -92,6 +92,8 @@ struct gen7_gmu_device {
 	void __iomem *rscc_virt;
 	/** @domain: IOMMU domain for the kernel context */
 	struct iommu_domain *domain;
+	/** @group: IOMMU group for the kernel context */
+	struct iommu_group *group;
 	/** @log_stream_enable: GMU log streaming enable. Disabled by default */
 	bool log_stream_enable;
 	/** @log_group_mask: Allows overriding default GMU log group mask */

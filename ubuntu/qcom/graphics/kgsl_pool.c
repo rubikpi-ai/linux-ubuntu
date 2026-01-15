@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <asm/cacheflush.h>
 #include <linux/debugfs.h>
 #include <linux/highmem.h>
 #include <linux/mempool.h>
+#include <linux/mm.h>
 #include <linux/of.h>
 #include <linux/scatterlist.h>
 #include <linux/version.h>
@@ -17,6 +18,7 @@
 #include "kgsl_pool.h"
 #include "kgsl_sharedmem.h"
 #include "kgsl_trace.h"
+#include "kgsl_util.h"
 
 #ifdef CONFIG_QCOM_KGSL_SORT_POOL
 
@@ -561,7 +563,7 @@ done:
 	kgsl_zero_page(page, order, dev);
 
 	for (j = 0; j < (*page_size >> PAGE_SHIFT); j++) {
-		p = nth_page(page, j);
+		p = kgsl_nth_page(page, j);
 		pages[pcount] = p;
 		pcount++;
 	}

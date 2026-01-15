@@ -5,6 +5,7 @@
  */
 #include <linux/component.h>
 #include <linux/delay.h>
+#include <linux/devfreq.h>
 #include <linux/firmware.h>
 #include <linux/input.h>
 #include <linux/interconnect.h>
@@ -78,6 +79,28 @@ static u32 get_ucode_version(const u32 *data)
 	return  version | ((data[3] & 0xfff000) >> 12);
 }
 
+int adreno_request_firmware(const struct firmware **fw, const char *name,
+		struct device *device, bool log_error)
+{
+	int ret;
+	char *newname;
+
+	if (!firmware_request_nowarn(fw, name, device))
+		return 0;
+
+	newname = kasprintf(GFP_KERNEL, "qcom/%s", name);
+	if (!newname)
+		return -ENOMEM;
+
+	ret = firmware_request_nowarn(fw, newname, device);
+	if (ret && log_error)
+		pr_err("Firmware request for %s failed with error %d\n",
+				name, ret);
+	kfree(newname);
+
+	return ret;
+}
+
 int adreno_get_firmware(struct adreno_device *adreno_dev,
 		const char *fwfile, struct adreno_firmware *firmware)
 {
@@ -88,13 +111,10 @@ int adreno_get_firmware(struct adreno_device *adreno_dev,
 	if (!IS_ERR_OR_NULL(firmware->memdesc))
 		return 0;
 
-	ret = request_firmware(&fw, fwfile, &device->pdev->dev);
+	ret = adreno_request_firmware(&fw, fwfile, &device->pdev->dev, true);
 
-	if (ret) {
-		dev_err(device->dev, "request_firmware(%s) failed: %d\n",
-				fwfile, ret);
+	if (ret)
 		return ret;
-	}
 
 	firmware->memdesc = kgsl_allocate_global(device, fw->size - 4, 0,
 				KGSL_MEMFLAGS_GPUREADONLY, KGSL_MEMDESC_UCODE,
@@ -136,6 +156,10 @@ int adreno_zap_shader_load(struct adreno_device *adreno_dev,
 		return 0;
 
 	np = of_get_child_by_name(dev->of_node, "zap-shader");
+	if (!of_device_is_available(np)) {
+		of_node_put(np);
+		return 0;
+	}
 
 	/*
 	 * While loading the zap firmware, follow the priority order below to determine
@@ -146,8 +170,7 @@ int adreno_zap_shader_load(struct adreno_device *adreno_dev,
 	 * 3. If both are missing, skip zap fw loading and use direct register write
 	 * to switch secure state.
 	 */
-	if (np)
-		of_property_read_string(np, "firmware-name", &firmware_name);
+	of_property_read_string(np, "firmware-name", &firmware_name);
 	firmware_name = firmware_name ?: name;
 
 	if (!firmware_name) {
@@ -721,10 +744,37 @@ adreno_identify_gpu(struct platform_device *pdev, u32 *chipid)
 static const struct of_device_id adreno_match_table[] = {
 	{ .compatible = "qcom,kgsl-3d0", .data = &device_3d0 },
 	{ .compatible = "qcom,kgsl", .data = &device_3d0 },
+	{ .compatible = "qcom,adreno", .data = &device_3d0 },
 	{ },
 };
 
 MODULE_DEVICE_TABLE(of, adreno_match_table);
+
+/* Read the fuse through the new and fancy nvmem method */
+static int adreno_read_speed_bin(struct platform_device *pdev, u32 *speedbin)
+{
+	struct nvmem_cell *cell = nvmem_cell_get(&pdev->dev, "speed_bin");
+	int ret = PTR_ERR_OR_ZERO(cell);
+	void *buf;
+	int val = 0;
+	size_t len;
+
+	if (ret)
+		return ret;
+
+	buf = nvmem_cell_read(cell, &len);
+	nvmem_cell_put(cell);
+
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
+
+	memcpy(&val, buf, min(len, sizeof(val)));
+	kfree(buf);
+
+	*speedbin = val;
+
+	return 0;
+}
 
 static u32 fuse_to_supp_hw(const struct adreno_gpu_core *gpucore, u32 fuse)
 {
@@ -740,28 +790,45 @@ static u32 fuse_to_supp_hw(const struct adreno_gpu_core *gpucore, u32 fuse)
 	return UINT_MAX;
 }
 
-static int adreno_set_support_hw(struct kgsl_device *device, int speedbin)
+static int adreno_setup_speedbin(struct kgsl_device *device)
 {
-	struct device *dev = &device->pdev->dev;
+	struct platform_device *pdev = device->pdev;
+	struct device_node *node;
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
 	const struct adreno_gpu_core *gpucore = adreno_dev->gpucore;
-	u32 supp_hw;
+	u32 supp_hw, speedbin;
 	int ret;
 
-	supp_hw = fuse_to_supp_hw(gpucore, speedbin);
+	ret = adreno_read_speed_bin(pdev, &speedbin);
+	/*
+	 * -ENOENT means that the platform doesn't support speedbin which is
+	 * fine
+	 */
+	if (ret == -ENOENT) {
+		device->speed_bin = 0;
+		return 0;
+	} else if (ret)
+		return ret;
+
+	device->speed_bin = speedbin;
+
+	node = of_parse_phandle(pdev->dev.of_node, "operating-points-v2", 0);
+	if (!node)
+		return 0;
+
+	supp_hw = fuse_to_supp_hw(gpucore, device->speed_bin);
 
 	if (supp_hw == UINT_MAX) {
-		dev_err(dev,
+		dev_err(&pdev->dev,
 			"missing support for speed-bin: %u. Some OPPs may not be supported by hardware\n",
-			speedbin);
+			device->speed_bin);
 		supp_hw = BIT(0); /* Default */
 	}
 
-	ret = devm_pm_opp_set_supported_hw(dev, &supp_hw, 1);
-	if (ret)
-		return ret;
+	ret = devm_pm_opp_set_supported_hw(&pdev->dev, &supp_hw, 1);
+	of_node_put(node);
 
-	return 0;
+	return ret;
 }
 
 /* Dynamically build the OPP table for the GPU device */
@@ -993,7 +1060,6 @@ static int adreno_parse_opp_node(struct kgsl_device *device,
 	int ret;
 
 	level->voltage_level = dev_pm_opp_get_level(opp);
-	dev_pm_opp_put(opp);
 
 	level->cx_level = 0xffffffff;
 	of_property_read_u32(dev_pm_opp_get_of_node(opp), "qcom,opp-acd-level", &level->acd_level);
@@ -1241,34 +1307,6 @@ static void adreno_isense_probe(struct kgsl_device *device)
 		dev_warn(device->dev, "isense ioremap failed\n");
 }
 
-/* Read the fuse through the new and fancy nvmem method */
-static int adreno_read_speed_bin(struct platform_device *pdev)
-{
-	struct nvmem_cell *cell = nvmem_cell_get(&pdev->dev, "speed_bin");
-	int ret = PTR_ERR_OR_ZERO(cell);
-	void *buf;
-	int val = 0;
-	size_t len;
-
-	if (ret) {
-		if (ret == -ENOENT)
-			return 0;
-
-		return ret;
-	}
-
-	buf = nvmem_cell_read(cell, &len);
-	nvmem_cell_put(cell);
-
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
-
-	memcpy(&val, buf, min(len, sizeof(val)));
-	kfree(buf);
-
-	return val;
-}
-
 static int adreno_read_gpu_model_fuse(struct platform_device *pdev)
 {
 	struct nvmem_cell *cell = nvmem_cell_get(&pdev->dev, "gpu_model");
@@ -1494,10 +1532,15 @@ static void adreno_setup_device(struct adreno_device *adreno_dev)
 }
 
 static const struct of_device_id adreno_component_match[] = {
+	{ .compatible = "qcom,adreno-gmu" },
+	{ .compatible = "qcom,adreno-rgmu" },
+	{},
+};
+
+static const struct of_device_id adreno_component_match_legacy[] = {
 	{ .compatible = "qcom,gen7-gmu" },
 	{ .compatible = "qcom,gpu-gmu" },
 	{ .compatible = "qcom,gpu-rgmu" },
-	/* Legacy components for kgsl-smmu */
 	{ .compatible = "qcom,kgsl-smmu-v2" },
 	{ .compatible = "qcom,smmu-kgsl-cb" },
 	{},
@@ -1542,7 +1585,6 @@ int adreno_device_probe(struct platform_device *pdev,
 {
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
 	struct device *dev = &pdev->dev;
-	struct device_node *node;
 	unsigned int priv = 0;
 	int status;
 	u32 size;
@@ -1558,18 +1600,9 @@ int adreno_device_probe(struct platform_device *pdev,
 
 	adreno_update_soc_hw_revision_quirks(adreno_dev, pdev);
 
-	status = adreno_read_speed_bin(pdev);
-	if (status < 0)
+	status = adreno_setup_speedbin(device);
+	if (status)
 		goto err;
-
-	device->speed_bin = status;
-
-	node = of_parse_phandle(pdev->dev.of_node, "operating-points-v2", 0);
-	if (node) {
-		status = adreno_set_support_hw(device, device->speed_bin);
-		if (status)
-			goto err;
-	}
 
 	status = kgsl_bus_init(device, pdev);
 	if (status)
@@ -2291,9 +2324,9 @@ static int _adreno_start(struct adreno_device *adreno_dev)
 
 	/*
 	 * There is a possible deadlock scenario during kgsl firmware reading
-	 * (request_firmware) and devfreq update calls. During first boot, kgsl
-	 * device mutex is held and then request_firmware is called for reading
-	 * firmware. request_firmware internally takes dev_pm_qos_mtx lock.
+	 * (firmware_request_nowarn) and devfreq update calls. During first boot, kgsl
+	 * device mutex is held and then firmware_request_nowarn is called for reading
+	 * firmware. firmware_request_nowarn internally takes dev_pm_qos_mtx lock.
 	 * Whereas in case of devfreq update calls triggered by thermal/bcl or
 	 * devfreq sysfs, it first takes the same dev_pm_qos_mtx lock and then
 	 * tries to take kgsl device mutex as part of get_dev_status/target
@@ -3799,7 +3832,7 @@ static void _release_of(struct device *dev, void *data)
 }
 
 static void adreno_add_components(struct device *dev,
-		struct component_match **match)
+		struct component_match **match, const struct of_device_id *matches)
 {
 	struct device_node *node;
 
@@ -3808,7 +3841,7 @@ static void adreno_add_components(struct device *dev,
 	 * Master bind (adreno_bind) will be called only once all added
 	 * components are available.
 	 */
-	for_each_matching_node(node, adreno_component_match) {
+	for_each_matching_node(node, matches) {
 		if (!of_device_is_available(node))
 			continue;
 
@@ -3819,8 +3852,23 @@ static void adreno_add_components(struct device *dev,
 static int adreno_probe(struct platform_device *pdev)
 {
 	struct component_match *match = NULL;
+	const struct of_device_id *matches = adreno_component_match_legacy;
 
-	adreno_add_components(&pdev->dev, &match);
+	/*
+	 * Let us say there are two devices. One with "qcom,adreno" compatible
+	 * and one with "qcom,kgsl-3d0" or "qcom,kgsl" compatible. In this case
+	 * probe only the device with legacy compatible strings and return
+	 * error for the device with "qcom,adreno". Also choose the match table
+	 * accordingly.
+	 */
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,adreno")) {
+		if (kgsl_is_compatible_node_available("qcom,kgsl") ||
+				kgsl_is_compatible_node_available("qcom,kgsl-3d0"))
+			return -ENODEV;
+		matches = adreno_component_match;
+	}
+
+	adreno_add_components(&pdev->dev, &match, matches);
 
 	if (!match)
 		return -ENODEV;
@@ -3998,6 +4046,14 @@ err:
 	return status;
 }
 
+static int adreno_tz_governor_reinit(struct devfreq *devfreq, const char *governor)
+{
+	if (governor && !strcmp(governor, "msm-adreno-tz"))
+		return msm_adreno_tz_reinit(devfreq);
+
+	return 0;
+}
+
 static int adreno_hibernation_resume(struct device *dev)
 {
 	struct kgsl_device *device = dev_get_drvdata(dev);
@@ -4027,7 +4083,7 @@ static int adreno_hibernation_resume(struct device *dev)
 
 	gmu_core_dev_force_first_boot(device);
 
-	msm_adreno_tz_reinit(pwrscale->devfreqptr);
+	adreno_tz_governor_reinit(pwrscale->devfreqptr, CONFIG_QCOM_ADRENO_DEFAULT_GOVERNOR);
 
 	ops->pm_resume(adreno_dev);
 

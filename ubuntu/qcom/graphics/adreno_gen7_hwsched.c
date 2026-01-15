@@ -1078,9 +1078,9 @@ static int gen7_hwsched_first_boot(struct adreno_device *adreno_dev)
 
 	/*
 	 * There is a possible deadlock scenario during kgsl firmware reading
-	 * (request_firmware) and devfreq update calls. During first boot, kgsl
-	 * device mutex is held and then request_firmware is called for reading
-	 * firmware. request_firmware internally takes dev_pm_qos_mtx lock.
+	 * (firmware_request_nowarn) and devfreq update calls. During first boot, kgsl
+	 * device mutex is held and then firmware_request_nowarn is called for reading
+	 * firmware. firmware_request_nowarn internally takes dev_pm_qos_mtx lock.
 	 * Whereas in case of devfreq update calls triggered by thermal/bcl or
 	 * devfreq sysfs, it first takes the same dev_pm_qos_mtx lock and then
 	 * tries to take kgsl device mutex as part of get_dev_status/target

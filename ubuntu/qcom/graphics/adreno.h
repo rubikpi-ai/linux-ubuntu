@@ -6,6 +6,7 @@
 #ifndef __ADRENO_H
 #define __ADRENO_H
 
+#include <linux/firmware.h>
 #include <linux/iopoll.h>
 #include <linux/of.h>
 #include "adreno_coresight.h"
@@ -1777,6 +1778,21 @@ static inline u32 adreno_get_level(struct kgsl_context *context)
 	return min_t(u32, level, KGSL_PRIORITY_MAX_RB_LEVELS - 1);
 }
 
+/**
+ * adreno_request_firmware - Helper function for requesting firmware
+ * @fw: Pointer to firmware image
+ * @name: Name of firmware file
+ * @device: Device for which firmware is being loaded
+ * @log_error: If true, logs an error message on failure
+ *
+ * Request for firmware with the name passed. If firmware is not
+ * available at /lib/firmware/, try /lib/firmware/qcom path by
+ * adding qcom/ prefix to the firmware name.
+ *
+ * Return: 0 on success or negative on failure
+ */
+int adreno_request_firmware(const struct firmware **fw,
+		const char *name, struct device *device, bool log_error);
 
 /**
  * adreno_get_firwmare - Load firmware into a adreno_firmware struct

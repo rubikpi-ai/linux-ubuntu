@@ -582,7 +582,7 @@ static size_t _iommu_map_page_to_range(struct iommu_domain *domain,
 	return mapped;
 }
 
-static size_t _iommu_map_sg(struct iommu_domain *domain, u64 gpuaddr,
+static ssize_t _iommu_map_sg(struct iommu_domain *domain, u64 gpuaddr,
 		struct sg_table *sgt, int prot)
 {
 	/* Sign extend TTBR1 addresses all the way to avoid warning */
@@ -597,7 +597,8 @@ _kgsl_iommu_map(struct kgsl_mmu *mmu, struct iommu_domain *domain,
 		struct kgsl_memdesc *memdesc)
 {
 	int prot = _iommu_get_protection_flags(mmu, memdesc);
-	size_t mapped, padding;
+	ssize_t mapped;
+	size_t padding;
 	int ret = 0;
 
 	/*
@@ -620,8 +621,9 @@ _kgsl_iommu_map(struct kgsl_mmu *mmu, struct iommu_domain *domain,
 		sg_free_table(&sgt);
 	}
 
-	if (!mapped)
-		return -ENOMEM;
+	/* Check for errors or no pages mapped */
+	if (mapped <= 0)
+		return mapped ? mapped : -ENOMEM;
 
 	padding = kgsl_memdesc_footprint(memdesc) - mapped;
 
@@ -1351,13 +1353,13 @@ static void _enable_gpuhtw_llc(struct kgsl_mmu *mmu, struct iommu_domain *domain
 		iommu_set_pgtable_quirks(domain, IO_PGTABLE_QUIRK_ARM_OUTER_WBWA);
 }
 
-#if (KERNEL_VERSION(6, 13, 0) <= LINUX_VERSION_CODE)
-int _kgsl_set_smmu_aperture(u32 num_context_bank)
+#if (KERNEL_VERSION(6, 13, 0) <= LINUX_VERSION_CODE) || !defined(CONFIG_QCOM_SCM_ADDON)
+static int _kgsl_set_smmu_aperture(u32 num_context_bank)
 {
 	return qcom_scm_set_gpu_smmu_aperture(num_context_bank);
 }
 #else
-int _kgsl_set_smmu_aperture(u32 num_context_bank)
+static int _kgsl_set_smmu_aperture(u32 num_context_bank)
 {
 	return qcom_scm_kgsl_set_smmu_aperture(num_context_bank);
 }
@@ -1393,10 +1395,6 @@ static int set_smmu_lpac_aperture(struct kgsl_device *device,
 	ret = qcom_scm_kgsl_set_smmu_lpac_aperture(context->cb_num);
 	if (ret == -EBUSY)
 		ret = qcom_scm_kgsl_set_smmu_lpac_aperture(context->cb_num);
-
-	if (ret)
-		dev_err(&device->pdev->dev, "Unable to set the LPAC SMMU aperture: %d. The aperture needs to be set to use per-process pagetables\n",
-			ret);
 
 	return ret;
 }
@@ -1608,7 +1606,7 @@ static void kgsl_iommu_detach_context(struct kgsl_iommu_context *context)
 	if (!context->domain)
 		return;
 
-	iommu_detach_device(context->domain, &context->pdev->dev);
+	kgsl_detach_iommu_group(context->domain, context->group);
 	iommu_domain_free(context->domain);
 
 	context->domain = NULL;
@@ -2405,7 +2403,8 @@ static int kgsl_iommu_setup_context_common(struct kgsl_mmu *mmu,
 
 	_enable_gpuhtw_llc(mmu, context->domain);
 
-	ret = iommu_attach_device(context->domain, &context->pdev->dev);
+	ret = kgsl_attach_iommu_group(&context->pdev->dev, context->domain,
+					&context->group);
 
 	if (restore_drvdata)
 		dev_set_drvdata(&pdev->dev, kgsl_drvdata);
@@ -2426,7 +2425,7 @@ static int kgsl_iommu_setup_context_common(struct kgsl_mmu *mmu,
 	dev_err(&device->pdev->dev, "Couldn't get the context bank for %s: %d\n",
 		context->name, context->cb_num);
 
-	iommu_detach_device(context->domain, &context->pdev->dev);
+	kgsl_detach_iommu_group(context->domain, context->group);
 	iommu_domain_free(context->domain);
 	context->domain = NULL;
 
@@ -2515,6 +2514,8 @@ static int iommu_probe_user_context(struct kgsl_device *device,
 	ret = set_smmu_lpac_aperture(device, &iommu->lpac_context);
 	/* LPAC is optional, ignore setup failures in absence of LPAC feature */
 	if ((ret < 0) && ADRENO_FEATURE(adreno_dev, ADRENO_LPAC)) {
+		dev_err(&device->pdev->dev, "Unable to set the LPAC SMMU aperture: %d. The aperture needs to be set to use per-process pagetables\n",
+			ret);
 		kgsl_iommu_detach_context(&iommu->lpac_context);
 		goto err;
 	}
@@ -2544,9 +2545,9 @@ static int iommu_probe_secure_context(struct kgsl_device *device,
 		return -EPERM;
 
 	node = of_find_node_by_name(parent, "gfx3d_secure");
-	if (!node) {
+	if (!of_device_is_available(node)) {
 		ret = -ENOENT;
-		goto err;
+		goto err_node_put;
 	}
 
 	pdev = of_find_device_by_node(node);
@@ -2581,7 +2582,8 @@ static int iommu_probe_secure_context(struct kgsl_device *device,
 
 	_enable_gpuhtw_llc(mmu, context->domain);
 
-	ret = iommu_attach_device(context->domain, &context->pdev->dev);
+	ret = kgsl_attach_iommu_group(&context->pdev->dev, context->domain,
+					&context->group);
 	if (ret)
 		goto err_domain_free;
 
@@ -2592,7 +2594,7 @@ static int iommu_probe_secure_context(struct kgsl_device *device,
 
 	if (context->cb_num < 0) {
 		ret = context->cb_num;
-		goto err_detach_device;
+		goto err_detach_group;
 	}
 
 	mmu->securepagetable = kgsl_iommu_secure_pagetable(mmu);
@@ -2600,8 +2602,8 @@ static int iommu_probe_secure_context(struct kgsl_device *device,
 	if (!IS_ERR(mmu->securepagetable))
 		return 0;
 
-err_detach_device:
-	iommu_detach_device(context->domain, &context->pdev->dev);
+err_detach_group:
+	kgsl_detach_iommu_group(context->domain, context->group);
 err_domain_free:
 	iommu_domain_free(context->domain);
 	context->domain = NULL;
@@ -2610,7 +2612,6 @@ err_device_put:
 	context->pdev = NULL;
 err_node_put:
 	of_node_put(node);
-err:
 	mmu->secured = false;
 
 	return ret;

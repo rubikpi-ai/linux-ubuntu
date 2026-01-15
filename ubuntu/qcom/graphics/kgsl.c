@@ -386,13 +386,13 @@ static void kgsl_destroy_anon(struct kgsl_memdesc *memdesc)
 			 * were writable by the GPU.
 			 */
 			if (!(memdesc->flags & KGSL_MEMFLAGS_GPUREADONLY))
-				set_page_dirty_lock(nth_page(page, j));
+				set_page_dirty_lock(kgsl_nth_page(page, j));
 
 			/*
 			 * Put the page reference taken using get_user_pages
 			 * during memdesc_sg_virt.
 			 */
-			put_page(nth_page(page, j));
+			put_page(kgsl_nth_page(page, j));
 		}
 	}
 
@@ -5086,7 +5086,6 @@ int kgsl_request_irq(struct platform_device *pdev, const char *name,
 {
 	int ret, num = -EINVAL;
 	const char *irq_name = name;
-	char index_name[32];
 
 	/*
 	 * Get IRQ by name if available, else try alt_name if previous failed,
@@ -5102,8 +5101,12 @@ int kgsl_request_irq(struct platform_device *pdev, const char *name,
 
 	if (index != -EINVAL && num < 0) {
 		num = platform_get_irq(pdev, index);
-		snprintf(index_name, sizeof(index_name), "irq-index-%d", index);
-		irq_name = index_name;
+		irq_name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "irq-index-%d", index);
+		if (!irq_name) {
+			dev_err(&pdev->dev, "Failed to allocate IRQ name string for index %d\n",
+				index);
+			return -ENOMEM;
+		}
 	}
 
 	if (num < 0) {
@@ -5150,8 +5153,6 @@ int kgsl_of_property_read_ddrtype(struct device_node *node, const char *base,
 	/* Read the default string */
 	return of_property_read_u32(node, base, ptr);
 }
-
-int kgsl_iommu_probe_standard(struct kgsl_device *device, struct platform_device *pdev);
 
 int kgsl_device_platform_probe(struct kgsl_device *device)
 {

@@ -134,9 +134,7 @@ msm_kgsl-y += \
 	adreno_ringbuffer.o \
 	adreno_snapshot.o \
 	adreno_sysfs.o \
-	adreno_trace.o \
-	governor_msm_adreno_tz.o \
-	governor_gpubw_mon.o
+	adreno_trace.o
 
 msm_kgsl-$(CONFIG_COMPAT) += adreno_compat.o
 msm_kgsl-$(CONFIG_QCOM_KGSL_CORESIGHT) += adreno_coresight.o
@@ -145,3 +143,5 @@ msm_kgsl-$(CONFIG_QCOM_KGSL_CORESIGHT) += adreno_a5xx_coresight.o
 msm_kgsl-$(CONFIG_QCOM_KGSL_CORESIGHT) += adreno_a6xx_coresight.o
 msm_kgsl-$(CONFIG_QCOM_KGSL_CORESIGHT) += adreno_gen7_coresight.o
 msm_kgsl-$(CONFIG_DEBUG_FS) += adreno_debugfs.o adreno_profile.o
+msm_kgsl-$(CONFIG_DEVFREQ_GOV_QCOM_ADRENO_TZ) += governor_msm_adreno_tz.o
+msm_kgsl-$(CONFIG_DEVFREQ_GOV_QCOM_GPUBW_MON) += governor_gpubw_mon.o

@@ -583,12 +583,10 @@ static int a6xx_rgmu_load_firmware(struct adreno_device *adreno_dev)
 	if (rgmu->fw_hostptr)
 		return 0;
 
-	ret = request_firmware(&fw, a6xx_core->gmufw_name, &rgmu->pdev->dev);
-	if (ret < 0) {
-		dev_err(&rgmu->pdev->dev, "request_firmware (%s) failed: %d\n",
-				a6xx_core->gmufw_name, ret);
+	ret = adreno_request_firmware(&fw, a6xx_core->gmufw_name,
+			&rgmu->pdev->dev, true);
+	if (ret)
 		return ret;
-	}
 
 	rgmu->fw_hostptr = devm_kmemdup(&rgmu->pdev->dev, fw->data,
 					fw->size, GFP_KERNEL);
@@ -986,9 +984,9 @@ static int a6xx_first_boot(struct adreno_device *adreno_dev)
 
 	/*
 	 * There is a possible deadlock scenario during kgsl firmware reading
-	 * (request_firmware) and devfreq update calls. During first boot, kgsl
-	 * device mutex is held and then request_firmware is called for reading
-	 * firmware. request_firmware internally takes dev_pm_qos_mtx lock.
+	 * (firmware_request_nowarn) and devfreq update calls. During first boot, kgsl
+	 * device mutex is held and then firmware_request_nowarn is called for reading
+	 * firmware. firmware_request_nowarn internally takes dev_pm_qos_mtx lock.
 	 * Whereas in case of devfreq update calls triggered by thermal/bcl or
 	 * devfreq sysfs, it first takes the same dev_pm_qos_mtx lock and then
 	 * tries to take kgsl device mutex as part of get_dev_status/target
@@ -1400,6 +1398,16 @@ static const struct component_ops a6xx_rgmu_component_ops = {
 
 static int a6xx_rgmu_probe_dev(struct platform_device *pdev)
 {
+	/*
+	 * Let us say there are two devices. One with "qcom,adreno-rgmu" compatible
+	 * and one with "qcom,gpu-rgmu" compatible. In this case probe only the
+	 * device with legacy compatible string and return error for the device
+	 * with "qcom,adreno-rgmu".
+	 */
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,adreno-rgmu") &&
+		kgsl_is_compatible_node_available("qcom,gpu-rgmu"))
+		return -ENODEV;
+
 	return component_add(&pdev->dev, &a6xx_rgmu_component_ops);
 }
 
@@ -1418,6 +1426,7 @@ static int a6xx_rgmu_remove_dev(struct platform_device *pdev)
 
 static const struct of_device_id a6xx_rgmu_match_table[] = {
 	{ .compatible = "qcom,gpu-rgmu" },
+	{ .compatible = "qcom,adreno-rgmu" },
 	{ },
 };
 
