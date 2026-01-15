@@ -1769,13 +1769,10 @@ int a6xx_gmu_parse_fw(struct adreno_device *adreno_dev)
 		if (a6xx_core->gmufw_name == NULL)
 			return -EINVAL;
 
-		ret = request_firmware(&gmu->fw_image, a6xx_core->gmufw_name,
-				&gmu->pdev->dev);
-		if (ret) {
-			dev_err(&gmu->pdev->dev, "request_firmware (%s) failed: %d\n",
-					a6xx_core->gmufw_name, ret);
+		ret = adreno_request_firmware(&gmu->fw_image, a6xx_core->gmufw_name,
+				&gmu->pdev->dev, true);
+		if (ret)
 			return ret;
-		}
 	}
 
 	/*
@@ -2646,7 +2643,7 @@ static void a6xx_free_gmu_globals(struct a6xx_gmu_device *gmu)
 	}
 
 	if (gmu->domain) {
-		iommu_detach_device(gmu->domain, &gmu->pdev->dev);
+		kgsl_detach_iommu_group(gmu->domain, gmu->group);
 		iommu_domain_free(gmu->domain);
 		gmu->domain = NULL;
 	}
@@ -2729,7 +2726,7 @@ static int a6xx_gmu_acd_probe(struct kgsl_device *device,
 
 	if (ret)
 		dev_err_probe(&gmu->pdev->dev, ret,
-				"AOP messaging init failed: %d\n");
+				"AOP messaging init failed\n");
 
 	return ret == -EPROBE_DEFER ? ret: 0;
 }
@@ -2855,8 +2852,10 @@ void a6xx_gmu_remove(struct kgsl_device *device)
 
 	vfree(gmu->itcm_shadow);
 
-	kobject_put(&gmu->log_kobj);
-	kobject_put(&gmu->stats_kobj);
+	if (gmu->log_kobj.state_initialized)
+		kobject_put(&gmu->log_kobj);
+	if (gmu->stats_kobj.state_initialized)
+		kobject_put(&gmu->stats_kobj);
 }
 
 static int a6xx_gmu_iommu_fault_handler(struct iommu_domain *domain,
@@ -2899,7 +2898,7 @@ static int a6xx_gmu_iommu_init(struct a6xx_gmu_device *gmu)
 	 */
 	qcom_iommu_set_fault_model(gmu->domain, QCOM_IOMMU_FAULT_MODEL_NO_STALL);
 
-	ret = iommu_attach_device(gmu->domain, &gmu->pdev->dev);
+	ret = kgsl_attach_iommu_group(&gmu->pdev->dev, gmu->domain, &gmu->group);
 	if (!ret) {
 		iommu_set_fault_handler(gmu->domain,
 			a6xx_gmu_iommu_fault_handler, gmu);
@@ -3014,8 +3013,13 @@ int a6xx_gmu_probe(struct kgsl_device *device,
 	gmu->stats_interval = HFI_FEATURE_GMU_STATS_INTERVAL;
 
 	/* GMU sysfs nodes setup */
-	(void) kobject_init_and_add(&gmu->log_kobj, &log_kobj_type, &dev->kobj, "log");
-	(void) kobject_init_and_add(&gmu->stats_kobj, &stats_kobj_type, &dev->kobj, "stats");
+	ret = kobject_init_and_add(&gmu->log_kobj, &log_kobj_type, &dev->kobj, "log");
+	if (ret)
+		dev_err(dev, "Failed to add log_kobj: %d\n", ret);
+
+	ret = kobject_init_and_add(&gmu->stats_kobj, &stats_kobj_type, &dev->kobj, "stats");
+	if (ret)
+		dev_err(dev, "Failed to add stats_kobj: %d\n", ret);
 
 	of_property_read_u32(gmu->pdev->dev.of_node, "qcom,gmu-perf-ddr-bw",
 		&gmu->perf_ddr_bw);
@@ -3370,9 +3374,9 @@ static int a6xx_first_boot(struct adreno_device *adreno_dev)
 
 	/*
 	 * There is a possible deadlock scenario during kgsl firmware reading
-	 * (request_firmware) and devfreq update calls. During first boot, kgsl
-	 * device mutex is held and then request_firmware is called for reading
-	 * firmware. request_firmware internally takes dev_pm_qos_mtx lock.
+	 * (firmware_request_nowarn) and devfreq update calls. During first boot, kgsl
+	 * device mutex is held and then firmware_request_nowarn is called for reading
+	 * firmware. firmware_request_nowarn internally takes dev_pm_qos_mtx lock.
 	 * Whereas in case of devfreq update calls triggered by thermal/bcl or
 	 * devfreq sysfs, it first takes the same dev_pm_qos_mtx lock and then
 	 * tries to take kgsl device mutex as part of get_dev_status/target
@@ -3856,6 +3860,16 @@ static const struct component_ops a6xx_gmu_component_ops = {
 
 static int a6xx_gmu_probe_dev(struct platform_device *pdev)
 {
+	/*
+	 * Let us say there are two devices. One with "qcom,adreno-gmu" compatible
+	 * and one with "qcom,gpu-gmu" compatible. In this case probe only the
+	 * device with legacy compatible string and return error for the device
+	 * with "qcom,adreno-gmu".
+	 */
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,adreno-gmu") &&
+		kgsl_is_compatible_node_available("qcom,gpu-gmu"))
+		return -ENODEV;
+
 	return component_add(&pdev->dev, &a6xx_gmu_component_ops);
 }
 
@@ -3874,6 +3888,7 @@ static int a6xx_gmu_remove_dev(struct platform_device *pdev)
 
 static const struct of_device_id a6xx_gmu_match_table[] = {
 	{ .compatible = "qcom,gpu-gmu" },
+	{ .compatible = "qcom,adreno-gmu" },
 	{ },
 };
 

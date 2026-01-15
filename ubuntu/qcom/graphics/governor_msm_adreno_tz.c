@@ -251,7 +251,7 @@ static int tz_init(struct device *dev, struct devfreq_msm_adreno_tz_data *priv,
 
 	tzmem_pool = qcom_tzmem_pool_new(&pool_config);
 	if (IS_ERR(tzmem_pool)) {
-		pr_err(TAG "tz: Failed to create qcom_tzmem_pool %d\n", PTR_ERR(tzmem_pool));
+		pr_err(TAG "tz: Failed to create qcom_tzmem_pool %pe\n", tzmem_pool);
 		return PTR_ERR(tzmem_pool);
 	}
 
@@ -472,11 +472,12 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 	 * Do not waste CPU cycles running this algorithm if
 	 * the GPU just started, or if less than FLOOR time
 	 * has passed since the last run or the gpu hasn't been
-	 * busier than MIN_BUSY.
+	 * busier than MIN_BUSY or there is only 1 power level
 	 */
 	if ((stats->total_time == 0) ||
 		(priv->bin.total_time < FLOOR) ||
-		(unsigned int) priv->bin.busy_time < MIN_BUSY) {
+		(unsigned int) priv->bin.busy_time < MIN_BUSY ||
+		devfreq->profile->max_state == 1) {
 		return 0;
 	}
 

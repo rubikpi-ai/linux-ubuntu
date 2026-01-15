@@ -156,6 +156,48 @@ void kgsl_hwunlock(struct cpu_gpu_lock *lock)
 	lock->cpu_req = 0;
 }
 
+bool kgsl_is_compatible_node_available(const char *compat)
+{
+	struct device_node *node;
+	bool avail;
+
+	node = of_find_compatible_node(NULL, NULL, compat);
+
+	if (!node)
+		return false;
+
+	avail = of_device_is_available(node);
+	of_node_put(node);
+
+	return avail;
+}
+
+int kgsl_attach_iommu_group(struct device *dev, struct iommu_domain *domain,
+		struct iommu_group **group)
+{
+	struct iommu_group *grp = iommu_group_get(dev);
+	int ret;
+
+	if (!grp)
+		return -ENODEV;
+
+	ret = iommu_attach_group(domain, grp);
+	if (ret) {
+		iommu_group_put(grp);
+		return ret;
+	}
+
+	*group = grp;
+
+	return 0;
+}
+
+void kgsl_detach_iommu_group(struct iommu_domain *domain, struct iommu_group *group)
+{
+	iommu_detach_group(domain, group);
+	iommu_group_put(group);
+}
+
 #if IS_ENABLED(CONFIG_QCOM_KGSL_UPSTREAM)
 #include <linux/soc/qcom/smem.h>
 #include <linux/soc/qcom/socinfo.h>

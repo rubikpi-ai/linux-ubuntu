@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #ifndef __ADRENO_A6XX_GMU_H
 #define __ADRENO_A6XX_GMU_H
@@ -82,6 +82,8 @@ struct a6xx_gmu_device {
 	void __iomem *rscc_virt;
 	/** @domain: IOMMU domain for the kernel context */
 	struct iommu_domain *domain;
+	/** @group: IOMMU group for the kernel context */
+	struct iommu_group *group;
 	/** @rdpm_cx_virt: Pointer where the RDPM CX block is mapped */
 	void __iomem *rdpm_cx_virt;
 	/** @rdpm_mx_virt: Pointer where the RDPM MX block is mapped */

@@ -197,7 +197,7 @@ static bool timeline_fence_signaled(struct dma_fence *fence)
 	struct kgsl_timeline_fence *f = to_timeline_fence(fence);
 
 #if (KERNEL_VERSION(6, 17, 0) <= LINUX_VERSION_CODE)
-	return !__dma_fence_is_later(fence, f->timeline->value, fence->seqno);
+	return !__dma_fence_is_later(fence, fence->seqno, f->timeline->value);
 #else
 	return !__dma_fence_is_later(fence->seqno, f->timeline->value,
 		fence->ops);

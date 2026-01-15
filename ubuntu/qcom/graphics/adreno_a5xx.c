@@ -577,13 +577,10 @@ static int _load_gpmu_firmware(struct adreno_device *adreno_dev)
 	if (a5xx_core->gpmufw_name == NULL)
 		return 0;
 
-	ret = request_firmware(&fw, a5xx_core->gpmufw_name, &device->pdev->dev);
-	if (ret || fw == NULL) {
-		dev_err(&device->pdev->dev,
-			"request_firmware (%s) failed: %d\n",
-			a5xx_core->gpmufw_name, ret);
+	ret = adreno_request_firmware(&fw, a5xx_core->gpmufw_name,
+			&device->pdev->dev, true);
+	if (ret || fw == NULL)
 		return ret;
-	}
 
 	data = (uint32_t *)fw->data;
 
@@ -849,12 +846,10 @@ static void _load_regfile(struct adreno_device *adreno_dev)
 	if (!a5xx_core->regfw_name)
 		return;
 
-	ret = request_firmware(&fw, a5xx_core->regfw_name, &device->pdev->dev);
-	if (ret) {
-		dev_err(&device->pdev->dev, "request firmware failed %d, %s\n",
-				ret, a5xx_core->regfw_name);
+	ret = adreno_request_firmware(&fw, a5xx_core->regfw_name,
+			&device->pdev->dev, true);
+	if (ret)
 		return;
-	}
 
 	/* a530v2 lm_major was 3. a530v3 lm_major was 1 */
 	if (adreno_is_a530v2(adreno_dev))

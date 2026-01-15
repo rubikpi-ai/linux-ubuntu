@@ -135,6 +135,8 @@ struct kgsl_iommu_context {
 	/** ratelimit: Ratelimit state for the context */
 	struct ratelimit_state ratelimit;
 	struct iommu_domain *domain;
+	/** @group: IOMMU group for the context */
+	struct iommu_group *group;
 	struct adreno_smmu_priv adreno_smmu;
 };
 
@@ -199,5 +201,14 @@ struct kgsl_iommu_pt {
  */
 int kgsl_set_smmu_aperture(struct kgsl_device *device,
 		struct kgsl_iommu_context *context);
+
+/**
+ * kgsl_iommu_probe_standard() - Probe and initialize IOMMU resources from adreno_smmu pdev
+ * @device: Pointer to the KGSL device
+ * @pdev: Pointer to the platform device
+ *
+ * Return: 0 on success or negative on failure.
+ */
+int kgsl_iommu_probe_standard(struct kgsl_device *device, struct platform_device *pdev);
 
 #endif
