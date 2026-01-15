@@ -142,24 +142,12 @@ static struct color_primaries_info color_primaries_data_sa8775p[] = {
 		.vidc_color_primaries  = MSM_VIDC_PRIMARIES_SMPTE_ST240M,
 	},
 	{
-		.v4l2_color_primaries  = V4L2_COLORSPACE_VIDC_GENERIC_FILM,
-		.vidc_color_primaries  = MSM_VIDC_PRIMARIES_GENERIC_FILM,
-	},
-	{
 		.v4l2_color_primaries  = V4L2_COLORSPACE_BT2020,
 		.vidc_color_primaries  = MSM_VIDC_PRIMARIES_BT2020,
 	},
 	{
 		.v4l2_color_primaries  = V4L2_COLORSPACE_DCI_P3,
 		.vidc_color_primaries  = MSM_VIDC_PRIMARIES_SMPTE_RP431_2,
-	},
-	{
-		.v4l2_color_primaries  = V4L2_COLORSPACE_VIDC_EG431,
-		.vidc_color_primaries  = MSM_VIDC_PRIMARIES_SMPTE_EG431_1,
-	},
-	{
-		.v4l2_color_primaries  = V4L2_COLORSPACE_VIDC_EBU_TECH,
-		.vidc_color_primaries  = MSM_VIDC_PRIMARIES_SMPTE_EBU_TECH,
 	},
 };
 
@@ -177,52 +165,16 @@ static struct transfer_char_info transfer_char_data_sa8775p[] = {
 		.vidc_transfer_char  = MSM_VIDC_TRANSFER_BT709,
 	},
 	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_M,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_BT470_SYSTEM_M,
-	},
-	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_BG,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_BT470_SYSTEM_BG,
-	},
-	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_BT601_525_OR_625,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_BT601_525_OR_625,
-	},
-	{
 		.v4l2_transfer_char  = V4L2_XFER_FUNC_SMPTE240M,
 		.vidc_transfer_char  = MSM_VIDC_TRANSFER_SMPTE_ST240M,
-	},
-	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_LINEAR,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_LINEAR,
-	},
-	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_XVYCC,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_XVYCC,
-	},
-	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_BT1361,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_BT1361_0,
 	},
 	{
 		.v4l2_transfer_char  = V4L2_XFER_FUNC_SRGB,
 		.vidc_transfer_char  = MSM_VIDC_TRANSFER_SRGB_SYCC,
 	},
 	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_BT2020,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_BT2020_14,
-	},
-	{
 		.v4l2_transfer_char  = V4L2_XFER_FUNC_SMPTE2084,
 		.vidc_transfer_char  = MSM_VIDC_TRANSFER_SMPTE_ST2084_PQ,
-	},
-	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_ST428,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_SMPTE_ST428_1,
-	},
-	{
-		.v4l2_transfer_char  = V4L2_XFER_FUNC_VIDC_HLG,
-		.vidc_transfer_char  = MSM_VIDC_TRANSFER_BT2100_2_HLG,
 	},
 };
 
@@ -236,20 +188,12 @@ static struct matrix_coeff_info matrix_coeff_data_sa8775p[] = {
 		.vidc_matrix_coeff  = MSM_VIDC_MATRIX_COEFF_UNSPECIFIED,
 	},
 	{
-		.v4l2_matrix_coeff  = V4L2_YCBCR_VIDC_SRGB_OR_SMPTE_ST428,
-		.vidc_matrix_coeff  = MSM_VIDC_MATRIX_COEFF_SRGB_SMPTE_ST428_1,
-	},
-	{
 		.v4l2_matrix_coeff  = V4L2_YCBCR_ENC_709,
 		.vidc_matrix_coeff  = MSM_VIDC_MATRIX_COEFF_BT709,
 	},
 	{
 		.v4l2_matrix_coeff  = V4L2_YCBCR_ENC_XV709,
 		.vidc_matrix_coeff  = MSM_VIDC_MATRIX_COEFF_BT709,
-	},
-	{
-		.v4l2_matrix_coeff  = V4L2_YCBCR_VIDC_FCC47_73_682,
-		.vidc_matrix_coeff  = MSM_VIDC_MATRIX_COEFF_FCC_TITLE_47,
 	},
 	{
 		.v4l2_matrix_coeff  = V4L2_YCBCR_ENC_XV601,

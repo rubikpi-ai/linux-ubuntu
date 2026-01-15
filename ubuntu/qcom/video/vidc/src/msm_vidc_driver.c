@@ -3052,11 +3052,6 @@ int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	q = inst->bufq[port].vb2q;
-	if (!q->streaming) {
-		i_vpr_e(inst, "%s: port %d is not streaming\n",
-			__func__, port);
-		return -EINVAL;
-	}
 
 	found = false;
 	list_for_each_entry(vb2, &q->queued_list, queued_entry) {
@@ -3076,7 +3071,9 @@ int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 	 * send state as error to avoid skipping V4L2_BUF_FLAG_ERROR
 	 * flag at v4l2 side.
 	 */
-	if (buf->flags & MSM_VIDC_BUF_FLAG_ERROR)
+	if (!q->streaming)
+		state = VB2_BUF_STATE_QUEUED;
+	else if (buf->flags & MSM_VIDC_BUF_FLAG_ERROR)
 		state = VB2_BUF_STATE_ERROR;
 	else
 		state = VB2_BUF_STATE_DONE;

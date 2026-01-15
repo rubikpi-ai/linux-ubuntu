@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef __HFI_BUFFER_IRIS2__
@@ -18,6 +18,14 @@ typedef u32     HFI_U32;
 typedef s32     HFI_S32;
 typedef u64     HFI_U64;
 typedef HFI_U32 HFI_BOOL;
+
+#ifndef MIN
+#define  MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
+#ifndef MAX
+#define  MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
 
 #define HFI_ALIGNMENT_4096 (4096)
 
