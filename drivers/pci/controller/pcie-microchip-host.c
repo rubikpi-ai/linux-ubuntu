@@ -23,6 +23,7 @@
 #include <linux/platform_device.h>
 
 #include "../pci.h"
+#include "pci-host-common.h"
 
 /* Number of MSI IRQs */
 #define MC_MAX_NUM_MSI_IRQS			32
