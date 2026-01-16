@@ -209,7 +209,10 @@ CONFIG_ARM_TEGRA194_CPUFREQ                     policy<{'arm64': '-'}>
 CONFIG_ARM_TEGRA20_CPUFREQ                      policy<{'arm64': '-'}>
 CONFIG_ARM_TEGRA_DEVFREQ                        policy<{'arm64': '-'}>
 CONFIG_ARM_TI_CPUFREQ                           policy<{'arm64': '-'}>
+CONFIG_ATH11K_CFR                               policy<{'arm64': 'n'}>
 CONFIG_ATH11K_COREDUMP                          policy<{'arm64': 'n'}>
+CONFIG_ATH12K_COREDUMP                          policy<{'arm64': 'n'}>
+CONFIG_ATH12K_DEBUGFS                           policy<{'arm64': 'n'}>
 CONFIG_AX88179B                                 policy<{'arm64': 'y'}>
 CONFIG_AXI_DMAC                                 policy<{'arm64': '-'}>
 CONFIG_BACKLIGHT_QCOM_WLED                      policy<{'arm64': 'y'}>
@@ -253,6 +256,7 @@ CONFIG_CLK_OWL_S500                             policy<{'arm64': '-'}>
 CONFIG_CLK_OWL_S700                             policy<{'arm64': '-'}>
 CONFIG_CLK_OWL_S900                             policy<{'arm64': '-'}>
 CONFIG_CLK_PX30                                 policy<{'arm64': '-'}>
+CONFIG_CLK_QCOM_DEBUG                           policy<{'arm64': 'y'}>
 CONFIG_CLK_QORIQ                                policy<{'arm64': '-'}>
 CONFIG_CLK_R8A774A1                             policy<{'arm64': '-'}>
 CONFIG_CLK_R8A774B1                             policy<{'arm64': '-'}>
@@ -563,6 +567,7 @@ CONFIG_DRM_IMX_LCDC                             policy<{'arm64': '-'}>
 CONFIG_DRM_IMX_LCDIF                            policy<{'arm64': '-'}>
 CONFIG_DRM_IMX_LDB_HELPER                       policy<{'arm64': '-'}>
 CONFIG_DRM_KMB_DISPLAY                          policy<{'arm64': '-'}>
+CONFIG_DRM_LONTIUM_LT8713SX                     policy<{'arm64': 'm'}>
 CONFIG_DRM_LONTIUM_LT9211C                      policy<{'arm64': 'm'}>
 CONFIG_DRM_MEDIATEK                             policy<{'arm64': '-'}>
 CONFIG_DRM_MEDIATEK_DP                          policy<{'arm64': '-'}>
@@ -664,6 +669,7 @@ CONFIG_FUEL_GAUGE_SC27XX                        policy<{'arm64': '-'}>
 CONFIG_FW_DEVLINK_SYNC_STATE_TIMEOUT            policy<{'arm64': 'y'}>
 CONFIG_GCC_ASM_GOTO_OUTPUT_WORKAROUND           policy<{'arm64': '-'}>
 CONFIG_GENERIC_IRQ_IPI_MUX                      policy<{'arm64': '-'}>
+CONFIG_GH_CTRL                                  policy<{'arm64': 'n'}>
 CONFIG_GH_VIRT_WATCHDOG                         policy<{'arm64': 'y'}>
 CONFIG_GPIO_ALTERA_A10SR                        policy<{'arm64': '-'}>
 CONFIG_GPIO_DAVINCI                             policy<{'arm64': '-'}>
@@ -1289,6 +1295,7 @@ CONFIG_PINCTRL_SC7180                           policy<{'arm64': 'y'}>
 CONFIG_PINCTRL_SC7280                           policy<{'arm64': 'y'}>
 CONFIG_PINCTRL_SC8180X                          policy<{'arm64': 'y'}>
 CONFIG_PINCTRL_SC8280XP                         policy<{'arm64': 'y'}>
+CONFIG_PINCTRL_SCMI                             policy<{'arm64': 'n'}>
 CONFIG_PINCTRL_SDM660                           policy<{'arm64': 'y'}>
 CONFIG_PINCTRL_SDM670                           policy<{'arm64': 'y'}>
 CONFIG_PINCTRL_SDM845                           policy<{'arm64': 'y'}>
@@ -1488,6 +1495,7 @@ CONFIG_REGULATOR_QCOM_RPMH                      policy<{'arm64': 'y'}>
 CONFIG_REGULATOR_QCOM_SMD_RPM                   policy<{'arm64': 'y'}>
 CONFIG_REGULATOR_QCOM_SPMI                      policy<{'arm64': 'y'}>
 CONFIG_REGULATOR_QPNP_LCDB                      policy<{'arm64': 'y'}>
+CONFIG_REGULATOR_RASPBERRYPI_TOUCHSCREEN_V2     policy<{'arm64': 'n'}>
 CONFIG_REGULATOR_SC2731                         policy<{'arm64': '-'}>
 CONFIG_REGULATOR_STM32_BOOSTER                  policy<{'arm64': '-'}>
 CONFIG_REGULATOR_STM32_PWR                      policy<{'arm64': '-'}>
