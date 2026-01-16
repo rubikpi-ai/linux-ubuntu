@@ -12,6 +12,7 @@
 #include <linux/iommu.h>
 #include <linux/timer.h>
 #include <linux/platform_device.h>
+#include <linux/of_device.h>
 #include <linux/videodev2.h>
 #include <media/v4l2-fh.h>
 #include <media/v4l2-device.h>
