@@ -47,6 +47,17 @@
 			};
 		};
 	};
+
+        nvme_vreg_en: nvme_vreg_en {
+                compatible = "regulator-fixed";
+                regulator-name = "nvme_vreg_en";
+                gpio = <&tlmm 51 GPIO_ACTIVE_HIGH>;
+                regulator-min-microvolt = <1800000>;
+                regulator-max-microvolt = <1800000>;
+                enable-active-high;
+                regulator-enable-ramp-delay = <10000>;
+        };
+
 };
 
 &apps_rsc {
@@ -221,6 +232,15 @@
 	perst-gpios = <&tlmm 2 GPIO_ACTIVE_LOW>;
 	wake-gpios = <&tlmm 0 GPIO_ACTIVE_HIGH>;
 
+        iommu-map = <0x0 &pcie_smmu 0x0000 0x1>,
+                    <0x100 &pcie_smmu 0x0001 0x1>,
+                    <0x200 &pcie_smmu 0x0007 0x1>,
+                    <0x208 &pcie_smmu 0x0002 0x1>,
+                    <0x210 &pcie_smmu 0x0003 0x1>,
+                    <0x218 &pcie_smmu 0x0004 0x1>,
+                    <0x300 &pcie_smmu 0x0005 0x1>,
+                    <0x400 &pcie_smmu 0x0006 0x1>;
+
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie0_default_state>;
 
@@ -235,6 +255,7 @@
 };
 
 &pcie1 {
+	vdda-supply = <&nvme_vreg_en>;
 	perst-gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
 	wake-gpios = <&tlmm 21 GPIO_ACTIVE_HIGH>;
 
@@ -246,7 +267,7 @@
 
 &pcie1_phy {
 	vdda-phy-supply = <&vreg_l6a>;
-	vdda-pll-supply = <&vreg_l5a>;
+	vdda-pll-supply = <&vreg_l4a>;
 
 	status = "okay";
 };
