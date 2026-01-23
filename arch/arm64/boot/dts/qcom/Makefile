@@ -25,7 +25,8 @@ dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp449.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp453.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp454.dtb
 
-lemans-addons-amr-dtbs:= lemans-amr.dtb lemans-addons-amr.dtbo
+lemans-addons-amr-dtbs:= lemans-amr.dtb lemans-addons-amr.dtbo \
+			qcs9075-camera-iq-9075-amr.dtbo
 
 dtb-$(CONFIG_ARCH_QCOM) += lemans-addons-amr.dtb
 dtb-$(CONFIG_ARCH_QCOM) += lemans-amr.dtb
