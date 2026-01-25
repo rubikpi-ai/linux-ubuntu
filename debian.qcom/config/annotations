@@ -1480,6 +1480,7 @@ CONFIG_RCU_BOOST_DELAY                          policy<{'arm64-qcom-rt': '500'}>
 CONFIG_RCU_CPU_STALL_TIMEOUT                    policy<{'arm64': '21'}>
 CONFIG_RCU_NOCB_CPU_CB_BOOST                    policy<{'arm64-qcom-rt': 'y'}>
 CONFIG_READ_ONLY_THP_FOR_FS                     policy<{'arm64': 'n', 'arm64-qcom-rt': '-'}>
+CONFIG_REALTEK_PHY_HWMON                        policy<{'arm64': 'y'}>
 CONFIG_REGMAP_AC97                              policy<{'arm64': '-'}>
 CONFIG_REGMAP_SPMI                              policy<{'arm64': 'y'}>
 CONFIG_REGULATOR_ANATOP                         policy<{'arm64': '-'}>
