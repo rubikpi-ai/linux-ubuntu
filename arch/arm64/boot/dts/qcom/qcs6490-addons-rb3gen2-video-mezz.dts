@@ -24,8 +24,6 @@
 };
 
 &sound {
-	model = "qcs6490-rb3gen2-video-snd-card";
-
 	audio-routing =
 		"SpkrLeft IN", "WSA_SPK1 OUT",
 		"SpkrRight IN", "WSA_SPK2 OUT",
