@@ -9538,7 +9538,7 @@ static int ufshcd_hba_init(struct ufs_hba *hba)
 
 	err = ufshcd_variant_hba_init(hba);
 	if (err)
-		goto out_disable_vreg;
+		goto out_disable_clks;
 
 	ufs_debugfs_hba_init(hba);
 	ufs_fault_inject_hba_init(hba);
@@ -9546,8 +9546,6 @@ static int ufshcd_hba_init(struct ufs_hba *hba)
 	hba->is_powered = true;
 	goto out;
 
-out_disable_vreg:
-	ufshcd_setup_vreg(hba, false);
 out_disable_clks:
 	ufshcd_setup_clocks(hba, false);
 out_disable_hba_vreg:
