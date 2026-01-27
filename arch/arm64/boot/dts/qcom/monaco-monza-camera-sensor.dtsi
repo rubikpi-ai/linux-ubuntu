@@ -12,50 +12,47 @@
 	};
 };
 
-&cam_cci0 {
-
-	/*cam0-imx577-eeprom*/
-	eeprom_cam20: qcom,eeprom20 {
-		cell-index = <20>;
-		compatible = "qcom,eeprom";
-		regulator-names = "cam_vio";
-		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
-		rgltr-cntrl-support;
-		pwm-switch;
-		rgltr-min-voltage = <1800000>;
-		rgltr-max-voltage = <1800000>;
-		rgltr-load-current = <120000>;
-		gpio-no-mux = <0>;
-		pinctrl-names = "cam_default", "cam_suspend";
-		pinctrl-0 = <&cam_sensor_mclk0_active
-				 &cam_sensor_active_rst0>;
-		pinctrl-1 = <&cam_sensor_mclk0_suspend
-				 &cam_sensor_suspend_rst0>;
-		gpios = <&tlmm 67 0>,
-			<&tlmm 76 0>;
-		gpio-reset = <1>;
-		gpio-req-tbl-num = <0 1>;
-		gpio-req-tbl-flags = <1 0>;
-		gpio-req-tbl-label = "CAM_MCLK0",
-		                       "CAMIF_RESET0";
-		sensor-mode = <0>;
-		cci-master = <0>;
-		status = "ok";
-		clocks = <&camcc CAM_CC_MCLK0_CLK>;
-		clock-names = "cam_clk";
-		clock-cntl-level = "nominal";
-		clock-rates = <24000000>;
+&tlmm {
+	camera_mux0_active: camera_mux0_active {
+		pins = "gpio24";
+		function = "gpio";
+		bias-pull-down;
+		drive-strength = <2>;
+		output-low;
 	};
 
+	camera_mux0_suspend: camera_mux0_suspend {
+		pins = "gpio24";
+		function = "gpio";
+		bias-disable;
+		drive-strength = <2>;
+	};
+
+	camera_mux1_active: camera_mux1_active {
+		pins = "gpio41";
+		function = "gpio";
+		bias-pull-down;
+		drive-strength = <2>;
+		output-low;
+	};
+
+	camera_mux1_suspend: camera_mux1_suspend {
+		pins = "gpio41";
+		function = "gpio";
+		bias-disable;
+		drive-strength = <2>;
+	};
+};
+
+&cam_cci0 {
 	/*cam0-imx577*/
-	qcom,cam-sensor20 {
-		cell-index = <20>;
+	qcom,cam-sensor23 {
+		cell-index = <23>;
 		compatible = "qcom,cam-sensor";
 		csiphy-sd-index = <0>;
 		sensor-position-roll = <0>;
 		sensor-position-pitch = <0>;
 		sensor-position-yaw = <180>;
-		eeprom-src = <&eeprom_cam20>;
 		regulator-names = "cam_vio";
 		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
 		rgltr-cntrl-support;
@@ -65,71 +62,30 @@
 		rgltr-load-current = <120000>;
 		gpio-no-mux = <0>;
 		pinctrl-names = "cam_default", "cam_suspend";
-		pinctrl-0 = <&cam_sensor_mclk0_active
-		                &cam_sensor_active_rst0>;
-		pinctrl-1 = <&cam_sensor_mclk0_suspend
-		                &cam_sensor_suspend_rst0>;
-		gpios = <&tlmm 67 0>,
-			<&tlmm 76 0>;
-		gpio-reset = <1>;
-		gpio-req-tbl-num = <0 1>;
-		gpio-req-tbl-flags   	 = <1 0>;
-		gpio-req-tbl-label = "CAM_MCLK0",
-		                       "CAMIF_RESET0";
+		pinctrl-0 = <&cam_sensor_active_rst0
+				&camera_mux0_active>;
+		pinctrl-1 = <&cam_sensor_suspend_rst0
+				&camera_mux0_suspend>;
+		gpios = <&tlmm 64 0>;
+		gpio-reset = <0>;
+		gpio-req-tbl-num = <0>;
+		gpio-req-tbl-flags = <0>;
+		gpio-req-tbl-label = "CAMIF_RESET0";
 		cci-master = <0>;
-		clocks = <&camcc CAM_CC_MCLK0_CLK>;
-		clock-names = "cam_clk";
-		clock-cntl-level = "nominal";
-		clock-rates = <24000000>;
 		status = "ok";
 	};
 };
 
 
 &cam_cci1 {
-
-	/*cam1-imx577-eeprom*/
-	eeprom_cam21: qcom,eeprom21 {
-		cell-index = <21>;
-		compatible = "qcom,eeprom";
-		regulator-names = "cam_vio";
-		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
-		rgltr-cntrl-support;
-		pwm-switch;
-		rgltr-min-voltage = <1800000>;
-		rgltr-max-voltage = <1800000>;
-		rgltr-load-current = <120000>;
-		gpio-no-mux = <0>;
-		pinctrl-names = "cam_default", "cam_suspend";
-		pinctrl-0 = <&cam_sensor_mclk1_active
-				 &cam_sensor_active_rst1>;
-		pinctrl-1 = <&cam_sensor_mclk1_suspend
-				 &cam_sensor_suspend_rst1>;
-		gpios = <&tlmm 68 0>,
-			<&tlmm 77 0>;
-		gpio-reset = <1>;
-		gpio-req-tbl-num = <0 1>;
-		gpio-req-tbl-flags = <1 0>;
-		gpio-req-tbl-label = "CAM_MCLK1",
-					"CAMIF_RESET1";
-		sensor-mode = <0>;
-		cci-master = <0>;
-		status = "ok";
-		clocks = <&camcc CAM_CC_MCLK1_CLK>;
-		clock-names = "cam_clk";
-		clock-cntl-level = "nominal";
-		clock-rates = <24000000>;
-	};
-
 	/*cam1-imx577*/
-	qcom,cam-sensor21 {
-		cell-index = <21>;
+	qcom,cam-sensor24 {
+		cell-index = <24>;
 		compatible = "qcom,cam-sensor";
 		csiphy-sd-index = <1>;
 		sensor-position-roll = <0>;
 		sensor-position-pitch = <0>;
 		sensor-position-yaw = <180>;
-		eeprom-src = <&eeprom_cam21>;
 		regulator-names = "cam_vio";
 		power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
 		rgltr-cntrl-support;
@@ -139,22 +95,16 @@
 		rgltr-load-current = <120000>;
 		gpio-no-mux = <0>;
 		pinctrl-names = "cam_default", "cam_suspend";
-		pinctrl-0 = <&cam_sensor_mclk1_active
-		                &cam_sensor_active_rst1>;
-		pinctrl-1 = <&cam_sensor_mclk1_suspend
-		                &cam_sensor_suspend_rst1>;
-		gpios = <&tlmm 68 0>,
-			<&tlmm 77 0>;
-		gpio-reset = <1>;
-		gpio-req-tbl-num = <0 1>;
-		gpio-req-tbl-flags   	 = <1 0>;
-		gpio-req-tbl-label = "CAM_MCLK1",
-		                       "CAMIF_RESET1";
+		pinctrl-0 = <&cam_sensor_active_rst1
+				&camera_mux1_active>;
+		pinctrl-1 = <&cam_sensor_suspend_rst1
+				&camera_mux1_suspend>;
+		gpios = <&tlmm 75 0>;
+		gpio-reset = <0>;
+		gpio-req-tbl-num = <0>;
+		gpio-req-tbl-flags = <0>;
+		gpio-req-tbl-label = "CAMIF_RESET1";
 		cci-master = <0>;
-		clocks = <&camcc CAM_CC_MCLK1_CLK>;
-		clock-names = "cam_clk";
-		clock-cntl-level = "nominal";
-		clock-rates = <24000000>;
 		status = "ok";
 	};
 };
