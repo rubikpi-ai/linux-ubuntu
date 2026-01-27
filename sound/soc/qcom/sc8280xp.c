@@ -53,7 +53,7 @@ struct snd_soc_common {
 };
 
 static struct snd_soc_common qcs9100_priv_data = {
-	.driver_name = "qcs9100",
+	.driver_name = "sa8775p",
 	.dapm_widgets = sc8280xp_dapm_widgets,
 	.num_dapm_widgets = ARRAY_SIZE(sc8280xp_dapm_widgets),
 	.jack_enable = true,
