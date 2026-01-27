@@ -352,7 +352,7 @@
 };
 
 &ethernet0 {
-	phy-mode = "sgmii";
+	phy-mode = "2500base-x";
 	phy-handle = <&hsgmii_phy0>;
 
 	pinctrl-0 = <&ethernet0_default>;
@@ -371,7 +371,7 @@
 		hsgmii_phy0: phy@1c {
 			compatible = "ethernet-phy-id004d.d101";
 			reg = <0x1c>;
-			reset-gpios = <&tlmm 31 GPIO_ACTIVE_LOW>;
+			reset-gpios = <&tlmm 50 GPIO_ACTIVE_LOW>;
 			reset-assert-us = <11000>;
 			reset-deassert-us = <70000>;
 		};
