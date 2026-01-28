@@ -24,6 +24,7 @@
 #include <linux/usb/hcd.h>
 #include <linux/usb.h>
 #include "core.h"
+#include <linux/pm_domain.h>
 
 /* USB QSCRATCH Hardware registers */
 #define QSCRATCH_HS_PHY_CTRL			0x10
@@ -470,6 +471,8 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup)
 {
 	u32 val;
 	int i, ret;
+	struct device *dev = qcom->dev;
+	struct generic_pm_domain *genpd;
 
 	if (qcom->is_suspended)
 		return 0;
@@ -494,6 +497,17 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup)
 		dwc3_qcom_enable_interrupts(qcom);
 	}
 
+	if (dev->pm_domain) {
+		genpd = pd_to_genpd(dev->pm_domain);
+		if (genpd) {
+			if (dwc3_qcom_is_host(qcom)) {
+				genpd->flags |= GENPD_FLAG_ACTIVE_WAKEUP;
+				genpd->flags |= GENPD_FLAG_ALWAYS_ON;
+				dev_dbg(dev, "GDSC flags ON\n");
+			}
+		}
+	}
+
 	qcom->is_suspended = true;
 	pm_relax(qcom->dev);
 
@@ -505,6 +519,8 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
 	bool legacy_binding = dwc3_qcom_has_separate_dwc3_of_node(qcom->dev);
 	int ret;
 	int i;
+	struct device *dev = qcom->dev;
+	struct generic_pm_domain *genpd;
 
 	if (!qcom->is_suspended)
 		return 0;
@@ -515,6 +531,15 @@ static int dwc3_qcom_resume(struct dwc3_qcom *qcom, bool wakeup)
 		ret = reset_control_deassert(qcom->dwc.reset);
 		if (ret)
 			return ret;
+	}
+
+	if (dev->pm_domain) {
+		genpd = pd_to_genpd(dev->pm_domain);
+		if (genpd) {
+			genpd->flags &= ~GENPD_FLAG_ACTIVE_WAKEUP;
+			genpd->flags &= ~GENPD_FLAG_ALWAYS_ON;
+			dev_dbg(dev, "GDSC flags OFF\n");
+		}
 	}
 
 	if (dwc3_qcom_is_host(qcom) && wakeup)
