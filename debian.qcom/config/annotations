@@ -30,6 +30,12 @@ CONFIG_EFI_ZBOOT                                note<'we use arch/arm64/boot/Ima
 CONFIG_HSA_AMD_P2P                              policy<{'arm64': '-'}>
 CONFIG_HSA_AMD_P2P                              note<'LP: #1987394'>
 
+CONFIG_IKCONFIG                                 policy<{'arm64': 'y'}>
+CONFIG_IKCONFIG                                 note<'LP: #2126467'>
+
+CONFIG_IKCONFIG_PROC                            policy<{'arm64': 'y'}>
+CONFIG_IKCONFIG_PROC                            note<'LP: #2126467'>
+
 CONFIG_IPMMU_VMSA                               policy<{'arm64': '-'}>
 CONFIG_IPMMU_VMSA                               note<'LP: #1718734'>
 
