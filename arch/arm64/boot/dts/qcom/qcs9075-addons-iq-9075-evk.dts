@@ -20,12 +20,22 @@
 		compatible = "qcom,qcs9100-sndcard";
 		model = "LEMANS-EVK";
 
-		pinctrl-0 = <&hs1_mi2s_data0>, <&mi2s_mclk>, <&hs0_mi2s_data0>,
+		pinctrl-0 = <&hs0_mi2s_data0_sleep>,<&hs0_mi2s_data1_sleep>,<&hs0_mi2s_sclk_sleep>,
+			    <&hs0_mi2s_ws_sleep>,<&hs1_mi2s_data0_sleep>,<&hs1_mi2s_data1_sleep>,
+			    <&hs1_mi2s_sclk_sleep>,<&hs1_mi2s_ws_sleep>,<&hs2_mi2s_data0_sleep>,
+			    <&hs2_mi2s_data1_sleep>, <&hs2_mi2s_sck_sleep>, <&hs2_mi2s_ws_sleep>,
+			    <&mi2s_mclk_sleep>;
+		pinctrl-1 = <&hs1_mi2s_data0>, <&mi2s_mclk>, <&hs0_mi2s_data0>,
 			    <&hs0_mi2s_sclk>, <&hs0_mi2s_data1>, <&hs0_mi2s_ws>,
 			    <&hs1_mi2s_sclk>, <&hs1_mi2s_data1>, <&hs1_mi2s_ws>,
 			    <&hs2_mi2s_data0>, <&hs2_mi2s_data1>, <&hs2_mi2s_sck>,
 			    <&hs2_mi2s_ws>;
-		pinctrl-names = "default";
+		pinctrl-2 = <&hs0_mi2s_data0_sleep>,<&hs0_mi2s_data1_sleep>,<&hs0_mi2s_sclk_sleep>,
+                            <&hs0_mi2s_ws_sleep>,<&hs1_mi2s_data0_sleep>,<&hs1_mi2s_data1_sleep>,
+                            <&hs1_mi2s_sclk_sleep>,<&hs1_mi2s_ws_sleep>,<&hs2_mi2s_data0_sleep>,
+                            <&hs2_mi2s_data1_sleep>, <&hs2_mi2s_sck_sleep>, <&hs2_mi2s_ws_sleep>,
+                            <&mi2s_mclk_sleep>;
+		pinctrl-names = "default", "mi2s_active", "mi2s_sleep";
 
 		hs0-mi2s-playback-dai-link {
 			link-name = "MI2S-LPAIF_SDR-RX-PRIMARY";
