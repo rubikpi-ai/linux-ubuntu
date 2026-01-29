@@ -41,6 +41,15 @@ static struct snd_soc_dapm_widget sc8280xp_dapm_widgets[] = {
 	SND_SOC_DAPM_SPK("DP7 Jack", NULL),
 };
 
+static struct snd_soc_dapm_widget qcs9100_dapm_widgets[] = {
+	SND_SOC_DAPM_PINCTRL("MI2S_PINCTRL", "mi2s_active", "mi2s_sleep"),
+};
+
+static const struct snd_soc_dapm_route qcs9100_dapm_routes[] = {
+	{"Speaker", NULL, "MI2S_PINCTRL"},
+	{"DMic", NULL, "MI2S_PINCTRL"},
+};
+
 struct snd_soc_common {
 	char *driver_name;
 	const struct snd_soc_dapm_widget *dapm_widgets;
@@ -54,9 +63,10 @@ struct snd_soc_common {
 
 static struct snd_soc_common qcs9100_priv_data = {
 	.driver_name = "sa8775p",
-	.dapm_widgets = sc8280xp_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(sc8280xp_dapm_widgets),
-	.jack_enable = true,
+	.dapm_widgets = qcs9100_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(qcs9100_dapm_widgets),
+	.dapm_routes = qcs9100_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(qcs9100_dapm_routes),
 };
 
 static struct snd_soc_common qcm6490_priv_data = {
@@ -74,9 +84,10 @@ static struct snd_soc_common qcs6490_priv_data = {
 
 static struct snd_soc_common qcs8275_priv_data = {
 	.driver_name = "qcs8300",
-	.dapm_widgets = sc8280xp_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(sc8280xp_dapm_widgets),
-	.jack_enable = true,
+	.dapm_widgets = qcs9100_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(qcs9100_dapm_widgets),
+	.dapm_routes = qcs9100_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(qcs9100_dapm_routes),
 };
 
 static struct snd_soc_common sc8280xp_priv_data = {
