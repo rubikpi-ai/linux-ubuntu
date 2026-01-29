@@ -38,6 +38,24 @@
 		regulator-max-microvolt = <1800000>;
 	};
 
+	adv7535_vreg_1v8: adv7535_1v8_regulstor {
+		compatible = "regulator-fixed";
+		regulator-name = "ADV7535_1V8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	adv7535_vreg_3v3: adv7535_3v3_regulstor {
+		compatible = "regulator-fixed";
+		regulator-name = "ADV7535_3V3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
 	edp-connector {
 		compatible = "dp-connector";
 		label = "EDP";
@@ -209,6 +227,18 @@
 						   RPMH_REGULATOR_MODE_HPM>;
 		};
 	};
+
+	hdmi-connector {
+		compatible = "hdmi-connector";
+		label = "hdmi";
+		type = "a";
+
+		port {
+			hdmi_connector_in: endpoint {
+				remote-endpoint = <&adv7535_out>;
+			};
+		};
+	};
 };
 
 &i2c12 {
@@ -264,6 +294,21 @@
 	remote-endpoint = <&edp_connector_in>;
 };
 
+&mdss_dsi0 {
+	status = "okay";
+	vdda-supply = <&vreg_l1c>;
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&adv7535_in>;
+};
+
+&mdss_dsi0_phy {
+	status = "okay";
+	vdds-supply = <&vreg_l4a>;
+};
+
 &mdss_edp_phy {
 	status = "okay";
 };
@@ -310,6 +355,50 @@
 	vdda-pll-supply = <&vreg_l4a>;
 
 	status = "okay";
+};
+
+&i2c12 {
+	status = "okay";
+
+	adv7535: hdmi@3d {
+		compatible = "adi,adv7535";
+		reg = <0x3d>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <93 IRQ_TYPE_EDGE_FALLING>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&hdmi_conv_int_pins>;
+
+		adi,dsi-lanes = <4>;
+		avdd-supply = <&adv7535_vreg_1v8>;
+		dvdd-supply = <&adv7535_vreg_1v8>;
+		pvdd-supply = <&adv7535_vreg_1v8>;
+		a2vdd-supply = <&adv7535_vreg_1v8>;
+		v3p3-supply = <&adv7535_vreg_3v3>;
+		v1p2-supply = <&adv7535_vreg_1v8>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				adv7535_in: endpoint {
+					remote-endpoint = <&mdss_dsi0_out>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				adv7535_out: endpoint {
+					remote-endpoint = <&hdmi_connector_in>;
+				};
+			};
+		};
+	};
 };
 
 &ice {
@@ -361,6 +450,11 @@
 	       output-high;
 	       power-source = <0>;
 	};
+};
+
+&qup_i2c12_data_clk {
+	drive-strength = <2>;
+	bias-pull-up;
 };
 
 &qup_i2c12_data_clk {
@@ -530,16 +624,16 @@
 };
 
 &tlmm {
-	edp0-pwr-en-hog {
-		gpio-hog;
-		gpios = <81 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "edp0-pwr-en-hog";
-	};
-
 	dp_hot_plug_det: dp-hot-plug-det-state {
 		pins = "gpio94";
 		function = "edp0_hot";
+		bias-disable;
+	};
+
+	hdmi_conv_int_pins: hdmi-conv-int-pins {
+		pins = "gpio93";
+		function = "gpio";
+		drive-strength = <2>;
 		bias-disable;
 	};
 
