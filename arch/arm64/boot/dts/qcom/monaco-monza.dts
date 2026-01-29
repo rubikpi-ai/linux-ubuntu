@@ -56,6 +56,17 @@
 		regulator-boot-on;
 	};
 
+	vdc_5v: vdc-5v {
+		compatible = "regulator-fixed";
+		regulator-name = "vdc_5v";
+
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&tlmm 49 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+	};
+
 	edp-connector {
 		compatible = "dp-connector";
 		label = "EDP";
