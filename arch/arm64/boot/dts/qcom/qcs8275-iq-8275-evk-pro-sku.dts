@@ -317,6 +317,15 @@
 	status = "okay";
 };
 
+&gpu {
+	status = "okay";
+};
+
+&gpu_zap_shader {
+	firmware-name = "qcom/qcs8300/a623_zap.mbn";
+};
+
+
 &i2c0 {
 	pinctrl-0 = <&qup_i2c0_default>;
 	pinctrl-names = "default";
