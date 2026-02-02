@@ -572,6 +572,7 @@ CONFIG_DRM_IMX_DCSS                             policy<{'arm64': '-'}>
 CONFIG_DRM_IMX_LCDC                             policy<{'arm64': '-'}>
 CONFIG_DRM_IMX_LCDIF                            policy<{'arm64': '-'}>
 CONFIG_DRM_IMX_LDB_HELPER                       policy<{'arm64': '-'}>
+CONFIG_DRM_ITE_IT6162                           policy<{'arm64': 'm'}>
 CONFIG_DRM_KMB_DISPLAY                          policy<{'arm64': '-'}>
 CONFIG_DRM_LONTIUM_LT8713SX                     policy<{'arm64': 'm'}>
 CONFIG_DRM_LONTIUM_LT9211C                      policy<{'arm64': 'm'}>
