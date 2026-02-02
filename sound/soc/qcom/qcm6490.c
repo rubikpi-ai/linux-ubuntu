@@ -223,8 +223,23 @@ static struct snd_soc_card qcm6490_data = {
 	.name = "qcm6490",
 };
 
+static const struct snd_soc_dapm_widget qcs6490_rubikpi3_dapm_widgets[] = {
+       SND_SOC_DAPM_HP("Headphone Jack", NULL),
+       SND_SOC_DAPM_MIC("Mic Jack", NULL),
+       SND_SOC_DAPM_PINCTRL("STUB_AIF1_PINCTRL", "stub_aif1_active", "stub_aif1_sleep"),
+};
+
+static const struct snd_soc_dapm_route qcs6490_rubikpi3_dapm_routes[] = {
+       {"STUB_AIF1_RX", NULL, "STUB_AIF1_PINCTRL"},
+       {"STUB_AIF1_TX", NULL, "STUB_AIF1_PINCTRL"},
+};
+
 static struct snd_soc_card qcs6490_rubikpi3_data = {
 	.name = "qcs6490-rubikpi3",
+	.dapm_widgets = qcs6490_rubikpi3_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(qcs6490_rubikpi3_dapm_widgets),
+	.dapm_routes = qcs6490_rubikpi3_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(qcs6490_rubikpi3_dapm_routes),
 };
 
 static struct snd_soc_card qcs6490_rb3gen2_ia_data = {

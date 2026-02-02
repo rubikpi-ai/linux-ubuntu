@@ -1637,6 +1637,12 @@
 		input-enable;
 	};
 };
+&msm_stub_codec {
+	pinctrl-names = "default", "mi2s_aud_active", "mi2s_aud_sleep";
+	pinctrl-0 = <>;
+	pinctrl-1 = <>;
+	pinctrl-2 = <>;
+};
 
 / {
 	sound: sound {
