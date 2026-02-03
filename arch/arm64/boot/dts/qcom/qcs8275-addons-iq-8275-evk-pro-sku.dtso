@@ -15,9 +15,15 @@
 		compatible = "qcom,qcs8275-sndcard";
 		model = "MONACO-EVK";
 
-		pinctrl-0 = <&hs0_mi2s_data0>, <&hs0_mi2s_sclk>, <&hs0_mi2s_data1>,
+		pinctrl-0 = <&hs0_mi2s_data0_sleep>,<&hs0_mi2s_data1_sleep>,<&hs0_mi2s_sclk_sleep>,
+			    <&hs0_mi2s_ws_sleep>,<&mi2s1_data0_sleep>,<&mi2s1_sck_sleep>,
+			    <&mi2s1_ws_sleep>;
+		pinctrl-1 = <&hs0_mi2s_data0>, <&hs0_mi2s_sclk>, <&hs0_mi2s_data1>,
 			    <&hs0_mi2s_ws>, <&mi2s1_data0>, <&mi2s1_sck>, <&mi2s1_ws>;
-		pinctrl-names = "default";
+		pinctrl-2 = <&hs0_mi2s_data0_sleep>,<&hs0_mi2s_data1_sleep>,<&hs0_mi2s_sclk_sleep>,
+			    <&hs0_mi2s_ws_sleep>,<&mi2s1_data0_sleep>,<&mi2s1_sck_sleep>,
+			    <&mi2s1_ws_sleep>;
+		pinctrl-names = "default", "mi2s_active", "mi2s_sleep";
 
 		hs0-mi2s-playback-dai-link {
 			link-name = "MI2S-LPAIF_SDR-RX-PRIMARY";
