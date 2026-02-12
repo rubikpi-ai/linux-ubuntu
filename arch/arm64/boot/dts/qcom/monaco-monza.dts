@@ -12,6 +12,7 @@
 #include "qcs8300-thermal.dtsi"
 #include "qcs8300-pmics.dtsi"
 
+/delete-node/ &usb_1_dwc3;
 / {
 	model = "Qualcomm Technologies, Inc. Monaco Monza";
 	compatible = "qcom,monaco-monza", "qcom,qcs8300";
@@ -22,6 +23,7 @@
 	aliases {
 		ethernet0 = &ethernet0;
 		serial0 = &uart7;
+		i2c12 = &i2c12;
 	};
 
 	chosen {
@@ -209,6 +211,44 @@
 	};
 };
 
+&i2c12 {
+	pinctrl-0 = <&qup_i2c12_data_clk>, <&usb0_intr_state>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	typec@8 {
+		compatible = "cypress,cypd6129";
+		reg = <0x08>;
+		interrupt-parent = <&tlmm>;
+		interrupts = < 3 IRQ_TYPE_LEVEL_LOW>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+
+		ccg_typec_con0: connector@0 {
+			compatible = "usb-c-connector";
+			reg = <0>;
+			label = "USB-C";
+			data-role = "dual";
+			power-role = "dual";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port@0 {
+					reg = <0>;
+
+					ucsi_ccg_port: endpoint {
+						remote-endpoint = <&usb_role_switch>;
+					};
+				};
+			};
+		};
+	};
+};
+
 &mdss {
 	status = "okay";
 };
@@ -321,6 +361,11 @@
 	       output-high;
 	       power-source = <0>;
 	};
+};
+
+&qup_i2c12_data_clk {
+	drive-strength = <2>;
+	bias-pull-up;
 };
 
 &qupv3_id_0 {
@@ -628,6 +673,12 @@
 		output-high;
 		line-name = "wlan-rfkill-pin";
 	};
+
+	usb0_intr_state: usb0-intr-state {
+		 pins = "gpio3";
+		 drive-strength = <16>;
+		 bias-pull-up;
+	};
 };
 
 &uart7 {
@@ -650,12 +701,45 @@
 };
 
 &usb_1 {
-	status = "okay";
-};
+	reg = <0x0 0x0a600000 0x0 0x20000>;
 
-&usb_1_dwc3 {
+	interrupts-extended = <&intc GIC_SPI 292 IRQ_TYPE_LEVEL_HIGH>,
+		<&intc GIC_SPI 131 IRQ_TYPE_LEVEL_HIGH>,
+		<&pdc 14 IRQ_TYPE_EDGE_BOTH>,
+		<&pdc 15 IRQ_TYPE_EDGE_BOTH>,
+		<&pdc 12 IRQ_TYPE_LEVEL_HIGH>;
+	interrupt-names = "dwc_usb3",
+		"pwr_event",
+		"dp_hs_phy_irq",
+		"dm_hs_phy_irq",
+		"ss_phy_irq";
+
+	iommus = <&apps_smmu 0x80 0x0>;
+	snps,dis_u2_susphy_quirk;
+	snps,dis_enblslpm_quirk;
+	phys = <&usb_1_hsphy>, <&usb_qmpphy>;
+	phy-names = "usb2-phy", "usb3-phy";
+	maximum-speed = "super-speed-plus";
+
 	usb-role-switch;
-	dr_mode = "peripheral";
+	dr_mode = "otg";
+
+	qcom,enable-rt;
+	wakeup-source;
+	status = "okay";
+
+	ports {
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+				usb_role_switch: endpoint {
+					remote-endpoint = <&ucsi_ccg_port>;
+			};
+		};
+	};
 };
 
 &usb_1_hsphy {
