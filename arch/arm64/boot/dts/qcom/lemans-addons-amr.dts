@@ -33,6 +33,10 @@
 			codec {
 				sound-dai = <&msm_stub_codec 0>;
 			};
+
+			platform {
+				sound-dai = <&q6apm>;
+			};
 		};
 
 		lpi-i2s3-capture-dai-link {
@@ -45,6 +49,10 @@
 			codec {
 				sound-dai = <&msm_stub_codec 1>;
 			};
+
+			platform {
+				sound-dai = <&q6apm>;
+			};
 		};
 
 		hdmi-dai-link {
@@ -56,6 +64,10 @@
 
 			codec {
 				sound-dai = <&it6162_1_codec 0>;
+			};
+
+			platform {
+				sound-dai = <&q6apm>;
 			};
 		};
 	};
