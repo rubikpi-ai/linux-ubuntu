@@ -25,10 +25,6 @@ dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp449.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp453.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= ipq9574-rdp454.dtb
 
-lemans-addons-amr-dtbs:= lemans-amr.dtb lemans-addons-amr.dtbo \
-			qcs9075-camera-iq-9075-amr.dtbo
-
-dtb-$(CONFIG_ARCH_QCOM) += lemans-addons-amr.dtb
 dtb-$(CONFIG_ARCH_QCOM) += lemans-amr.dtb
 
 monaco-addons-monza-dtbs:= monaco-monza.dtb monaco-addons-monza.dtbo
@@ -421,6 +417,12 @@ qcs9075-addons-iq-9075-evk-ovl-dtbs := \
     sa8775p-video.dtbo \
     qcs9100-graphics.dtbo \
     qcs9075-camera-iq-9075-evk.dtbo
+
+dtb-$(CONFIG_ARCH_QCOM) += lemans-addons-amr-ovl.dtb
+lemans-addons-amr-ovl-dtbs := \
+    lemans-addons-amr.dtb \
+    sa8775p-video.dtbo \
+    qcs9075-camera-iq-9075-amr.dtbo
 
 dtb-$(CONFIG_ARCH_QCOM) += qcs8275-addons-iq-8275-evk-ovl.dtb
 qcs8275-addons-iq-8275-evk-ovl-dtbs := \
