@@ -138,7 +138,7 @@ static int qcs9100_snd_hw_params(struct snd_pcm_substream *substream,
 		break;
 	}
 
-	if (strcmp(card->name, "monaco-monza") == 0) {
+	if (strcmp(card->name, "monaco-gertrude") == 0) {
 		switch (params_rate(params)) {
 		case 8000:
 		case 16000:
@@ -215,7 +215,12 @@ static int qcs9100_snd_startup(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = snd_soc_substream_to_rtd(substream);
 	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
+        struct snd_soc_card *card = rtd->card;
 	unsigned int fmt = SND_SOC_DAIFMT_BP_FP;
+
+	if (strcmp(card->name, "monaco-gertrude") == 0) {
+		fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBM_CFM;
+	}
 
 	switch (cpu_dai->id) {
 	case PRIMARY_MI2S_RX ... QUATERNARY_MI2S_TX:
@@ -229,28 +234,28 @@ static int qcs9100_snd_startup(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static const struct snd_soc_dapm_widget monaco_monza_dapm_widgets[] = {
+static const struct snd_soc_dapm_widget monaco_gertrude_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("Int Mic", NULL),
+	SND_SOC_DAPM_MIC("Headset Mic12", NULL),
+	SND_SOC_DAPM_MIC("Headset Mic56", NULL),
 	SND_SOC_DAPM_SPK("Speaker", NULL),
 };
 
-static const struct snd_soc_dapm_route monaco_monza_dapm_routes[] = {
-	{"IN34", NULL, "Headset Mic"},
-	{"Headset Mic", NULL, "MICBIAS"},
-	{"DMICL", NULL, "Int Mic"},
-	{"Int Mic", NULL, "MICBIAS"},
+static const struct snd_soc_dapm_route monaco_gertrude_dapm_routes[] = {
+	{"IN12", NULL, "Headset Mic12"},
+	{"Headset Mic12", NULL, "MICBIAS"},
+	{"IN56", NULL, "Headset Mic56"},
+	{"Headset Mic56", NULL, "MICBIAS"},
 	{"Headphone", NULL, "HPL"},
 	{"Headphone", NULL, "HPR"},
 	{"Speaker", NULL, "SPKL"},
 	{"Speaker", NULL, "SPKR"},
 };
 
-static const struct snd_kcontrol_new monaco_monza_max98090_controls[] = {
-	SOC_DAPM_PIN_SWITCH("Headset Mic"),
+static const struct snd_kcontrol_new monaco_gertrude_max98090_controls[] = {
+	SOC_DAPM_PIN_SWITCH("Headset Mic12"),
+	SOC_DAPM_PIN_SWITCH("Headset Mic56"),
 	SOC_DAPM_PIN_SWITCH("Headphone"),
-	SOC_DAPM_PIN_SWITCH("Int Mic"),
 	SOC_DAPM_PIN_SWITCH("Speaker"),
 };
 
@@ -274,14 +279,15 @@ static struct snd_soc_card snd_soc_iq8_8275_evk_data = {
 	.name = "iq8-8275-evk",
 };
 
-static struct snd_soc_card snd_soc_monaco_monza_data = {
-	.name = "monaco-monza",
-	.dapm_widgets = monaco_monza_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(monaco_monza_dapm_widgets),
-	.dapm_routes = monaco_monza_dapm_routes,
-	.num_dapm_routes = ARRAY_SIZE(monaco_monza_dapm_routes),
-	.controls = monaco_monza_max98090_controls,
-	.num_controls = ARRAY_SIZE(monaco_monza_max98090_controls),
+static struct snd_soc_card snd_soc_monaco_gertrude_data = {
+	.name = "monaco-gertrude",
+	.driver_name = "qcs8300",
+	.dapm_widgets = monaco_gertrude_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(monaco_gertrude_dapm_widgets),
+	.dapm_routes = monaco_gertrude_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(monaco_gertrude_dapm_routes),
+	.controls = monaco_gertrude_max98090_controls,
+	.num_controls = ARRAY_SIZE(monaco_gertrude_max98090_controls),
 };
 
 static struct snd_soc_card snd_soc_qcs8300_data = {
@@ -316,9 +322,9 @@ static void qcs9100_add_be_ops(struct snd_soc_card *card)
 			link->init = qcs9100_snd_init;
 			link->be_hw_params_fixup = qcs9100_be_hw_params_fixup;
 			link->ops = &qcs9100_be_ops;
-			if (strcmp(card->name, "monaco-monza") == 0) {
+			if (strcmp(card->name, "monaco-gertrude") == 0) {
 				link->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF
-					| SND_SOC_DAIFMT_CBM_CFM;
+					| SND_SOC_DAIFMT_CBS_CFS;
 			}
 		}
 	}
@@ -373,7 +379,7 @@ static const struct of_device_id snd_qcs9100_dt_match[] = {
 	{.compatible = "qcom,qcs8300-ridesx-sndcard", .data = &snd_soc_qcs8300_data},
 	{.compatible = "qcom,qcs9100-ridesx-sndcard", .data = &snd_soc_qcs9100_data},
 	{.compatible = "qcom,qcs9075-rb8-sndcard", .data = &snd_soc_qcs9075_rb8_data},
-	{.compatible = "qcom,monaco-monza-sndcard", .data = &snd_soc_monaco_monza_data},
+	{.compatible = "qcom,monaco-gertrude-sndcard", .data = &snd_soc_monaco_gertrude_data},
 	{.compatible = "qcom,qcs9075-amr-sndcard", .data = &snd_soc_qcs9075_amr_data},
 	{}
 };
