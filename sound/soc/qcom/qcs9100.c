@@ -238,6 +238,7 @@ static const struct snd_soc_dapm_widget monaco_gertrude_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone", NULL),
 	SND_SOC_DAPM_MIC("Headset Mic12", NULL),
 	SND_SOC_DAPM_MIC("Headset Mic56", NULL),
+	SND_SOC_DAPM_SPK("Receiver", NULL),
 	SND_SOC_DAPM_SPK("Speaker", NULL),
 };
 
@@ -248,6 +249,8 @@ static const struct snd_soc_dapm_route monaco_gertrude_dapm_routes[] = {
 	{"Headset Mic56", NULL, "MICBIAS"},
 	{"Headphone", NULL, "HPL"},
 	{"Headphone", NULL, "HPR"},
+	{"Receiver", NULL, "RCVL"},
+	{"Receiver", NULL, "RCVR"},
 	{"Speaker", NULL, "SPKL"},
 	{"Speaker", NULL, "SPKR"},
 };
@@ -256,6 +259,7 @@ static const struct snd_kcontrol_new monaco_gertrude_max98090_controls[] = {
 	SOC_DAPM_PIN_SWITCH("Headset Mic12"),
 	SOC_DAPM_PIN_SWITCH("Headset Mic56"),
 	SOC_DAPM_PIN_SWITCH("Headphone"),
+	SOC_DAPM_PIN_SWITCH("Receiver"),
 	SOC_DAPM_PIN_SWITCH("Speaker"),
 };
 
