@@ -132,35 +132,16 @@ static int msm_dp_aux_link_configure(struct drm_dp_aux *aux,
 	return 0;
 }
 
-void msm_dp_ctrl_push_idle(struct msm_dp_ctrl *msm_dp_ctrl)
+void msm_dp_ctrl_push_idle(struct msm_dp_ctrl *msm_dp_ctrl, struct msm_dp_panel *msm_dp_panel)
 {
 	struct msm_dp_ctrl_private *ctrl;
-
-	ctrl = container_of(msm_dp_ctrl, struct msm_dp_ctrl_private, msm_dp_ctrl);
-
-	reinit_completion(&ctrl->idle_comp);
-	msm_dp_catalog_ctrl_state_ctrl(ctrl->catalog, DP_STATE_CTRL_PUSH_IDLE);
-
-	if (!wait_for_completion_timeout(&ctrl->idle_comp,
-			IDLE_PATTERN_COMPLETION_TIMEOUT_JIFFIES))
-		pr_warn("PUSH_IDLE pattern timedout\n");
-
-	drm_dbg_dp(ctrl->drm_dev, "mainlink off\n");
-}
-
-void msm_dp_ctrl_push_vcpf(struct msm_dp_ctrl *msm_dp_ctrl, struct msm_dp_panel *msm_dp_panel)
-{
 	u32 state = 0x0;
-	struct msm_dp_ctrl_private *ctrl;
 
 	ctrl = container_of(msm_dp_ctrl, struct msm_dp_ctrl_private, msm_dp_ctrl);
 
-	if (msm_dp_panel->stream_id >= DP_STREAM_MAX) {
-		DRM_ERROR("invalid input\n");
-		return;
-	}
-
-	if (msm_dp_panel->stream_id == DP_STREAM_0)
+	if (!ctrl->mst_active)
+		state |= DP_STATE_CTRL_PUSH_IDLE;
+	else if (msm_dp_panel->stream_id == DP_STREAM_0)
 		state |= MST_DP0_PUSH_VCPF;
 	else if (msm_dp_panel->stream_id == DP_STREAM_1)
 		state |= MST_DP1_PUSH_VCPF;
@@ -177,8 +158,8 @@ void msm_dp_ctrl_push_vcpf(struct msm_dp_ctrl *msm_dp_ctrl, struct msm_dp_panel 
 		msm_dp_catalog_ctrl_state_ctrl(ctrl->catalog, state);
 
 	if (!wait_for_completion_timeout(&ctrl->idle_comp,
-					 IDLE_PATTERN_COMPLETION_TIMEOUT_JIFFIES))
-		pr_warn("PUSH_VCPF pattern timedout\n");
+			IDLE_PATTERN_COMPLETION_TIMEOUT_JIFFIES))
+		pr_warn("PUSH_IDLE pattern timedout\n");
 
 	drm_dbg_dp(ctrl->drm_dev, "mainlink off\n");
 }
@@ -1279,7 +1260,7 @@ static void msm_dp_ctrl_clear_training_pattern(struct msm_dp_ctrl_private *ctrl)
 }
 
 static int msm_dp_ctrl_link_train_2(struct msm_dp_ctrl_private *ctrl,
-			int *training_step)
+			int *training_step, bool downgrade)
 {
 	int tries = 0, ret = 0;
 	u8 pattern;
@@ -1301,6 +1282,28 @@ static int msm_dp_ctrl_link_train_2(struct msm_dp_ctrl_private *ctrl,
 		pattern = DP_TRAINING_PATTERN_2;
 		state_ctrl_bit = 2;
 	}
+
+	/*
+	 * DP link training uses the highest allowed pattern by default.
+	 * If it fails, the pattern is downgraded to improve cable and monitor compatibility.
+	 */
+	if (downgrade) {
+		switch (pattern) {
+		case DP_TRAINING_PATTERN_4:
+			pattern = DP_TRAINING_PATTERN_3;
+			state_ctrl_bit = 3;
+			break;
+		case DP_TRAINING_PATTERN_3:
+			pattern = DP_TRAINING_PATTERN_2;
+			state_ctrl_bit = 2;
+			break;
+		default:
+			break;
+		}
+	}
+
+	drm_dbg_dp(ctrl->drm_dev, "pattern(%d) state_ctrl_bit(%d) downgrade(%d)\n",
+		pattern, state_ctrl_bit, downgrade);
 
 	ret = msm_dp_catalog_ctrl_set_pattern_state_bit(ctrl->catalog, state_ctrl_bit);
 	if (ret)
@@ -1370,10 +1373,14 @@ static int msm_dp_ctrl_link_train(struct msm_dp_ctrl_private *ctrl,
 	/* print success info as this is a result of user initiated action */
 	drm_dbg_dp(ctrl->drm_dev, "link training #1 successful\n");
 
-	ret = msm_dp_ctrl_link_train_2(ctrl, training_step);
+	ret = msm_dp_ctrl_link_train_2(ctrl, training_step, false);
 	if (ret) {
-		DRM_ERROR("link training #2 failed. ret=%d\n", ret);
-		goto end;
+		drm_dbg_dp(ctrl->drm_dev, "link training #2 failed, retry downgrade.\n");
+		ret = msm_dp_ctrl_link_train_2(ctrl, training_step, true);
+		if (ret) {
+			DRM_ERROR("link training #2 failed. ret=%d\n", ret);
+			goto end;
+		}
 	}
 
 	/* print success info as this is a result of user initiated action */
@@ -1584,7 +1591,7 @@ void msm_dp_ctrl_set_psr(struct msm_dp_ctrl *msm_dp_ctrl, bool enter)
 			return;
 		}
 
-		msm_dp_ctrl_push_idle(msm_dp_ctrl);
+		msm_dp_ctrl_push_idle(msm_dp_ctrl, ctrl->panel);
 		msm_dp_catalog_ctrl_state_ctrl(ctrl->catalog, 0);
 
 		msm_dp_catalog_ctrl_psr_mainlink_enable(ctrl->catalog, false);
@@ -1706,7 +1713,7 @@ static int msm_dp_ctrl_link_maintenance(struct msm_dp_ctrl_private *ctrl)
 	int ret = 0;
 	int training_step = DP_TRAINING_NONE;
 
-	msm_dp_ctrl_push_idle(&ctrl->msm_dp_ctrl);
+	msm_dp_ctrl_push_idle(&ctrl->msm_dp_ctrl, ctrl->panel);
 
 	ctrl->link->phy_params.p_level = 0;
 	ctrl->link->phy_params.v_level = 0;
@@ -2287,6 +2294,7 @@ void msm_dp_ctrl_off_link(struct msm_dp_ctrl *msm_dp_ctrl)
 	msm_dp_catalog_ctrl_mainlink_ctrl(ctrl->catalog, false);
 	msm_dp_catalog_mst_config(ctrl->catalog, false);
 
+	msm_dp_catalog_ctrl_reset(ctrl->catalog);
 	ctrl->mst_active = false;
 
 	dev_pm_opp_set_rate(ctrl->dev, 0);

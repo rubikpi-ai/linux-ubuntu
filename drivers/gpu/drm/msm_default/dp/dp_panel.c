@@ -503,8 +503,8 @@ static int msm_dp_panel_parse_dt(struct msm_dp_panel *msm_dp_panel)
 		msm_dp_panel->max_dp_lanes = DP_MAX_NUM_DP_LANES; /* 4 lanes */
 
 	ret = drm_of_get_lane_mapping(of_node,
-                             "lane-mapping", 1, 0, 4, 4,
-                             msm_dp_panel->lane_map);
+				"lane-mapping", 1, 0, 4, 4,
+				msm_dp_panel->lane_map);
 	if (ret < 0) {
 		/* fallback: identity mapping */
 		msm_dp_panel->lane_map[0] = 0;
