@@ -1827,11 +1827,14 @@ err_pm_runtime_put:
 static int qcom_pcie_resume_noirq(struct device *dev)
 {
 	struct qcom_pcie *pcie;
+	struct dw_pcie_rp *pp;
 	int ret;
 
 	pcie = dev_get_drvdata(dev);
 	if (!pcie)
 		return 0;
+
+	pp = &pcie->pci->pp;
 
 	if (pcie->soc_is_rpmh) {
 		/*
@@ -1858,6 +1861,10 @@ static int qcom_pcie_resume_noirq(struct device *dev)
 		goto revert_icc_tag;
 
 	dw_pcie_setup_rc(&pcie->pci->pp);
+
+	if (pp->use_linkup_irq)
+		writel_relaxed(PARF_INT_ALL_LINK_UP | PARF_INT_MSI_DEV_0_7,
+			       pcie->parf + PARF_INT_ALL_MASK);
 
 	ret = qcom_pcie_start_link(pcie->pci);
 	if (ret)
