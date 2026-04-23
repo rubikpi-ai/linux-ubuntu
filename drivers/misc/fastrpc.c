@@ -316,6 +316,7 @@ struct fastrpc_invoke_ctx {
 	struct fastrpc_buf_overlap *olaps;
 	struct fastrpc_channel_ctx *cctx;
 	struct fastrpc_perf *perf;
+	void **kaddrs;
 };
 
 struct fastrpc_session_ctx {
@@ -652,6 +653,7 @@ static void fastrpc_context_free(struct kref *ref)
 	kfree(ctx->perf);
 	kfree(ctx->maps);
 	kfree(ctx->olaps);
+	kfree(ctx->kaddrs);
 	kfree(ctx);
 
 	fastrpc_channel_ctx_put(cctx);
@@ -742,6 +744,13 @@ static struct fastrpc_invoke_ctx *fastrpc_context_alloc(
 		ctx->olaps = kcalloc(ctx->nscalars,
 				    sizeof(*ctx->olaps), GFP_KERNEL);
 		if (!ctx->olaps) {
+			kfree(ctx->maps);
+			kfree(ctx);
+			return ERR_PTR(-ENOMEM);
+		}
+		ctx->kaddrs = kcalloc(ctx->nscalars, sizeof(*ctx->kaddrs), GFP_KERNEL);
+		if (!ctx->kaddrs) {
+			kfree(ctx->olaps);
 			kfree(ctx->maps);
 			kfree(ctx);
 			return ERR_PTR(-ENOMEM);
@@ -1212,6 +1221,7 @@ static int fastrpc_get_args(u32 kernel, struct fastrpc_invoke_ctx *ctx)
 				goto bail;
 
 			rpra[i].buf.pv = args - ctx->olaps[oix].offset;
+			ctx->kaddrs[i] = (void *)(uintptr_t)rpra[i].buf.pv;
 			pages[i].addr = ctx->buf->phys -
 					ctx->olaps[oix].offset +
 					(pkt_size - rlen);
@@ -1287,7 +1297,7 @@ static int fastrpc_put_args(struct fastrpc_invoke_ctx *ctx,
 
 	for (i = inbufs; i < ctx->nbufs; ++i) {
 		if (!ctx->maps[i]) {
-			void *src = (void *)(uintptr_t)rpra[i].buf.pv;
+			void *src = ctx->kaddrs[i];
 			void *dst = (void *)(uintptr_t)ctx->args[i].ptr;
 			u64 len = rpra[i].buf.len;
 
