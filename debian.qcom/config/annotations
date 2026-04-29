@@ -253,7 +253,6 @@ CONFIG_CAN_BXCAN                                policy<{'arm64': '-'}>
 CONFIG_CAN_RCAR                                 policy<{'arm64': '-'}>
 CONFIG_CAN_RCAR_CANFD                           policy<{'arm64': '-'}>
 CONFIG_CAVIUM_CPT                               policy<{'arm64': '-'}>
-CONFIG_CC_VERSION_TEXT                          policy<{'arm64': '"aarch64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0"'}>
 CONFIG_CEC_GPIO                                 policy<{'arm64': 'm', 'arm64-qcom-rt': 'n'}>
 CONFIG_CEC_MESON_AO                             policy<{'arm64': '-'}>
 CONFIG_CEC_MESON_G12A_AO                        policy<{'arm64': '-'}>
