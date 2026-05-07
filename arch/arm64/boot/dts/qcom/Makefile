@@ -446,6 +446,14 @@ qcs8275-addons-iq-8275-evk-pro-sku-ovl-dtbs := \
     qcs8300-video.dtbo \
     qcs8300-graphics.dtbo
 
+dtb-$(CONFIG_ARCH_QCOM) += qcs8275-addons-iq-8275-evk-pro-sku-mezz-ovl.dtb
+qcs8275-addons-iq-8275-evk-pro-sku-mezz-ovl-dtbs := \
+    qcs8275-addons-iq-8275-evk-pro-sku.dtb \
+    qcs8275-camera-iq-8275-evk-pro-sku.dtbo \
+    qcs8300-video.dtbo \
+    qcs8300-graphics.dtbo \
+    qcs8275-addons-iq-8275-evk-pro-sku-mezz.dtbo
+
 dtb-$(CONFIG_ARCH_QCOM) += qcs6490-thundercomm-rubikpi3-ovl.dtb
 qcs6490-thundercomm-rubikpi3-ovl-dtbs := \
     qcs6490-thundercomm-rubikpi3.dtb \
