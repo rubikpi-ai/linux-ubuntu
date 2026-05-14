@@ -460,6 +460,11 @@ static void adv7511_hpd_work(struct work_struct *work)
 			drm_kms_helper_hotplug_event(adv7511->connector.dev);
 		} else {
 			drm_bridge_hpd_notify(&adv7511->bridge, status);
+
+			adv7511->status = status;
+			if (adv7511->plugged_cb && adv7511->codec_dev)
+				adv7511->plugged_cb(adv7511->codec_dev,
+						    status == connector_status_connected);
 		}
 	}
 }

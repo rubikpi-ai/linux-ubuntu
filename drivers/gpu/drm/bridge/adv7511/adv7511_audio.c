@@ -7,7 +7,6 @@
  */
 
 #include <sound/core.h>
-#include <sound/hdmi-codec.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>
 #include <linux/of_graph.h>
@@ -233,11 +232,28 @@ static int adv7511_hdmi_i2s_get_dai_id(struct snd_soc_component *component,
 	return -EINVAL;
 }
 
+static int adv7511_hook_plugged_cb(struct device *dev, void *data,
+				   hdmi_codec_plugged_cb fn,
+				   struct device *codec_dev)
+{
+	struct adv7511 *adv7511 = dev_get_drvdata(dev);
+
+	adv7511->plugged_cb = fn;
+	adv7511->codec_dev = codec_dev;
+
+	if (adv7511->plugged_cb && adv7511->codec_dev) {
+		adv7511->plugged_cb(adv7511->codec_dev,
+				    adv7511->status == connector_status_connected);
+	}
+	return 0;
+}
+
 static const struct hdmi_codec_ops adv7511_codec_ops = {
-	.hw_params	= adv7511_hdmi_hw_params,
-	.audio_shutdown = audio_shutdown,
-	.audio_startup	= audio_startup,
-	.get_dai_id	= adv7511_hdmi_i2s_get_dai_id,
+	.hw_params	 = adv7511_hdmi_hw_params,
+	.audio_shutdown  = audio_shutdown,
+	.audio_startup	 = audio_startup,
+	.get_dai_id	 = adv7511_hdmi_i2s_get_dai_id,
+	.hook_plugged_cb = adv7511_hook_plugged_cb,
 };
 
 static const struct hdmi_codec_pdata codec_data = {

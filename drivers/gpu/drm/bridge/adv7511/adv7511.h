@@ -18,6 +18,8 @@
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
 
+#include <sound/hdmi-codec.h>
+
 #define ADV7511_REG_CHIP_REVISION		0x00
 #define ADV7511_REG_N0				0x01
 #define ADV7511_REG_N1				0x02
@@ -396,6 +398,9 @@ struct adv7511 {
 	bool cec_enabled_adap;
 	struct clk *cec_clk;
 	u32 cec_clk_freq;
+
+	struct device *codec_dev;
+	hdmi_codec_plugged_cb plugged_cb;
 };
 
 #ifdef CONFIG_DRM_I2C_ADV7511_CEC
