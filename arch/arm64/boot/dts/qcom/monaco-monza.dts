@@ -91,6 +91,99 @@
                 regulator-enable-ramp-delay = <10000>;
         };
 
+        cci1_i2c1_gpio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "i2c-gpio";
+		sda-gpios = <&tlmm 31 (GPIO_ACTIVE_HIGH| GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&tlmm 32 (GPIO_ACTIVE_HIGH| GPIO_OPEN_DRAIN)>;
+		status = "okay";
+		pinctrl-0 = <&cci1_1_default_bb_sda &cci1_1_default_bb_scl>;
+		pinctrl-names = "default";
+
+		fan_controller: fan-controller@2f {
+			compatible = "microchip,emc2305";
+			status = "okay";
+			reg = <0x2f>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#pwm-cells = <3>;
+
+			fan: fan@0 {
+				reg = <0x0>;
+				pwms = <&fan_controller 26000 PWM_POLARITY_INVERTED 1>;
+				#cooling-cells = <2>;
+			};
+		};
+
+		leds_controller: leds-controller@22 {
+			compatible = "nxp,pca9635";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x22>;
+
+			red@0 {
+				label = "red";
+				reg = <0>;
+				linux,default-trigger = "none";
+			};
+			green@1 {
+				label = "green";
+				reg = <1>;
+				linux,default-trigger = "none";
+			};
+			blue@2 {
+				label = "blue";
+				reg = <2>;
+				linux,default-trigger = "none";
+			};
+			red@3 {
+				label = "red";
+				reg = <3>;
+				linux,default-trigger = "none";
+			};
+			green@4 {
+				label = "green";
+				reg = <4>;
+				linux,default-trigger = "none";
+			};
+			blue@5 {
+				label = "blue";
+				reg = <5>;
+				linux,default-trigger = "none";
+			};
+			red@6 {
+				label = "red";
+				reg = <6>;
+				linux,default-trigger = "none";
+			};
+			green@7 {
+				label = "green";
+				reg = <7>;
+				linux,default-trigger = "none";
+			};
+			blue@8 {
+				label = "blue";
+				reg = <8>;
+				linux,default-trigger = "none";
+			};
+			red@9 {
+				label = "red";
+				reg = <9>;
+				linux,default-trigger = "none";
+			};
+			green@a {
+				label = "green";
+				reg = <10>;
+				linux,default-trigger = "none";
+			};
+			blue@b {
+				label = "blue";
+				reg = <11>;
+				linux,default-trigger = "none";
+			};
+		};
+	};
 };
 
 &apps_rsc {
@@ -687,6 +780,20 @@
 		bias-pull-up;
 	};
 
+	cci1_1_default_bb_sda: cci1-1-default-bb-sda {
+		pins = "gpio31";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up = <2200>;
+	};
+
+	cci1_1_default_bb_scl: cci1-1-default-bb-scl {
+		pins = "gpio32";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up = <2200>;
+	};
+
 	pcie0_default_state: pcie0-default-state {
 		perst-pins {
 			pins = "gpio2";
@@ -789,28 +896,6 @@
 		enable-gpios = <&tlmm 55 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
-};
-
-&cci1 {
-        status = "okay";
-};
-&cci1_i2c1 {
-        #address-cells = <1>;
-        #size-cells = <0>;
-
-        fan_controller: fan-controller@2f {
-                compatible = "microchip,emc2305";
-                reg = <0x2f>;
-                #address-cells = <1>;
-                #size-cells = <0>;
-                #pwm-cells = <3>;
-
-                fan: fan@0 {
-                        reg = <0x0>;
-                        pwms = <&fan_controller 26000 PWM_POLARITY_INVERTED 1>;
-                        #cooling-cells = <2>;
-                };
-        };
 };
 
 &ufs_mem_hc {

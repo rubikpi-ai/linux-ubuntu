@@ -3409,7 +3409,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			status = "okay";
+			status = "disabled";
 
 			cci1_i2c0: i2c-bus@0 {
 				reg = <0>;
