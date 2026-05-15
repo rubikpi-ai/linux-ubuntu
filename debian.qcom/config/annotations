@@ -1092,6 +1092,8 @@ CONFIG_PATA_IMX                                 policy<{'arm64': '-'}>
 CONFIG_PCIE_APPLE                               policy<{'arm64': '-'}>
 CONFIG_PCIE_APPLE_MSI_DOORBELL_ADDR             policy<{'arm64': '-'}>
 CONFIG_PCIE_ARMADA_8K                           policy<{'arm64': '-'}>
+CONFIG_PCIE_DPC                                 policy<{'arm64': 'n'}>
+CONFIG_PCIE_EDR                                 policy<{'arm64': '-'}>
 CONFIG_PCIE_HISI_STB                            policy<{'arm64': '-'}>
 CONFIG_PCIE_KEEMBAY                             policy<{'arm64': '-'}>
 CONFIG_PCIE_KEEMBAY_EP                          policy<{'arm64': '-'}>
