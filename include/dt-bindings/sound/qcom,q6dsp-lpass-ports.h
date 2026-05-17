@@ -140,7 +140,6 @@
 #define DISPLAY_PORT_RX_6	134
 #define DISPLAY_PORT_RX_7	135
 #define USB_RX                  136
-#define LPASS_MAX_PORT         USB_RX
 #define PRIMARY_SDR_MI2S_RX     136
 #define PRIMARY_SDR_MI2S_TX     137
 #define SECONDARY_SDR_MI2S_RX   138
@@ -163,6 +162,17 @@
 #define QUINARY_SDR_TDM_TX_0    155
 #define SENARY_MI2S_RX          156
 #define SENARY_MI2S_TX          157
+#define LPI_MI2S_RX_0		158
+#define LPI_MI2S_TX_0		159
+#define LPI_MI2S_RX_1		160
+#define LPI_MI2S_TX_1		161
+#define LPI_MI2S_RX_2		162
+#define LPI_MI2S_TX_2		163
+#define LPI_MI2S_RX_3		164
+#define LPI_MI2S_TX_3		165
+#define LPI_MI2S_RX_4		166
+#define LPI_MI2S_TX_4		167
+#define LPASS_MAX_PORT          (LPI_MI2S_TX_4 + 1)
 
 #define LPASS_CLK_ID_PRI_MI2S_IBIT	1
 #define LPASS_CLK_ID_PRI_MI2S_EBIT	2
