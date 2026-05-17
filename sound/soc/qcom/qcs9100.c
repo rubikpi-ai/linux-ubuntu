@@ -159,11 +159,7 @@ static int qcs9100_snd_hw_params(struct snd_pcm_substream *substream,
 			return -EINVAL;
 		}
 
-		ret = snd_soc_dai_set_sysclk(codec_dai, 0, mclk, SND_SOC_CLOCK_IN);
-		if (ret) {
-			dev_err(codec_dai->dev, "Can't set codec DAI clock: %d\n", ret);
-			return ret;
-		}
+		snd_soc_dai_set_sysclk(codec_dai, 0, mclk, SND_SOC_CLOCK_IN);
 	}
 
 	return qcom_snd_sdw_hw_params(substream, params, &pdata->sruntime[cpu_dai->id]);
@@ -225,6 +221,7 @@ static int qcs9100_snd_startup(struct snd_pcm_substream *substream)
 	switch (cpu_dai->id) {
 	case PRIMARY_MI2S_RX ... QUATERNARY_MI2S_TX:
 	case PRIMARY_SDR_MI2S_RX ... QUINARY_SDR_MI2S_TX:
+	case LPI_MI2S_RX_0 ... LPI_MI2S_TX_4:
 		snd_soc_dai_set_fmt(cpu_dai, fmt);
 		break;
 	default:
