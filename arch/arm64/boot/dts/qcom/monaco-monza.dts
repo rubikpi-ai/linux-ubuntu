@@ -429,7 +429,7 @@
 	adv7535: hdmi@3d {
 		compatible = "adi,adv7535";
 		reg = <0x3d>;
-
+		#sound-dai-cells = <0>;
 		interrupt-parent = <&tlmm>;
 		interrupts = <93 IRQ_TYPE_EDGE_FALLING>;
 

@@ -16,7 +16,7 @@
 		compatible = "qcom,monaco-gertrude-sndcard";
 		model = "monaco-gertrude";
 		pinctrl-names = "default";
-		pinctrl-0 = <&ext_mclk1_c>,<&lpi_quad_clk>,<&lpi_quad_ws>,<&lpi_quad_data>;
+		pinctrl-0 = <&ext_mclk1_c>,<&lpi_quad_clk>,<&lpi_quad_ws>,<&lpi_quad_data>,<&lpi_i2s4_active>;
 
 		lpi-quad-capture-dai-link {
 			link-name = "MI2S-LPAIF_RXTX-TX-PRIMARY";
@@ -43,6 +43,22 @@
 
 			codec {
 				sound-dai = <&max98091>;
+			};
+
+			platform {
+				sound-dai = <&q6apm>;
+			};
+		};
+
+		hdmi-mi2s-playback-dai-link {
+			link-name = "HDMI Playback";
+
+			cpu {
+				sound-dai = <&q6apmbedai LPI_MI2S_RX_4>;
+			};
+
+			codec {
+				sound-dai = <&adv7535>;
 			};
 
 			platform {
@@ -130,6 +146,32 @@
 		drive-strength = <2>;
 		bias-pull-down;
 		input-enable;
+	};
+
+	lpi_i2s4_active: lpi_i2s4-active-state {
+		data0-pins {
+			pins = "gpio17";
+			function = "i2s4_data";
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
+
+		clk-pins {
+			pins = "gpio12";
+			function = "i2s4_clk";
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
+
+		ws-pins {
+			pins = "gpio13";
+			function = "i2s4_ws";
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
 	};
 };
 
