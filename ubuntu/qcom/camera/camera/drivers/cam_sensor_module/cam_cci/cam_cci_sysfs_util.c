@@ -671,7 +671,7 @@ int  cam_sysfs_add_cci(void *cci_device_ptr)
 
 	num_of_map_idx = of_property_count_u32_elems(
 			of_node, "pctrl-idx-mapping");
-	if (num_of_map_idx <= 0 && num_of_map_idx > MASTER_MAX) {
+	if (num_of_map_idx <= 0 || num_of_map_idx > MASTER_MAX) {
 		CAM_ERR(CAM_CCI, "Reading pctrl-idx-mapping failed");
 		return -EINVAL;
 	}
@@ -682,7 +682,7 @@ int  cam_sysfs_add_cci(void *cci_device_ptr)
 		cci_dev->cci_master_sysfs[i].master = idx;
 		cci_dev->cci_master_sysfs[i].cci_dev = soc_info->index;
 		cci_dev->num_masters = num_of_map_idx;
-		cci_idx = (soc_info->index * num_of_map_idx) + idx;
+		cci_idx = (soc_info->index * MASTER_MAX) + idx;
 
 		scnprintf(buff, sizeof(buff), "cci%d", cci_idx);
 
